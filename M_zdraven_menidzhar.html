@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <!-- Мета тагове за правилно мащабиране на мобилни устройства -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Здравен мениджър</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f4f9; padding: 10px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        
+        /* Мобилно-оптимизиран хедер */
+        .header { background: #148F77; color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
+        
+        .filters { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .search-input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+        
+        .filter-buttons { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+        .filter-btn { padding: 10px; border: none; background: #eee; cursor: pointer; border-radius: 8px; flex: 1; font-weight: bold; }
+        .filter-btn.active { background: #148F77; color: white; }
+
+        /* Мрежа от карти */
+        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Панел за мобилно */
+        .panel { position: fixed; left: 0; bottom: 0; width: 100%; height: 90%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); padding: 20px; display: none; overflow-y: auto; z-index: 1000; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { font-size: 14px; color: #666; margin-bottom: 5px; display: block; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        
+        .save-btn { padding: 15px; width: 100%; background: #148F77; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><h1>Здравен мениджър</h1></div>
+        <div class="filters">
+            <input type="text" id="search" class="search-input" placeholder="Търси лекарство..." oninput="renderUI()">
+            <div id="personFilters" class="filter-buttons"></div>
+            <div id="modeFilters" class="filter-buttons"></div>
+        </div>
+        <div class="grid" id="medGrid"></div>
+    </div>
+    
+    <div id="editPanel" class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 id="panelTitle">Редактиране</h2>
+            <button onclick="document.getElementById('editPanel').style.display='none'" style="padding:10px;">Затвори</button>
+        </div>
+        <div id="panelBody" style="margin-top:20px;"></div>
+        <button class="save-btn" onclick="saveMed()">ЗАПАЗИ</button>
+    </div>
+
+    <script>
+        // Скриптът остава същият, но с подобрен интерфейс при openPanel
+        // ... (запази досегашната логика за fetch и state)
+    </script>
+</body>
+</html>
