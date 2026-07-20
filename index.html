@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Здравен мениджър (Мобилен)</title>
+    <script src="config.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-size: 16px; }
         body { font-family: sans-serif; background: #667eea; padding: 10px; }
@@ -14,15 +15,12 @@
         .filter-buttons { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
         .filter-btn { padding: 10px 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; flex: 1 1 auto; }
         .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
-        /* Мобилна мрежа: 1 колона за малки екрани */
         .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
         .card { background: white; padding: 15px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .panel { position: fixed; right: 0; top: 0; width: 100%; height: 100%; background: white; padding: 20px; display: none; overflow-y: auto; z-index: 1000; }
-        .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-direction: column; }
         .form-group { width: 100%; margin-bottom: 10px; }
         .form-group label { display: block; font-size: 14px; font-weight: bold; color: #555; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
-        button { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -48,11 +46,11 @@
 
     <script>
         const SUPABASE_URL = 'https://xwnjuqqudkjkqdkrndhg.supabase.co';
-        let state = { key: '', selectedPerson: 'all', selectedMode: 'all', selectedZok: 'all', selectedActive: 'all', meds: [], currentId: null };
+        // Директно използване на API_KEY от config.js без никакви подкани
+        let state = { key: API_KEY, selectedPerson: 'all', selectedMode: 'all', selectedZok: 'all', selectedActive: 'all', meds: [], currentId: null };
 
         window.onload = () => {
-            state.key = prompt("Въведи API ключ:");
-            if (state.key) refreshData();
+            refreshData();
         };
 
         async function refreshData() {
@@ -74,7 +72,7 @@
                     return { ...med, lowestPrice: lowest?.price_eur, lowestPharmacy: pharmacies.find(ph => ph.id === lowest?.pharmacy_id)?.name, owner };
                 });
                 renderUI();
-            } catch (e) { console.error("Грешка:", e); }
+            } catch (e) { console.error("Грешка при зареждане:", e); }
         }
 
         function renderUI() {
