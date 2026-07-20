@@ -8,37 +8,35 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: sans-serif; background: #667eea; padding: 10px; }
-        .container { max-width: 1200px; margin: 0 auto; }
         .header { background: #148F77; color: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; }
         .filters { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
         .search-input { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px; }
         .filter-buttons { display: flex; gap: 5px; margin-bottom: 5px; flex-wrap: wrap; }
-        .filter-btn { padding: 4px 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; font-size: 12px; }
+        .filter-btn { padding: 4px 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; font-size: 11px; }
         .filter-btn.active { background: #148F77; color: white; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-        .card { background: white; padding: 10px; border-radius: 8px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 14px; }
-        .panel { position: fixed; right: 0; top: 0; width: 100%; max-width: 500px; height: 100%; background: white; padding: 15px; display: none; overflow-y: auto; z-index: 1000; box-shadow: -2px 0 5px rgba(0,0,0,0.2); }
-        .form-group { margin-bottom: 8px; }
-        .form-group label { display: block; font-size: 11px; font-weight: bold; color: #555; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; }
+        .card { background: white; padding: 10px; border-radius: 8px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .panel { position: fixed; right: 0; top: 0; width: 100%; max-width: 500px; height: 100%; background: white; padding: 15px; display: none; overflow-y: auto; z-index: 1000; }
+        .form-row { display: flex; gap: 5px; }
+        .form-group { flex: 1; margin-bottom: 8px; }
+        .form-group label { display: block; font-size: 10px; font-weight: bold; color: #555; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header"><h1>Здравен мениджър</h1></div>
-        <div class="filters">
-            <input type="text" id="search" class="search-input" placeholder="Търси..." oninput="renderUI()">
-            <div id="personFilters" class="filter-buttons"></div>
-            <div id="modeFilters" class="filter-buttons"></div>
-            <div id="zokFilters" class="filter-buttons"></div>
-            <div id="activeFilters" class="filter-buttons"></div>
-            <button onclick="refreshData()" style="width:100%; padding: 8px; background:#148F77; color:white; border:none; border-radius:4px;">Опресни</button>
-        </div>
-        <div class="grid" id="medGrid"></div>
+    <div class="header"><h1>Здравен мениджър</h1></div>
+    <div class="filters">
+        <input type="text" id="search" class="search-input" placeholder="Търси..." oninput="renderUI()">
+        <div id="personFilters" class="filter-buttons"></div>
+        <div id="modeFilters" class="filter-buttons"></div>
+        <div id="zokFilters" class="filter-buttons"></div>
+        <div id="activeFilters" class="filter-buttons"></div>
+        <button onclick="refreshData()" style="width:100%; padding: 8px; background:#148F77; color:white; border:none; border-radius:4px;">Опресни</button>
     </div>
+    <div class="grid" id="medGrid"></div>
     
     <div id="editPanel" class="panel">
-        <h2 id="panelTitle" style="font-size: 18px;">Редактиране</h2>
+        <h2 id="panelTitle" style="font-size: 16px;">Редактиране</h2>
         <button onclick="document.getElementById('editPanel').style.display='none'" style="margin:10px 0;">Затвори</button>
         <div id="panelBody"></div>
         <button onclick="saveMed()" style="padding:10px; width:100%; background:#148F77; color:white; border:none;">ЗАПАЗИ</button>
@@ -83,7 +81,7 @@
             ).map(med => `
                 <div class="card" onclick="openPanel('${med.id}')">
                     <h3>${med.name_bg}</h3>
-                    <p style="font-size:11px;">💶 ${med.lowestPrice ? med.lowestPrice.toFixed(2) + ' EUR' : 'Няма цена'}</p>
+                    <p style="font-size:11px;">💶 ${med.lowestPrice ? med.lowestPrice.toFixed(2) + ' EUR (' + med.lowestPharmacy + ')' : 'Няма цена'}</p>
                 </div>`).join('');
         }
 
@@ -92,15 +90,29 @@
             state.currentId = id;
             document.getElementById('panelTitle').innerText = m.name_bg;
             document.getElementById('panelBody').innerHTML = `
-                <div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div>
+                    <div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div>
+                </div>
                 <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
-                <div class="form-group"><label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> ЗОК</label></div>`;
+                <div class="form-row">
+                    <div class="form-group"><label>Количество</label><input type="number" id="vol" value="${m.volume_quantity||''}"></div>
+                    <div class="form-group"><label>Единица</label><input type="text" id="unit" value="${m.volume_unit||''}"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Форма</label><input type="text" id="form" value="${m.form||''}"></div>
+                    <div class="form-group"><label>Брой в опаковка</label><input type="number" id="qty" value="${m.form_quantity||''}"></div>
+                </div>
+                <div class="form-group"><label>Дозировка</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
+                <div class="form-group"><label>ЗОК</label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}></div>
+                <div class="form-group"><label>Описание</label><textarea id="desc">${m.description||''}</textarea></div>`;
             document.getElementById('editPanel').style.display = 'block';
         }
 
         async function saveMed() {
             const updates = { 
-                name_bg: document.getElementById('name_bg').value, 
+                name_bg: document.getElementById('name_bg').value,
+                name_latin: document.getElementById('name_latin').value,
                 active_substance: document.getElementById('active').value,
                 health_insurance: document.getElementById('health_insurance').checked 
             };
