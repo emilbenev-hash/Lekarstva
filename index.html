@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Здравен мениджър</title>
+    <title>Здравен мениджър (Mobile)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <style>
@@ -17,10 +17,9 @@
         .filter-btn.active { background: #148F77; color: white; }
         .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .panel { position: fixed; right: 0; top: 0; width: 100%; height: 100%; background: white; padding: 20px; display: none; overflow-y: auto; z-index: 1000; }
-        .form-row { display: flex; gap: 10px; margin-bottom: 5px; }
-        .form-group { flex: 1; margin-bottom: 10px; }
-        .form-group label { display: block; font-size: 12px; font-weight: bold; color: #555; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -29,48 +28,31 @@
         <input type="text" id="search" class="search-input" placeholder="Търси по име..." oninput="renderUI()">
         <div id="personFilters" class="filter-buttons"></div>
         <div id="modeFilters" class="filter-buttons"></div>
-        <button onclick="refreshData()" style="width:100%; padding:10px; background:#148F77; color:white; border:none; border-radius:4px;">Опресни данни</button>
+        <button onclick="refreshData()" style="width:100%; padding:12px; background:#148F77; color:white; border:none; border-radius:4px;">Опресни данни</button>
     </div>
     <div id="medGrid"></div>
     
     <div id="editPanel" class="panel">
         <h2 id="panelTitle">Редактиране</h2>
-        <button onclick="document.getElementById('editPanel').style.display='none'" style="margin:10px 0; padding: 5px 15px;">Затвори</button>
+        <button onclick="document.getElementById('editPanel').style.display='none'" style="margin:10px 0; padding: 10px 20px;">Затвори</button>
         <div id="panelBody"></div>
         <button onclick="saveMed()" style="padding:15px; width:100%; background:#148F77; color:white; border:none; font-weight:bold;">ЗАПАЗИ ВСИЧКИ ПРОМЕНИ</button>
     </div>
 
     <script>
-        let state = { selectedPerson: 'all', selectedMode: 'all', meds: [], pharmacies: [], currentId: null };
         const client = supabase.createClient(CONFIG.URL, CONFIG.KEY);
+        let state = { meds: [], currentId: null };
 
         async function refreshData() {
-            const [persons, pharmacies, medPersons, purchases, allMeds] = await Promise.all([
-                client.from('persons').select('*'),
-                client.from('pharmacies').select('*'),
-                client.from('medication_persons').select('*'),
-                client.from('purchases').select('*'),
-                client.from('medications').select('*')
-            ]);
-            state.pharmacies = pharmacies.data;
-            state.meds = allMeds.data.map(med => {
-                const p = purchases.data.filter(x => x.medication_id === med.id);
-                const lowest = p.length > 0 ? p.reduce((min, cur) => cur.price_eur < min.price_eur ? cur : min) : null;
-                const owner = persons.data.find(p => p.id === medPersons.data.find(mp => mp.medication_id === med.id)?.person_id)?.name.toLowerCase() || 'all';
-                return { ...med, lowestPrice: lowest?.price_eur, lowestPharmacy: pharmacies.data.find(ph => ph.id === lowest?.pharmacy_id)?.name, owner };
-            });
+            const { data: meds } = await client.from('medications').select('*');
+            state.meds = meds;
             renderUI();
         }
 
         function renderUI() {
-            document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => 
-                `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; refreshData()">${p.toUpperCase()}</button>`).join('');
-            document.getElementById('modeFilters').innerHTML = ['daily', 'all'].map(m => 
-                `<button class="filter-btn ${state.selectedMode===m?'active':''}" onclick="state.selectedMode='${m}'; refreshData()">${m==='daily'?'Ежедневни':'Всички'}</button>`).join('');
-            
             const search = document.getElementById('search').value.toLowerCase();
             document.getElementById('medGrid').innerHTML = state.meds.filter(m => m.name_bg.toLowerCase().includes(search))
-                .map(med => `<div class="card" onclick="openPanel('${med.id}')"><h3>${med.name_bg}</h3><p>💶 ${med.lowestPrice ? med.lowestPrice.toFixed(2) + ' EUR (' + med.lowestPharmacy + ')' : 'Няма цена'}</p></div>`).join('');
+                .map(m => `<div class="card" onclick="openPanel('${m.id}')"><h3>${m.name_bg}</h3></div>`).join('');
         }
 
         function openPanel(id) {
@@ -78,32 +60,25 @@
             state.currentId = id;
             document.getElementById('panelTitle').innerText = m.name_bg;
             document.getElementById('panelBody').innerHTML = `
-                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div>
-                <div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div></div>
-                <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
-                <div class="form-row"><div class="form-group"><label>Количество</label><input type="number" id="vol" value="${m.volume_quantity||''}"></div>
-                <div class="form-group"><label>Единица</label><input type="text" id="unit" value="${m.volume_unit||''}"></div></div>
-                <div class="form-row"><div class="form-group"><label>Форма</label><input type="text" id="form" value="${m.form||''}"></div>
-                <div class="form-group"><label>Брой в оп.</label><input type="number" id="qty" value="${m.form_quantity||''}"></div></div>
+                <div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div>
+                <div class="form-group"><label>ЗОК (Здравна каса)</label><input type="checkbox" id="health_ins" ${m.health_insurance ? 'checked' : ''}></div>
                 <div class="form-group"><label>Дозировка</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
                 <div class="form-group"><label>Описание</label><textarea id="desc">${m.description||''}</textarea></div>
-                <div class="form-group"><label>Собственик</label><select id="owner"><option value="all" ${m.owner==='all'?'selected':''}>Всички</option>
-                <option value="лили" ${m.owner==='лили'?'selected':''}>Лили</option><option value="емил" ${m.owner==='емил'?'selected':''}>Емил</option></select></div>
             `;
             document.getElementById('editPanel').style.display = 'block';
         }
 
         async function saveMed() {
-            const updates = {
-                name_bg: document.getElementById('name_bg').value,
-                name_latin: document.getElementById('name_latin').value,
-                active_substance: document.getElementById('active').value
+            const updates = { 
+                name_bg: document.getElementById('name_bg').value, 
+                health_insurance: document.getElementById('health_ins').checked,
+                dosage: document.getElementById('dosage').value,
+                description: document.getElementById('desc').value 
             };
-            const { error } = await client.from('medications').update(updates).eq('id', state.currentId);
-            if (error) alert("Грешка при запис: " + error.message);
-            else { alert("Успешно записано!"); document.getElementById('editPanel').style.display = 'none'; refreshData(); }
+            await client.from('medications').update(updates).eq('id', state.currentId);
+            document.getElementById('editPanel').style.display = 'none';
+            refreshData();
         }
-
         window.onload = refreshData;
     </script>
 </body>
