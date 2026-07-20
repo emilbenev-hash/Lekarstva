@@ -2,41 +2,63 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Моите лекарства</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Управление</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- ЗАДЪЛЖИТЕЛНО зареждане на config.js -->
-    <script src="config.js"></script> 
+    <script src="config.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f9; }
+        .nav { display: flex; background: #2c3e50; padding: 5px; gap: 5px; overflow-x: auto; }
+        .nav button { flex: 1; padding: 12px; border: none; background: #34495e; color: white; cursor: pointer; white-space: nowrap; }
+        .nav button.active { background: #27ae60; }
+        .content { padding: 10px; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; font-size: 14px; }
+        @media (max-width: 768px) {
+            th, td { font-size: 12px; padding: 6px; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Моите лекарства</h1>
-    <div id="list">Зареждане на списъка...</div>
+
+    <div class="nav">
+        <!-- Списък с вашите таблици -->
+        <button class="active" onclick="showTable('medications', this)">Лекарства</button>
+        <button onclick="showTable('settings', this)">Настройки</button>
+        <!-- Добавете тук другите таблици, ако имате още -->
+    </div>
+
+    <div class="content" id="data-view">Зареждане...</div>
 
     <script>
-        // Добавяме проверка за CONFIG, за да не се чупи при грешка
-        window.onload = async () => {
-            const listDiv = document.getElementById('list');
-            
-            if (typeof CONFIG === 'undefined') {
-                listDiv.innerHTML = '<span style="color:red">Грешка: config.js не е зареден! Проверете името на файла в GitHub.</span>';
-                return;
-            }
+        const client = supabase.createClient(CONFIG.URL, CONFIG.KEY);
+
+        async function showTable(tableName, btnElement) {
+            document.querySelectorAll('.nav button').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            const view = document.getElementById('data-view');
+            view.innerHTML = "Зареждане...";
 
             try {
-                const client = supabase.createClient(CONFIG.URL, CONFIG.KEY);
-                const { data, error } = await client.from('medications').select('*');
-                
+                const { data, error } = await client.from(tableName).select('*');
                 if (error) throw error;
-                
-                listDiv.innerHTML = data.map(med => `
-                    <div style="border-bottom: 1px solid #ccc; padding: 10px;">
-                        <strong>${med.name_bg || 'Без име'}</strong>
-                    </div>
-                `).join('');
+                if (!data || data.length === 0) { view.innerHTML = "Няма данни."; return; }
+
+                let html = `<table><thead><tr>`;
+                Object.keys(data[0]).forEach(key => html += `<th>${key.toUpperCase()}</th>`);
+                html += `</tr></thead><tbody>`;
+                data.forEach(row => {
+                    html += `<tr>${Object.values(row).map(val => `<td>${val ?? ''}</td>`).join('')}</tr>`;
+                });
+                html += `</tbody></table>`;
+                view.innerHTML = html;
             } catch (err) {
-                listDiv.innerHTML = `<span style="color:red">Грешка: ${err.message}</span>`;
+                view.innerHTML = `Грешка: ${err.message}`;
             }
-        };
+        }
+
+        window.onload = () => showTable('medications', document.querySelector('.nav button'));
     </script>
 </body>
 </html>
