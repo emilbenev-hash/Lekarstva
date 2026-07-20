@@ -2,105 +2,58 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <title>Здравен мениджър (Desktop)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Здравен мениджър</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: sans-serif; background: #667eea; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { background: #148F77; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
-        .filters { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .search-input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        .filter-buttons { display: flex; gap: 10px; margin-bottom: 10px; }
-        .filter-btn { padding: 8px 16px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; }
-        .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 15px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .panel { position: fixed; right: 0; top: 0; width: 600px; height: 100%; background: white; box-shadow: -2px 0 10px rgba(0,0,0,0.3); padding: 20px; display: none; overflow-y: auto; z-index: 1000; }
-        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .form-group { flex: 1; margin-bottom: 10px; }
-        .form-group label { display: block; font-size: 12px; font-weight: bold; color: #555; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        * { box-sizing: border-box; }
+        body { font-family: sans-serif; background: #667eea; padding: 10px; margin: 0; }
+        .header { background: #148F77; color: white; padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 10px; }
+        .filters { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+        .filter-row { display: flex; gap: 5px; margin-bottom: 5px; flex-wrap: wrap; }
+        .filter-btn { flex: 1; padding: 8px; border: 1px solid #ddd; background: #fff; border-radius: 4px; font-size: 12px; }
+        .filter-btn.active { background: #148F77; color: white; }
+        .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .panel { position: fixed; right: 0; top: 0; width: 100%; height: 100%; background: white; padding: 20px; display: none; overflow-y: auto; z-index: 1000; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 12px; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header"><h1>Здравен мениджър</h1></div>
-        <div class="filters">
-            <input type="text" id="search" class="search-input" placeholder="Търси по име..." oninput="renderUI()">
-            <div id="personFilters" class="filter-buttons"></div>
-            <div id="modeFilters" class="filter-buttons"></div>
-            <button onclick="refreshData()" style="padding: 10px 20px; background:#148F77; color:white; border:none; border-radius:4px; cursor:pointer;">Опресни данни</button>
-        </div>
-        <div class="grid" id="medGrid"></div>
+    <div class="header"><h1>Здравен мениджър</h1></div>
+    <div class="filters">
+        <input type="text" id="search" style="width:100%; padding:10px; margin-bottom:5px;" placeholder="Търси..." oninput="renderUI()">
+        <div class="filter-row" id="personFilters"></div>
+        <div class="filter-row" id="modeFilters"></div>
+        <div class="filter-row" id="zokFilters"></div>
+        <button onclick="refreshData()" style="width:100%; padding:10px; background:#148F77; color:white; border:none; margin-top:5px;">Опресни данни</button>
     </div>
-    
+    <div id="medGrid"></div>
     <div id="editPanel" class="panel">
         <h2 id="panelTitle">Редактиране</h2>
-        <button onclick="document.getElementById('editPanel').style.display='none'" style="margin:10px 0; padding: 5px 15px;">Затвори</button>
+        <button onclick="document.getElementById('editPanel').style.display='none'" style="padding: 10px;">Затвори</button>
         <div id="panelBody"></div>
-        <button onclick="saveMed()" style="padding:15px; width:100%; background:#148F77; color:white; border:none; font-weight:bold;">ЗАПАЗИ ВСИЧКИ ПРОМЕНИ</button>
+        <button onclick="saveMed()" style="width:100%; padding:15px; background:#148F77; color:white; border:none; margin-top:10px;">ЗАПАЗИ</button>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
     <script>
         const client = supabase.createClient(CONFIG.URL, CONFIG.KEY);
-        let state = { selectedPerson: 'all', selectedMode: 'all', meds: [], currentId: null };
-
-        async function refreshData() {
-            const { data } = await client.from('medications').select('*');
-            state.meds = data;
-            renderUI();
-        }
-
+        let state = { selectedPerson: 'all', selectedMode: 'all', selectedZok: 'all', meds: [], currentId: null };
+        async function refreshData() { const { data } = await client.from('medications').select('*'); state.meds = data; renderUI(); }
         function renderUI() {
-            document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => 
-                `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
-            document.getElementById('modeFilters').innerHTML = ['daily', 'all'].map(m => 
-                `<button class="filter-btn ${state.selectedMode===m?'active':''}" onclick="state.selectedMode='${m}'; renderUI()">${m==='daily'?'Ежедневни':'Всички'}</button>`).join('');
-
+            document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
+            document.getElementById('modeFilters').innerHTML = ['daily', 'all'].map(m => `<button class="filter-btn ${state.selectedMode===m?'active':''}" onclick="state.selectedMode='${m}'; renderUI()">${m==='daily'?'Ежедневни':'Всички'}</button>`).join('');
+            document.getElementById('zokFilters').innerHTML = [true, false, 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok=${z}; renderUI()">${z===true?'Само ЗОК':z===false?'Без ЗОК':'Всички'}</button>`).join('');
             const search = document.getElementById('search').value.toLowerCase();
-            document.getElementById('medGrid').innerHTML = state.meds
-                .filter(m => (state.selectedPerson === 'all' || m.owner === state.selectedPerson) && m.name_bg.toLowerCase().includes(search))
-                .map(m => `<div class="card" onclick="openPanel('${m.id}')"><h3>${m.name_bg}</h3></div>`).join('');
+            document.getElementById('medGrid').innerHTML = state.meds.filter(m => (state.selectedPerson === 'all' || m.owner === state.selectedPerson) && (state.selectedZok === 'all' || m.health_insurance === state.selectedZok) && m.name_bg.toLowerCase().includes(search)).map(m => `<div class="card" onclick="openPanel('${m.id}')"><h3>${m.name_bg}</h3></div>`).join('');
         }
-
         function openPanel(id) {
-            const m = state.meds.find(x => x.id == id);
-            state.currentId = id;
-            document.getElementById('panelTitle').innerText = m.name_bg;
-            document.getElementById('panelBody').innerHTML = `
-                <div class="form-row">
-                    <div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div>
-                    <div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div>
-                </div>
-                <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
-                <div class="form-group"><label><input type="checkbox" id="health_ins" ${m.health_insurance ? 'checked' : ''}> ЗОК (Здравна каса)</label></div>
-                <div class="form-row">
-                    <div class="form-group"><label>Количество</label><input type="number" id="vol" value="${m.volume_quantity||''}"></div>
-                    <div class="form-group"><label>Единица</label><input type="text" id="unit" value="${m.volume_unit||''}"></div>
-                </div>
-                <div class="form-group"><label>Дозировка</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
-                <div class="form-group"><label>Описание</label><textarea id="desc">${m.description||''}</textarea></div>
-            `;
+            const m = state.meds.find(x => x.id == id); state.currentId = id; document.getElementById('panelTitle').innerText = m.name_bg;
+            document.getElementById('panelBody').innerHTML = `<div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>ЗОК</label><input type="checkbox" id="health_ins" ${m.health_insurance ? 'checked' : ''}></div><div class="form-group"><label>Дозировка</label><input type="text" id="dosage" value="${m.dosage||''}"></div><div class="form-group"><label>Описание</label><textarea id="desc">${m.description||''}</textarea></div>`;
             document.getElementById('editPanel').style.display = 'block';
         }
-
-        async function saveMed() {
-            const updates = { 
-                name_bg: document.getElementById('name_bg').value,
-                name_latin: document.getElementById('name_latin').value,
-                active_substance: document.getElementById('active').value,
-                health_insurance: document.getElementById('health_ins').checked,
-                volume_quantity: document.getElementById('vol').value,
-                volume_unit: document.getElementById('unit').value,
-                dosage: document.getElementById('dosage').value,
-                description: document.getElementById('desc').value
-            };
-            await client.from('medications').update(updates).eq('id', state.currentId);
-            document.getElementById('editPanel').style.display = 'none';
-            refreshData();
-        }
+        async function saveMed() { const updates = { name_bg: document.getElementById('name_bg').value, health_insurance: document.getElementById('health_ins').checked, dosage: document.getElementById('dosage').value, description: document.getElementById('desc').value }; await client.from('medications').update(updates).eq('id', state.currentId); document.getElementById('editPanel').style.display = 'none'; refreshData(); }
         window.onload = refreshData;
     </script>
 </body>
