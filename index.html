@@ -71,8 +71,8 @@
         function renderUI() {
             document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
             document.getElementById('modeFilters').innerHTML = ['daily', 'all'].map(m => `<button class="filter-btn ${state.selectedMode===m?'active':''}" onclick="state.selectedMode='${m}'; renderUI()">${m==='daily'?'Ежедневни':'Всички'}</button>`).join('');
-            document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':'Без ЗОК'}</button>`).join('');
-            document.getElementById('activeFilters').innerHTML = ['true', 'false', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':'Неактивни'}</button>`).join('');
+            document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без ЗОК':'Всички'}</button>`).join('');
+            document.getElementById('activeFilters').innerHTML = ['true', 'false', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':a==='false'?'Неактивни':'Всички'}</button>`).join('');
 
             const search = document.getElementById('search').value.toLowerCase();
             document.getElementById('medGrid').innerHTML = state.meds.filter(m => 
