@@ -4,106 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Здравен мениджър</title>
+    <!-- Зареждаме конфигурацията -->
     <script src="config.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-size: 16px; font-family: sans-serif; }
-        body { background: #667eea; padding: 10px; }
-        .container { max-width: 100%; margin: 0 auto; }
-        .header { background: #148F77; color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
-        .filters { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-        .search-input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        .filter-buttons { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
-        .filter-btn { padding: 10px 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; flex: 1 1 auto; }
-        .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
-        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        .card { background: white; padding: 15px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .panel { position: fixed; right: 0; top: 0; width: 100%; height: 100%; background: white; padding: 20px; display: none; overflow-y: auto; z-index: 1000; }
-        .form-group { width: 100%; margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 14px; font-weight: bold; color: #555; margin-bottom: 5px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
-    </style>
 </head>
 <body>
     <div class="container">
-        <div class="header"><h1>Здравен мениджър</h1></div>
-        <div class="filters">
-            <input type="text" id="search" class="search-input" placeholder="Търси..." oninput="renderUI()">
-            <div id="personFilters" class="filter-buttons"></div>
-            <div id="modeFilters" class="filter-buttons"></div>
-            <div id="zokFilters" class="filter-buttons"></div>
-            <div id="activeFilters" class="filter-buttons"></div>
-            <button onclick="refreshData()" style="width:100%; padding: 15px; background:#148F77; color:white; border:none; border-radius:4px;">Опресни</button>
-        </div>
-        <div class="grid" id="medGrid"></div>
-    </div>
-    
-    <div id="editPanel" class="panel">
-        <h2 id="panelTitle" style="margin-bottom:10px;">Редактиране</h2>
-        <button onclick="document.getElementById('editPanel').style.display='none'" style="padding:10px; width:100%; margin-bottom:10px;">Затвори</button>
-        <div id="panelBody"></div>
-        <button onclick="saveMed()" style="padding:15px; width:100%; background:#148F77; color:white; border:none; font-weight:bold; margin-top:10px;">ЗАПАЗИ</button>
+        <!-- Твоят HTML тук -->
+        <h1>Здравен мениджър</h1>
+        <button onclick="refreshData()">Опресни</button>
+        <div id="medGrid"></div>
     </div>
 
     <script>
-        // Използваме обекта CONFIG от твоя файл config.js
-        let state = { key: CONFIG.KEY, selectedPerson: 'all', selectedMode: 'all', selectedZok: 'all', selectedActive: 'all', meds: [], currentId: null };
-        const SUPABASE_URL = CONFIG.URL;
+        // Инициализираме state с празни стойности
+        let state = { key: '', meds: [] };
 
         async function refreshData() {
-            const h = { 'apikey': state.key, 'Authorization': 'Bearer ' + state.key };
-            try {
-                const [persons, pharmacies, medPersons, purchases, allMeds] = await Promise.all([
-                    fetch(SUPABASE_URL + '/rest/v1/persons', {headers: h}).then(r => r.json()),
-                    fetch(SUPABASE_URL + '/rest/v1/pharmacies', {headers: h}).then(r => r.json()),
-                    fetch(SUPABASE_URL + '/rest/v1/medication_persons', {headers: h}).then(r => r.json()),
-                    fetch(SUPABASE_URL + '/rest/v1/purchases', {headers: h}).then(r => r.json()),
-                    fetch(SUPABASE_URL + '/rest/v1/medications?select=*', {headers: h}).then(r => r.json())
-                ]);
-
-                state.meds = allMeds.map(med => {
-                    const personRelation = medPersons.find(mp => mp.medication_id === med.id);
-                    const owner = persons.find(p => p.id === personRelation?.person_id)?.name.toLowerCase() || 'all';
-                    return { ...med, owner };
-                });
-                renderUI();
-            } catch (e) { console.error("Грешка:", e); }
+            // ТУК правим проверката: Ако CONFIG е зареден, взимаме данните от него
+            if (typeof CONFIG !== 'undefined') {
+                state.key = CONFIG.KEY;
+                const SUPABASE_URL = CONFIG.URL;
+                
+                const h = { 'apikey': state.key, 'Authorization': 'Bearer ' + state.key };
+                try {
+                    const response = await fetch(SUPABASE_URL + '/rest/v1/medications?select=*', {headers: h});
+                    state.meds = await response.json();
+                    console.log("Данните са заредени!");
+                    // renderUI(); // Извикай функцията си за визуализация
+                } catch (e) {
+                    console.error("Грешка при заявката:", e);
+                }
+            } else {
+                alert("Грешка: config.js не е зареден правилно (обектът CONFIG липсва)!");
+            }
         }
 
-        function renderUI() {
-            document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
-            document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без':'Всички'}</button>`).join('');
-            
-            const search = document.getElementById('search').value.toLowerCase();
-            document.getElementById('medGrid').innerHTML = state.meds
-                .filter(m => (state.selectedPerson === 'all' || m.owner === state.selectedPerson) && 
-                             (state.selectedZok === 'all' || m.health_insurance === (state.selectedZok === 'true')) &&
-                             m.name_bg.toLowerCase().includes(search))
-                .map(med => `
-                <div class="card" onclick="openPanel('${med.id}')"><h3>${med.name_bg}</h3></div>`).join('');
-        }
-
-        function openPanel(id) {
-            const m = state.meds.find(x => x.id == id);
-            state.currentId = id;
-            document.getElementById('panelTitle').innerText = m.name_bg;
-            document.getElementById('panelBody').innerHTML = `
-                <div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div>
-                <div class="form-group"><label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> ЗОК</label></div>
-            `;
-            document.getElementById('editPanel').style.display = 'block';
-        }
-
-        async function saveMed() {
-            const updates = { name_bg: document.getElementById('name_bg').value, health_insurance: document.getElementById('health_insurance').checked };
-            await fetch(`${SUPABASE_URL}/rest/v1/medications?id=eq.${state.currentId}`, {
-                method: 'PATCH',
-                headers: { 'apikey': state.key, 'Authorization': 'Bearer ' + state.key, 'Content-Type': 'application/json' },
-                body: JSON.stringify(updates)
-            });
-            document.getElementById('editPanel').style.display = 'none';
-            refreshData();
-        }
-
+        // Изчакваме страницата да зареди
         window.onload = refreshData;
     </script>
 </body>
