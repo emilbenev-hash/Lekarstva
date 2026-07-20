@@ -1,46 +1,52 @@
-<!DOCTYPE html>
-<html lang="bg">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Здравен мениджър</title>
-    <!-- Зареждаме конфигурацията -->
-    <script src="config.js"></script>
-</head>
-<body>
-    <div class="container">
-        <!-- Твоят HTML тук -->
-        <h1>Здравен мениджър</h1>
-        <button onclick="refreshData()">Опресни</button>
-        <div id="medGrid"></div>
-    </div>
-
-    <script>
-        // Инициализираме state с празни стойности
-        let state = { key: '', meds: [] };
-
-        async function refreshData() {
-            // ТУК правим проверката: Ако CONFIG е зареден, взимаме данните от него
-            if (typeof CONFIG !== 'undefined') {
-                state.key = CONFIG.KEY;
-                const SUPABASE_URL = CONFIG.URL;
-                
-                const h = { 'apikey': state.key, 'Authorization': 'Bearer ' + state.key };
-                try {
-                    const response = await fetch(SUPABASE_URL + '/rest/v1/medications?select=*', {headers: h});
-                    state.meds = await response.json();
-                    console.log("Данните са заредени!");
-                    // renderUI(); // Извикай функцията си за визуализация
-                } catch (e) {
-                    console.error("Грешка при заявката:", e);
-                }
-            } else {
-                alert("Грешка: config.js не е зареден правилно (обектът CONFIG липсва)!");
-            }
+<script>
+    async function refreshData() {
+        console.log("1. Опитвам се да заредя данни...");
+        
+        // Проверка дали конфигурацията съществува
+        if (typeof CONFIG === 'undefined') {
+            alert("Грешка: Обектът CONFIG липсва!");
+            console.error("CONFIG не е дефиниран. Провери дали config.js е зареден.");
+            return;
         }
 
-        // Изчакваме страницата да зареди
-        window.onload = refreshData;
-    </script>
-</body>
-</html>
+        console.log("2. CONFIG е намерен. URL:", CONFIG.URL);
+        
+        const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
+        
+        try {
+            // Само тестваме дали изобщо можем да достъпим API-то
+            const response = await fetch(CONFIG.URL + '/rest/v1/medications?select=*', {headers: h});
+            
+            console.log("3. Отговор от сървъра:", response.status);
+            
+            if (!response.ok) {
+                alert("Грешка при връзката с базата: " + response.status);
+                return;
+            }
+
+            const data = await response.json();
+            console.log("4. Данните са получени:", data);
+            
+            state.meds = data;
+            // Тук извикваме рендирането, след като вече сме сигурни, че имаме данни
+            renderUI(); 
+            
+        } catch (e) {
+            console.error("5. Фатална грешка при fetch:", e);
+            alert("Грешка: " + e.message);
+        }
+    }
+
+    // Рендиращ механизъм (само тест)
+    function renderUI() {
+        console.log("6. Рендирам...");
+        const container = document.getElementById('medGrid');
+        if (!container) { console.error("Грешка: няма елемент medGrid!"); return; }
+        
+        container.innerHTML = state.meds.map(m => `
+            <div class="card"><h3>${m.name_bg || 'Без име'}</h3></div>
+        `).join('');
+    }
+
+    window.onload = refreshData;
+</script>
