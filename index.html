@@ -3,32 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Здравен мениджър</title>
+    <title>Моите лекарства</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Зареждаме конфигурацията от отделния файл -->
     <script src="config.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        .med-card { border-bottom: 1px solid #ccc; padding: 10px 0; }
+        h1 { color: #2c3e50; }
+    </style>
 </head>
 <body>
-    <div id="log" style="padding: 20px; font-family: sans-serif;">Зареждане...</div>
+    <h1>Моите лекарства</h1>
+    <div id="list">Зареждане на списъка...</div>
 
     <script>
         window.onload = async () => {
-            const logDiv = document.getElementById('log');
+            const listDiv = document.getElementById('list');
             try {
-                // Използваме CONFIG обекта от config.js
                 const client = supabase.createClient(CONFIG.URL, CONFIG.KEY);
-                
-                const { data, error } = await client.from('medications').select('name_bg');
+                const { data, error } = await client.from('medications').select('name_bg, dose, time_info');
                 
                 if (error) throw error;
                 
-                if (data.length === 0) {
-                    logDiv.innerHTML = "Таблицата е празна.";
-                } else {
-                    logDiv.innerHTML = `<strong>УСПЕХ!</strong><br>Брой записи: ${data.length}<br>Пример: ${data[0].name_bg}`;
+                if (!data || data.length === 0) {
+                    listDiv.innerHTML = "Няма добавени лекарства.";
+                    return;
                 }
+
+                // Генериране на списък
+                listDiv.innerHTML = data.map(med => `
+                    <div class="med-card">
+                        <strong>${med.name_bg}</strong><br>
+                        Дозировка: ${med.dose || 'Няма данни'}<br>
+                        Време: ${med.time_info || 'Няма данни'}
+                    </div>
+                `).join('');
+
             } catch (err) {
-                logDiv.innerHTML = `<span style="color:red">Грешка: ${err.message}</span>`;
+                listDiv.innerHTML = `<span style="color:red">Грешка при зареждане: ${err.message}</span>`;
             }
         };
     </script>
