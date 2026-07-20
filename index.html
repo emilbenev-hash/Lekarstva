@@ -5,42 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Моите лекарства</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
-    <style>
-        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
-        .med-card { border-bottom: 1px solid #ccc; padding: 10px 0; }
-        h1 { color: #2c3e50; }
-    </style>
+    <!-- ЗАДЪЛЖИТЕЛНО зареждане на config.js -->
+    <script src="config.js"></script> 
 </head>
 <body>
     <h1>Моите лекарства</h1>
     <div id="list">Зареждане на списъка...</div>
 
     <script>
+        // Добавяме проверка за CONFIG, за да не се чупи при грешка
         window.onload = async () => {
             const listDiv = document.getElementById('list');
+            
+            if (typeof CONFIG === 'undefined') {
+                listDiv.innerHTML = '<span style="color:red">Грешка: config.js не е зареден! Проверете името на файла в GitHub.</span>';
+                return;
+            }
+
             try {
                 const client = supabase.createClient(CONFIG.URL, CONFIG.KEY);
-                const { data, error } = await client.from('medications').select('name_bg, dose, time_info');
+                const { data, error } = await client.from('medications').select('*');
                 
                 if (error) throw error;
                 
-                if (!data || data.length === 0) {
-                    listDiv.innerHTML = "Няма добавени лекарства.";
-                    return;
-                }
-
-                // Генериране на списък
                 listDiv.innerHTML = data.map(med => `
-                    <div class="med-card">
-                        <strong>${med.name_bg}</strong><br>
-                        Дозировка: ${med.dose || 'Няма данни'}<br>
-                        Време: ${med.time_info || 'Няма данни'}
+                    <div style="border-bottom: 1px solid #ccc; padding: 10px;">
+                        <strong>${med.name_bg || 'Без име'}</strong>
                     </div>
                 `).join('');
-
             } catch (err) {
-                listDiv.innerHTML = `<span style="color:red">Грешка при зареждане: ${err.message}</span>`;
+                listDiv.innerHTML = `<span style="color:red">Грешка: ${err.message}</span>`;
             }
         };
     </script>
