@@ -1,19 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="bg">
 <head>
-    <title>Тест</title>
-    <!-- Зареждаме библиотеката директно -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Здравен мениджър</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Зареждаме конфигурацията от отделния файл -->
+    <script src="config.js"></script>
 </head>
 <body>
-    <div id="debug">Зареждане...</div>
+    <div id="log" style="padding: 20px; font-family: sans-serif;">Зареждане...</div>
+
     <script>
-        window.onload = () => {
-            const el = document.getElementById('debug');
-            if (typeof supabase !== 'undefined') {
-                el.innerHTML = "БИБЛИОТЕКАТА Е ЗАРЕДЕНА УСПЕШНО";
-            } else {
-                el.innerHTML = "КРИТИЧНА ГРЕШКА: supabase не е дефиниран";
+        window.onload = async () => {
+            const logDiv = document.getElementById('log');
+            try {
+                // Използваме CONFIG обекта от config.js
+                const client = supabase.createClient(CONFIG.URL, CONFIG.KEY);
+                
+                const { data, error } = await client.from('medications').select('name_bg');
+                
+                if (error) throw error;
+                
+                if (data.length === 0) {
+                    logDiv.innerHTML = "Таблицата е празна.";
+                } else {
+                    logDiv.innerHTML = `<strong>УСПЕХ!</strong><br>Брой записи: ${data.length}<br>Пример: ${data[0].name_bg}`;
+                }
+            } catch (err) {
+                logDiv.innerHTML = `<span style="color:red">Грешка: ${err.message}</span>`;
             }
         };
     </script>
