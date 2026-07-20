@@ -2,50 +2,61 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Здравен мениджър</title>
+    <!-- Първо зареждаме конфигурацията -->
     <script src="config.js"></script>
     <style>
         body { font-family: sans-serif; background: #667eea; padding: 10px; }
-        .card { background: white; padding: 15px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; }
-        .panel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; padding: 20px; display: none; }
+        .card { background: white; padding: 20px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; border: 2px solid #ccc; }
+        #panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; padding: 20px; }
     </style>
 </head>
 <body>
     <h1>Здравен мениджър</h1>
-    <input type="text" id="search" placeholder="Търси..." oninput="renderUI()">
-    <div id="medGrid"></div>
+    <div id="medList">Зареждане...</div>
 
-    <div id="editPanel" class="panel">
-        <h2 id="panelTitle"></h2>
-        <input type="text" id="editName">
-        <button onclick="saveMed()">ЗАПАЗИ</button>
-        <button onclick="document.getElementById('editPanel').style.display='none'">ОТКАЗ</button>
+    <div id="panel">
+        <h2 id="medTitle"></h2>
+        <button onclick="closePanel()" style="padding:10px; background:red; color:white;">ЗАТВОРИ</button>
     </div>
 
     <script>
-        let state = { meds: [] };
-        
-        async function refreshData() {
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
-            const res = await fetch(CONFIG.URL + '/rest/v1/medications?select=*', {headers: h});
-            state.meds = await res.json();
-            renderUI();
-        }
+        // Проверка дали config.js е зареден
+        if (typeof CONFIG === 'undefined') {
+            document.body.innerHTML = "<h1>Грешка: config.js не е намерен!</h1>";
+        } else {
+            async function loadData() {
+                try {
+                    const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
+                    const res = await fetch(CONFIG.URL + '/rest/v1/medications?select=*', {headers: h});
+                    const data = await res.json();
+                    
+                    const list = document.getElementById('medList');
+                    list.innerHTML = "";
+                    data.forEach(m => {
+                        const div = document.createElement('div');
+                        div.className = 'card';
+                        div.innerText = m.name_bg;
+                        div.onclick = () => openPanel(m.name_bg);
+                        list.appendChild(div);
+                    });
+                } catch (e) {
+                    document.getElementById('medList').innerText = "Грешка при зареждане: " + e.message;
+                }
+            }
 
-        function renderUI() {
-            const search = document.getElementById('search').value.toLowerCase();
-            document.getElementById('medGrid').innerHTML = state.meds
-                .filter(m => m.name_bg.toLowerCase().includes(search))
-                .map(m => `<div class="card" onclick="openPanel('${m.id}')"><h3>${m.name_bg}</h3></div>`).join('');
-        }
+            function openPanel(name) {
+                document.getElementById('medTitle').innerText = name;
+                document.getElementById('panel').style.display = 'block';
+            }
 
-        function openPanel(id) {
-            const m = state.meds.find(x => x.id == id);
-            document.getElementById('panelTitle').innerText = m.name_bg;
-            document.getElementById('editPanel').style.display = 'block';
+            function closePanel() {
+                document.getElementById('panel').style.display = 'none';
+            }
+
+            loadData();
         }
-        
-        window.onload = refreshData;
     </script>
 </body>
 </html>
