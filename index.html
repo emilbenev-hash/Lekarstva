@@ -3,68 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Здравен мениджър</title>
+    <title>Здравен мениджър (Mobile)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
+        body { font-family: sans-serif; background: #667eea; padding: 10px; margin: 0; }
+        .container { max-width: 100%; }
+        .header { background: #148F77; color: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; text-align: center; }
         .filters { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-        .search-input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        .search-input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
         .filter-buttons { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
-        .filter-btn { flex: 1; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 4px; font-size: 14px; }
-        .filter-btn.active { background: #148F77; color: white; }
+        .filter-btn { padding: 10px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; flex: 1; }
+        .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
         .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card { background: white; padding: 15px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        /* Мобилен панел на цял екран */
         .panel { position: fixed; right: 0; top: 0; width: 100%; height: 100%; background: white; padding: 15px; display: none; overflow-y: auto; z-index: 1000; }
-        .form-row { display: flex; flex-direction: column; gap: 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
     </style>
 </head>
 <body>
-
-    <div class="filters">
-        <input type="text" id="search" class="search-input" placeholder="Търси..." oninput="renderUI()">
-        <div id="personFilters" class="filter-buttons"></div>
-        <div id="modeFilters" class="filter-buttons"></div>
+    <div class="container">
+        <div class="header"><h1>Здравен мениджър</h1></div>
+        <div class="filters">
+            <input type="text" id="search" class="search-input" placeholder="Търси по име..." oninput="renderUI()">
+            <div id="personFilters" class="filter-buttons"></div>
+            <div id="modeFilters" class="filter-buttons"></div>
+            <button onclick="refreshData()" style="width:100%; padding: 12px; background:#148F77; color:white; border:none; border-radius:4px; margin-top:5px;">Опресни данни</button>
+        </div>
+        <div class="grid" id="medGrid"></div>
     </div>
-    <div class="grid" id="medGrid"></div>
     
     <div id="editPanel" class="panel">
-        <button onclick="document.getElementById('editPanel').style.display='none'" style="padding:10px; width:100%;">ЗАТВОРИ</button>
+        <h2 id="panelTitle">Редактиране</h2>
+        <button onclick="document.getElementById('editPanel').style.display='none'" style="width:100%; padding:15px; margin:10px 0; background:#eee; border:none;">Затвори</button>
         <div id="panelBody"></div>
+        <button onclick="saveMed()" style="padding:15px; width:100%; background:#148F77; color:white; border:none; font-weight:bold; margin-bottom: 30px;">ЗАПАЗИ</button>
     </div>
 
     <script>
-        // Използваме CONFIG от config.js
+        // Използваме CONFIG от config.js, за да не се въвежда ключ всеки път
         let state = { selectedPerson: 'all', selectedMode: 'all', meds: [], pharmacies: [] };
 
         async function refreshData() {
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Prefer': 'return=representation' };
-            // Заявки към твоите таблици
-            const [persons, pharmacies, medPersons, purchases, allMeds] = await Promise.all([
+            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
+            const [persons, pharmacies, medPersons, purchases] = await Promise.all([
                 fetch(CONFIG.URL + '/rest/v1/persons', {headers: h}).then(r => r.json()),
                 fetch(CONFIG.URL + '/rest/v1/pharmacies', {headers: h}).then(r => r.json()),
                 fetch(CONFIG.URL + '/rest/v1/medication_persons', {headers: h}).then(r => r.json()),
-                fetch(CONFIG.URL + '/rest/v1/purchases', {headers: h}).then(r => r.json()),
-                fetch(CONFIG.URL + '/rest/v1/medications?select=*', {headers: h}).then(r => r.json())
+                fetch(CONFIG.URL + '/rest/v1/purchases', {headers: h}).then(r => r.json())
             ]);
-            
             state.pharmacies = pharmacies;
+
+            let url = CONFIG.URL + '/rest/v1/medications?select=*';
+            if (state.selectedMode === 'daily') url += '&is_daily=eq.true';
+            
+            let allMeds = await fetch(url, {headers: h}).then(r => r.json());
+            
             state.meds = allMeds.map(med => {
-                const owner = persons.find(p => p.id === medPersons.find(mp => mp.medication_id === med.id)?.person_id)?.name.toLowerCase() || 'all';
-                return { ...med, owner };
+                const p = purchases.filter(x => x.medication_id === med.id);
+                const lowest = p.length > 0 ? p.reduce((min, cur) => cur.price_eur < min.price_eur ? cur : min) : null;
+                const personRelation = medPersons.find(mp => mp.medication_id === med.id);
+                const owner = persons.find(p => p.id === personRelation?.person_id)?.name.toLowerCase() || 'all';
+                return { ...med, lowestPrice: lowest?.price_eur, lowestPharmacy: pharmacies.find(ph => ph.id === lowest?.pharmacy_id)?.name, owner };
             });
+
+            if (state.selectedPerson !== 'all') {
+                state.meds = state.meds.filter(m => m.owner === state.selectedPerson || m.owner === 'all');
+            }
             renderUI();
         }
 
         function renderUI() {
             document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => 
-                `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
+                `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; refreshData()">${p.toUpperCase()}</button>`).join('');
             
+            document.getElementById('modeFilters').innerHTML = ['daily', 'all'].map(m => 
+                `<button class="filter-btn ${state.selectedMode===m?'active':''}" onclick="state.selectedMode='${m}'; refreshData()">${m==='daily'?'Ежедневни':'Всички'}</button>`).join('');
+
             const search = document.getElementById('search').value.toLowerCase();
             document.getElementById('medGrid').innerHTML = state.meds
-                .filter(m => (state.selectedPerson === 'all' || m.owner === state.selectedPerson) && m.name_bg.toLowerCase().includes(search))
-                .map(med => `<div class="card" onclick="alert('Редактирай ${med.name_bg}')"><h3>${med.name_bg}</h3></div>`).join('');
+                .filter(m => m.name_bg.toLowerCase().includes(search))
+                .map(med => `
+                <div class="card" onclick="openPanel('${med.id}')">
+                    <h3>${med.name_bg}</h3>
+                    <p>💶 ${med.lowestPrice ? med.lowestPrice.toFixed(2) + ' EUR' : 'Няма цена'}</p>
+                </div>`).join('');
+        }
+
+        function openPanel(id) {
+            const m = state.meds.find(x => x.id == id);
+            document.getElementById('panelTitle').innerText = m.name_bg;
+            // Тук използваме същата форма като в десктоп файла
+            document.getElementById('panelBody').innerHTML = `
+                <div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div>
+                <div class="form-group"><label>Дозировка</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
+                <div class="form-group"><label>Описание</label><textarea id="desc">${m.description||''}</textarea></div>
+                <div class="form-group"><label>Собственик</label>
+                    <select id="owner">
+                        <option value="all" ${m.owner==='all'?'selected':''}>Всички</option>
+                        <option value="лили" ${m.owner==='лили'?'selected':''}>Лили</option>
+                        <option value="емил" ${m.owner==='емил'?'selected':''}>Емил</option>
+                    </select>
+                </div>
+            `;
+            document.getElementById('editPanel').style.display = 'block';
+            state.currentId = id;
         }
 
         window.onload = refreshData;
