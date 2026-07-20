@@ -1,43 +1,21 @@
 <!DOCTYPE html>
-<html lang="bg">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Здравен мениджър</title>
+    <title>Тест</title>
+    <!-- Зареждаме библиотеката директно -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div id="status" style="padding: 20px; font-family: sans-serif;">
-        <h2>Статус:</h2>
-        <div id="log">Зареждане...</div>
-    </div>
-
+    <div id="debug">Зареждане...</div>
     <script>
-        const log = (msg) => document.getElementById('log').innerHTML += `<p>${msg}</p>`;
-        
-        window.addEventListener('load', async () => {
-            try {
-                // Този адрес съответства на вашия проект
-                const SUPABASE_URL = 'https://xwnjuqqudkjkqdkrndhg.supabase.co'; 
-                const SUPABASE_KEY = 'ПОСТАВЕТЕ_ТУК_ВАШИЯ_ANON_KEY'; 
-
-                if (typeof supabase === 'undefined') throw new Error("Библиотеката не е заредена!");
-
-                const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                
-                log("Свързване...");
-                const { data, error } = await sb.from('medications').select('name_bg');
-                
-                if (error) {
-                    log(`<span style="color:red">ГРЕШКА: ${error.message}</span>`);
-                } else {
-                    log(`<span style="color:green">УСПЕХ! Намерени записи: ${data.length}</span>`);
-                    if(data.length > 0) log(`Първо лекарство: ${data[0].name_bg}`);
-                }
-            } catch (e) {
-                log(`<span style="color:red">КРИТИЧНА ГРЕШКА: ${e.message}</span>`);
+        window.onload = () => {
+            const el = document.getElementById('debug');
+            if (typeof supabase !== 'undefined') {
+                el.innerHTML = "БИБЛИОТЕКАТА Е ЗАРЕДЕНА УСПЕШНО";
+            } else {
+                el.innerHTML = "КРИТИЧНА ГРЕШКА: supabase не е дефиниран";
             }
-        });
+        };
     </script>
 </body>
 </html>
