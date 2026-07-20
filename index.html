@@ -2,57 +2,43 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Здравен мениджър</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: sans-serif; background: #f4f4f9; padding: 15px; margin: 0; }
-        .container { max-width: 600px; margin: 0 auto; }
-        .card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        h1 { color: #333; font-size: 1.5rem; }
-        .error { color: red; font-weight: bold; }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Моите лекарства</h1>
-        <div id="medList">Зареждане на данни...</div>
+    <div id="status" style="padding: 20px; font-family: sans-serif;">
+        <h2>Статус на зареждане:</h2>
+        <div id="log">Започване...</div>
     </div>
 
     <script>
-        // ЗАМЕНЕТЕ ТЕЗИ СТОЙНОСТИ С ВАШИТЕ ОТ PROJECT SETTINGS -> API
-        const SUPABASE_URL = 'https://xwnjuqqudkjkqdkrndhg.supabase.co';
-        const SUPABASE_KEY = 'ВАШИЯТ_ANON_PUBLIC_KEY'; 
+        const log = (msg) => document.getElementById('log').innerHTML += `<p>${msg}</p>`;
+        
+        try {
+            log("Инициализиране на Supabase...");
+            const SUPABASE_URL = 'https://xwnjuqqudkjkqdkrndhg.supabase.com/rest/v1/';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34'; // Попълнете тук
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        async function fetchMedications() {
-            const list = document.getElementById('medList');
-            try {
-                const { data, error } = await supabase
-                    .from('medications')
-                    .select('name_bg, active_substance');
-
-                if (error) throw error;
-
-                if (!data || data.length === 0) {
-                    list.innerHTML = '<p>Няма намерени записи в базата данни.</p>';
-                    return;
+            const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            
+            async function test() {
+                log("Изпращане на заявка към таблица 'medications'...");
+                const { data, error } = await supabase.from('medications').select('*');
+                
+                if (error) {
+                    log(`<span style="color:red">ГРЕШКА: ${error.message}</span>`);
+                } else {
+                    log(`<span style="color:green">УСПЕХ! Намерени записи: ${data.length}</span>`);
+                    if(data.length > 0) {
+                        log(`Първо лекарство: ${data[0].name_bg}`);
+                    }
                 }
-
-                list.innerHTML = data.map(m => `
-                    <div class="card">
-                        <h3>${m.name_bg || 'Без име'}</h3>
-                        <p>${m.active_substance || 'Няма активна субстанция'}</p>
-                    </div>
-                `).join('');
-            } catch (err) {
-                console.error("Грешка:", err);
-                list.innerHTML = `<p class="error">Грешка при зареждане: ${err.message}</p>`;
             }
+            test();
+        } catch (e) {
+            log(`<span style="color:red">КРИТИЧНА ГРЕШКА: ${e.message}</span>`);
         }
-
-        fetchMedications();
     </script>
 </body>
 </html>
