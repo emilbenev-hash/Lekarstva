@@ -8,37 +8,36 @@
 </head>
 <body>
     <div id="status" style="padding: 20px; font-family: sans-serif;">
-        <h2>Статус на зареждане:</h2>
-        <div id="log">Започване...</div>
+        <h2>Статус:</h2>
+        <div id="log">Зареждане...</div>
     </div>
 
     <script>
         const log = (msg) => document.getElementById('log').innerHTML += `<p>${msg}</p>`;
         
-        try {
-            log("Инициализиране на Supabase...");
-            const SUPABASE_URL = 'https://xwnjuqqudkjkqdkrndhg.supabase.com/rest/v1/';
-            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34'; // Попълнете тук
+        window.addEventListener('load', async () => {
+            try {
+                // Този адрес съответства на вашия проект
+                const SUPABASE_URL = 'https://xwnjuqqudkjkqdkrndhg.supabase.co'; 
+                const SUPABASE_KEY = 'ПОСТАВЕТЕ_ТУК_ВАШИЯ_ANON_KEY'; 
 
-            const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            
-            async function test() {
-                log("Изпращане на заявка към таблица 'medications'...");
-                const { data, error } = await supabase.from('medications').select('*');
+                if (typeof supabase === 'undefined') throw new Error("Библиотеката не е заредена!");
+
+                const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                
+                log("Свързване...");
+                const { data, error } = await sb.from('medications').select('name_bg');
                 
                 if (error) {
                     log(`<span style="color:red">ГРЕШКА: ${error.message}</span>`);
                 } else {
                     log(`<span style="color:green">УСПЕХ! Намерени записи: ${data.length}</span>`);
-                    if(data.length > 0) {
-                        log(`Първо лекарство: ${data[0].name_bg}`);
-                    }
+                    if(data.length > 0) log(`Първо лекарство: ${data[0].name_bg}`);
                 }
+            } catch (e) {
+                log(`<span style="color:red">КРИТИЧНА ГРЕШКА: ${e.message}</span>`);
             }
-            test();
-        } catch (e) {
-            log(`<span style="color:red">КРИТИЧНА ГРЕШКА: ${e.message}</span>`);
-        }
+        });
     </script>
 </body>
 </html>
