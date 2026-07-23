@@ -2,127 +2,542 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Здравен мениджър</title>
-    <script src="config.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Здравен мениджър - Мобилен</title>
+    <script>
+        const CONFIG = {
+            URL: "https://xwnjuqqudkjkqdkrndhg.supabase.co",
+            KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34"
+        };
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: sans-serif; background: #667eea; padding: 10px; }
-        .header { background: #148F77; color: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; }
-        .filters { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-        .search-input { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px; }
-        .filter-buttons { display: flex; gap: 5px; margin-bottom: 5px; flex-wrap: wrap; }
-        .filter-btn { padding: 4px 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; font-size: 11px; }
-        .filter-btn.active { background: #148F77; color: white; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-        .card { background: white; padding: 10px; border-radius: 8px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .panel { position: fixed; right: 0; top: 0; width: 100%; max-width: 500px; height: 100%; background: white; padding: 15px; display: none; overflow-y: auto; z-index: 1000; }
-        .form-row { display: flex; gap: 5px; }
-        .form-group { flex: 1; margin-bottom: 8px; }
-        .form-group label { display: block; font-size: 10px; font-weight: bold; color: #555; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #667eea; padding: 8px; font-size: 14px; }
+        
+        .header { background: #E74C3C; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .header h1 { font-size: 20px; }
+        
+        .filters { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .search-input { width: 100%; padding: 12px; font-size: 16px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; }
+        .filter-buttons { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+        .filter-btn { padding: 10px 0; flex: 1; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 6px; font-size: 12px; font-weight: bold; min-width: 30%; text-align: center; }
+        .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
+        .refresh-btn { width: 100%; padding: 12px; background: #148F77; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; padding-bottom: 20px; }
+        .card { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 13px; }
+        .card h3 { font-size: 16px; margin-bottom: 4px; color: #2C3E50; }
+        .card p { margin-bottom: 3px; color: #555; }
+        .card-price { color: #148F77; font-weight: bold; font-size: 14px; margin-bottom: 6px; }
+        
+        /* Фиксиран мобилен панел с правилно скролиране */
+        .panel { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f4f6f9; display: none; flex-direction: column; z-index: 1000; }
+        .panel-header { background: #fff; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 10; }
+        .panel-header h2 { font-size: 17px; margin: 0; color: #2C3E50; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 75%; }
+        .close-panel-btn { background: #E74C3C; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+        
+        .panel-body-content { padding: 12px; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        
+        .form-row { display: flex; flex-direction: column; gap: 0; }
+        .form-group { margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .form-group label { display: block; font-size: 11px; font-weight: bold; color: #4A5568; margin-bottom: 4px; text-transform: uppercase; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #CBD5E0; border-radius: 6px; background: #fff; }
+        .form-group textarea { height: 70px; resize: none; }
+        
+        .checkbox-group { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 4px; }
+        .checkbox-group label { font-size: 14px; display: flex; align-items: center; gap: 6px; font-weight: normal; color: #2D3748; }
+        .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; }
+        
+        .save-btn-container { padding: 12px; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 10; }
+        .save-btn { width: 100%; padding: 14px; background: #148F77; color: white; border: none; border-radius: 6px; font-size: 17px; font-weight: bold; }
+
+        .doc-btn { background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; font-size: 12px; margin-top: 4px; display: inline-block; text-decoration: none; font-weight: bold; }
+        .doc-item { display: flex; justify-content: space-between; align-items: center; background: #EDF2F7; padding: 8px; border-radius: 6px; margin-bottom: 6px; }
+        
+        .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; }
+        .fullscreen-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #1A202C; color: white; }
+        .fullscreen-header h2 { font-size: 15px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 70%; }
+        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+        .fullscreen-content { flex: 1; width: 100%; background: #fff; overflow: hidden; }
+        
+        @media (min-width: 600px) {
+            .form-row { flex-direction: row; gap: 8px; }
+            .form-group { flex: 1; }
+        }
     </style>
 </head>
 <body>
-    <div class="header"><h1>Здравен мениджър</h1></div>
+    <div class="header"><h1>📱 Здравен мениджър</h1></div>
+    
     <div class="filters">
-        <input type="text" id="search" class="search-input" placeholder="Търси..." oninput="renderUI()">
+        <input type="text" id="search" class="search-input" placeholder="Търси лекарство..." oninput="renderUI()">
         <div id="personFilters" class="filter-buttons"></div>
-        <div id="modeFilters" class="filter-buttons"></div>
         <div id="zokFilters" class="filter-buttons"></div>
         <div id="activeFilters" class="filter-buttons"></div>
-        <button onclick="refreshData()" style="width:100%; padding: 8px; background:#148F77; color:white; border:none; border-radius:4px;">Опресни</button>
+        <button class="refresh-btn" onclick="refreshData()">Опресни данните</button>
     </div>
+    
     <div class="grid" id="medGrid"></div>
     
     <div id="editPanel" class="panel">
-        <h2 id="panelTitle" style="font-size: 16px;">Редактиране</h2>
-        <button onclick="document.getElementById('editPanel').style.display='none'" style="margin:10px 0;">Затвори</button>
-        <div id="panelBody"></div>
-        <button onclick="saveMed()" style="padding:10px; width:100%; background:#148F77; color:white; border:none;">ЗАПАЗИ</button>
+        <div class="panel-header">
+            <h2 id="panelTitle">Редактиране</h2>
+            <button class="close-panel-btn" onclick="document.getElementById('editPanel').style.display='none'">Затвори</button>
+        </div>
+        <div class="panel-body-content" id="panelBody"></div>
+        <div class="save-btn-container">
+            <button class="save-btn" onclick="saveMed()">ЗАПАЗИ ПРОМЕНИТЕ</button>
+        </div>
+    </div>
+
+    <div id="fullscreenModal" class="fullscreen-modal">
+        <div class="fullscreen-header">
+            <h2 id="fsTitle">Документ</h2>
+            <button class="close-fs-btn" onclick="closeFullscreen()">X Затвори</button>
+        </div>
+        <div class="fullscreen-content" id="fsContainer"></div>
     </div>
 
     <script>
-        let state = { selectedPerson: 'all', selectedMode: 'all', selectedZok: 'all', selectedActive: 'all', meds: [], currentId: null };
+        let state = { selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], currentId: null };
 
         async function refreshData() {
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
             try {
-                const [persons, pharmacies, medPersons, purchases, allMeds] = await Promise.all([
-                    fetch(CONFIG.URL + '/rest/v1/persons', {headers: h}).then(r => r.json()),
-                    fetch(CONFIG.URL + '/rest/v1/pharmacies', {headers: h}).then(r => r.json()),
-                    fetch(CONFIG.URL + '/rest/v1/medication_persons', {headers: h}).then(r => r.json()),
-                    fetch(CONFIG.URL + '/rest/v1/purchases', {headers: h}).then(r => r.json()),
-                    fetch(CONFIG.URL + '/rest/v1/medications?select=*', {headers: h}).then(r => r.json())
+                const [medsRes, purchRes, pharmRes, docRes, mcRes, catRes, manRes, persRes, medPersRes, docsRes, medDocsRes] = await Promise.all([
+                    fetch(CONFIG.URL + '/rest/v1/medications?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/purchases?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/pharmacies?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/doctors?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/medical_centers?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/categories?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/manufacturers?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/persons?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/medication_persons?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/documents?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/medication_documents?select=*', { headers: h })
                 ]);
 
-                state.meds = allMeds.map(med => {
-                    const p = purchases.filter(x => x.medication_id === med.id);
-                    const lowest = p.length > 0 ? p.reduce((min, cur) => cur.price_eur < min.price_eur ? cur : min) : null;
-                    const owner = persons.find(p => p.id === medPersons.find(mp => mp.medication_id === med.id)?.person_id)?.name.toLowerCase() || 'all';
-                    return { ...med, lowestPrice: lowest?.price_eur, lowestPharmacy: pharmacies.find(ph => ph.id === lowest?.pharmacy_id)?.name, owner };
-                });
+                state.meds = medsRes.ok ? await medsRes.json() : [];
+                state.purchases = purchRes.ok ? await purchRes.json() : [];
+                state.pharmacies = pharmRes.ok ? await pharmRes.json() : [];
+                state.doctors = docRes.ok ? await docRes.json() : [];
+                state.medicalCenters = mcRes.ok ? await mcRes.json() : [];
+                state.categories = catRes.ok ? await catRes.json() : [];
+                state.manufacturers = manRes.ok ? await manRes.json() : [];
+                state.persons = persRes.ok ? await persRes.json() : [];
+                state.medicationPersons = medPersRes.ok ? await medPersRes.json() : [];
+                state.documents = docsRes.ok ? await docsRes.json() : [];
+                state.medication_documents = medDocsRes.ok ? await medDocsRes.json() : [];
+
                 renderUI();
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Грешка при зареждане:", e); }
         }
 
         function renderUI() {
             document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
-            document.getElementById('modeFilters').innerHTML = ['daily', 'all'].map(m => `<button class="filter-btn ${state.selectedMode===m?'active':''}" onclick="state.selectedMode='${m}'; renderUI()">${m==='daily'?'Ежедневни':'Всички'}</button>`).join('');
             document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без ЗОК':'Всички'}</button>`).join('');
             document.getElementById('activeFilters').innerHTML = ['true', 'false', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':a==='false'?'Неактивни':'Всички'}</button>`).join('');
 
-            const search = document.getElementById('search').value.toLowerCase();
-            document.getElementById('medGrid').innerHTML = state.meds.filter(m => 
-                (state.selectedPerson === 'all' || m.owner === state.selectedPerson) &&
-                (state.selectedZok === 'all' || m.health_insurance === (state.selectedZok === 'true')) &&
-                (state.selectedActive === 'all' || m.is_active === (state.selectedActive === 'true')) &&
-                m.name_bg.toLowerCase().includes(search)
-            ).map(med => `
-                <div class="card" onclick="openPanel('${med.id}')">
-                    <h3>${med.name_bg}</h3>
-                    <p style="font-size:11px;">💶 ${med.lowestPrice ? med.lowestPrice.toFixed(2) + ' EUR (' + med.lowestPharmacy + ')' : 'Няма цена'}</p>
-                </div>`).join('');
+            const search = document.getElementById('search').value.toLowerCase().trim();
+            
+            document.getElementById('medGrid').innerHTML = state.meds.filter(m => {
+                const personsForMed = state.medicationPersons.filter(mp => String(mp.medication_id) === String(m.id)).map(mp => {
+                    const pObj = state.persons.find(p => String(p.id) === String(mp.person_id));
+                    return pObj ? pObj.name.toLowerCase() : '';
+                });
+
+                if (search !== '') {
+                    const matchNameBg = m.name_bg && m.name_bg.toLowerCase().includes(search);
+                    const matchNameLatin = m.name_latin && m.name_latin.toLowerCase().includes(search);
+                    return matchNameBg || matchNameLatin;
+                }
+
+                const matchPerson = state.selectedPerson === 'all' || personsForMed.includes(state.selectedPerson);
+                const matchZok = state.selectedZok === 'all' || m.health_insurance === (state.selectedZok === 'true');
+                const matchActive = state.selectedActive === 'all' || m.is_active === (state.selectedActive === 'true');
+
+                return matchPerson && matchZok && matchActive;
+            }).map(m => {
+                const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
+                let priceHtml = 'Няма цена';
+                
+                if (medPurchases.length > 0) {
+                    if (m.health_insurance) {
+                        const validZok = medPurchases.filter(p => p.price_zk_eur !== null && p.price_zk_eur !== undefined);
+                        if (validZok.length > 0) {
+                            validZok.sort((a, b) => a.price_zk_eur - b.price_zk_eur);
+                            const bestZok = validZok[0];
+                            const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestZok.pharmacy_id));
+                            const pharmName = pharm ? pharm.name : 'Аптека';
+                            const bestStd = [...medPurchases].sort((a, b) => a.price_eur - b.price_eur)[0];
+                            
+                            if (bestZok.price_zk_eur === 0) {
+                                priceHtml = `<b>ЗОК:</b> 0.00 EUR (${pharmName})`;
+                            } else {
+                                priceHtml = `<b>ЗОК:</b> ${bestZok.price_zk_eur.toFixed(2)} EUR (${pharmName})<br><span style="color:#666; font-size:12px; font-weight:normal;">Станд.: ${bestStd ? bestStd.price_eur.toFixed(2) : '0'} EUR</span>`;
+                            }
+                        } else {
+                            const bestStd = [...medPurchases].sort((a, b) => a.price_eur - b.price_eur)[0];
+                            const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestStd.pharmacy_id));
+                            priceHtml = `${bestStd.price_eur.toFixed(2)} EUR (${pharm ? pharm.name : ''})`;
+                        }
+                    } else {
+                        const bestStd = [...medPurchases].sort((a, b) => a.price_eur - b.price_eur)[0];
+                        const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestStd.pharmacy_id));
+                        priceHtml = `${bestStd.price_eur.toFixed(2)} EUR (${pharm ? pharm.name : 'Аптека'})`;
+                    }
+                }
+
+                const dosageText = m.dosage ? `Дозировка: ${m.dosage}` : 'Няма дозировка';
+                const doctor = state.doctors.find(d => String(d.id) === String(m.doctor_id));
+                const mc = state.medicalCenters.find(c => String(c.id) === String(m.prescription_medical_center_id));
+                const assignedPersons = state.medicationPersons.filter(mp => String(mp.medication_id) === String(m.id)).map(mp => {
+                    const p = state.persons.find(x => String(x.id) === String(mp.person_id));
+                    return p ? p.name : '';
+                }).filter(Boolean).join(', ');
+
+                let displayName = m.name_bg || '';
+                if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
+                if (m.volume_unit) displayName += ` ${m.volume_unit}`;
+
+                const linkedDocIds = state.medication_documents.filter(md => String(md.medication_id) === String(m.id)).map(md => String(md.document_id));
+                const medDocs = state.documents.filter(doc => linkedDocIds.includes(String(doc.id)));
+
+                let docButtonsHtml = '';
+                if (medDocs.length > 0) {
+                    docButtonsHtml = `<div style="margin-top: 8px; border-top: 1px dashed #ddd; padding-top: 6px;">`;
+                    medDocs.forEach(doc => {
+                        const docName = doc.file_name || doc.title || 'Документ';
+                        docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${doc.file_url}', '${docName}')">📄 ${docName}</button> `;
+                    });
+                    docButtonsHtml += `</div>`;
+                }
+
+                return `
+                    <div class="card" onclick="openPanel('${m.id}')">
+                        <h3>${displayName}</h3>
+                        <p class="card-price">💶 ${priceHtml}</p>
+                        <p>${dosageText}</p>
+                        ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold; margin-top:4px;">За: ${assignedPersons}</p>` : ''}
+                        ${doctor ? `<p style="color:#444;">Лекар: ${doctor.name}</p>` : ''}
+                        ${mc ? `<p style="color:#444;">Център: ${mc.name}</p>` : ''}
+                        ${docButtonsHtml}
+                    </div>`;
+            }).join('');
         }
 
         function openPanel(id) {
-            const m = state.meds.find(x => x.id == id);
+            const m = state.meds.find(x => String(x.id) === String(id));
             state.currentId = id;
-            document.getElementById('panelTitle').innerText = m.name_bg;
+            document.getElementById('panelTitle').innerText = m.name_bg || 'Редактиране';
+
+            const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
+            let pEur = 0, pZk = 0, pharmNameVal = '';
+            if (medPurchases.length > 0) {
+                pEur = medPurchases[0].price_eur !== null && medPurchases[0].price_eur !== undefined ? medPurchases[0].price_eur : 0;
+                pZk = medPurchases[0].price_zk_eur !== null && medPurchases[0].price_zk_eur !== undefined ? medPurchases[0].price_zk_eur : 0;
+                if (medPurchases[0].pharmacy_id) {
+                    const phObj = state.pharmacies.find(ph => String(ph.id) === String(medPurchases[0].pharmacy_id));
+                    pharmNameVal = phObj ? phObj.name : '';
+                }
+            }
+
+            const currentDocObj = state.doctors.find(d => String(d.id) === String(m.doctor_id));
+            const currentDocName = currentDocObj ? currentDocObj.name : '';
+
+            const currentMcObj = state.medicalCenters.find(c => String(c.id) === String(m.prescription_medical_center_id));
+            const currentMcName = currentMcObj ? currentMcObj.name : '';
+
+            const docDatalist = state.doctors.map(d => `<option value="${d.name}">`).join('');
+            const mcDatalist = state.medicalCenters.map(mc => `<option value="${mc.name}">`).join('');
+            const pharmDatalist = state.pharmacies.map(ph => `<option value="${ph.name}">`).join('');
+
+            const catOpts = '<option value="">-- Избери категория --</option>' + state.categories.map(c => `<option value="${c.id}" ${String(m.category_id) === String(c.id) ? 'selected' : ''}>${c.name}</option>`).join('');
+            const manOpts = '<option value="">-- Избери производител --</option>' + state.manufacturers.map(mn => `<option value="${mn.id}" ${String(m.manufacturer_id) === String(mn.id) ? 'selected' : ''}>${mn.name}</option>`).join('');
+
+            const currentPersonsIds = state.medicationPersons.filter(mp => String(mp.medication_id) === String(m.id)).map(mp => String(mp.person_id));
+            const personsCheckboxes = state.persons.map(p => {
+                const checked = currentPersonsIds.includes(String(p.id)) ? 'checked' : '';
+                return `<label><input type="checkbox" name="person_checkbox" value="${p.id}" ${checked}> <span>${p.name}</span></label>`;
+            }).join('');
+
+            // Намиране на прикрепените документи
+            const linkedDocIds = state.medication_documents.filter(md => String(md.medication_id) === String(m.id)).map(md => String(md.document_id));
+            const currentMedDocs = state.documents.filter(doc => linkedDocIds.includes(String(doc.id)));
+
+            let docsListHtml = '<p style="font-size:12px; color:#718096;">Няма свързани рецепти/документи</p>';
+            if (currentMedDocs.length > 0) {
+                docsListHtml = currentMedDocs.map(doc => {
+                    const docName = doc.file_name || doc.title || 'Документ';
+                    return `
+                    <div class="doc-item">
+                        <div>
+                            <strong style="color:#2B6CB0; display:block;">📄 ${docName}</strong>
+                            <a href="${doc.file_url}" target="_blank" style="font-size:11px; color:#4A5568;">Отвори в нов прозорец ↗</a>
+                        </div>
+                        <div style="display:flex; gap:4px;">
+                            <button type="button" class="doc-btn" onclick="openFullscreen('${doc.file_url}', '${docName}')" style="margin:0;">Виж</button>
+                            <button type="button" onclick="unlinkDocument('${doc.id}')" style="background:#E74C3C; color:white; border:none; padding:6px 8px; border-radius:4px; font-size:11px; font-weight:bold;">X</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            const availableDocs = state.documents.filter(doc => !linkedDocIds.includes(String(doc.id)));
+            let existingDocOpts = '<option value="">-- Избери от качените в базата --</option>' + availableDocs.map(doc => `<option value="${doc.id}">${doc.file_name || doc.title || 'Документ'}</option>`).join('');
+
             document.getElementById('panelBody').innerHTML = `
                 <div class="form-row">
                     <div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div>
-                    <div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div>
+                    <div class="form-group"><label>Име (Латински)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div>
                 </div>
+                
                 <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
+                
                 <div class="form-row">
-                    <div class="form-group"><label>Количество</label><input type="number" id="vol" value="${m.volume_quantity||''}"></div>
-                    <div class="form-group"><label>Единица</label><input type="text" id="unit" value="${m.volume_unit||''}"></div>
+                    <div class="form-group"><label>Категория</label><select id="category_id">${catOpts}</select></div>
+                    <div class="form-group"><label>Производител</label><select id="manufacturer_id">${manOpts}</select></div>
                 </div>
+                
+                <div class="form-group">
+                    <label>За кого е предназначено:</label>
+                    <div class="checkbox-group">${personsCheckboxes || 'Няма лица'}</div>
+                </div>
+
                 <div class="form-row">
-                    <div class="form-group"><label>Форма</label><input type="text" id="form" value="${m.form||''}"></div>
+                    <div class="form-group"><label>Количество</label><input type="text" id="vol" value="${m.volume_quantity !== null && m.volume_quantity !== undefined ? m.volume_quantity : ''}"></div>
+                    <div class="form-group"><label>Единица (мл, мг...)</label><input type="text" id="unit" value="${m.volume_unit||''}"></div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group"><label>Форма (табл, капс...)</label><input type="text" id="form" value="${m.form||''}"></div>
                     <div class="form-group"><label>Брой в опаковка</label><input type="number" id="qty" value="${m.form_quantity||''}"></div>
                 </div>
-                <div class="form-group"><label>Дозировка</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
-                <div class="form-group"><label>ЗОК</label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}></div>
-                <div class="form-group"><label>Описание</label><textarea id="desc">${m.description||''}</textarea></div>`;
-            document.getElementById('editPanel').style.display = 'block';
+                
+                <div class="form-group"><label>Дозировка / Прием</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
+                
+                <!-- Мобилна секция за прикрепени документи -->
+                <div class="form-group" style="border: 1px solid #2980B9; background:#EBF8FF;">
+                    <label style="color: #2B6CB0; font-size:12px;">📑 Рецепти и Документи</label>
+                    <div style="margin-bottom:8px;">${docsListHtml}</div>
+                    
+                    ${availableDocs.length > 0 ? `
+                        <div style="margin-top: 8px; border-top: 1px solid #CBD5E0; padding-top: 8px;">
+                            <label style="font-size:11px; text-transform:none; color:#4A5568;">Свържи съществуваща рецепта от базата:</label>
+                            <select id="existing_doc_select" style="margin-bottom:6px;">${existingDocOpts}</select>
+                            <button type="button" onclick="linkExistingDoc()" style="background:#2B6CB0; color:white; border:none; padding:8px; border-radius:6px; font-size:12px; font-weight:bold; width:100%;">+ Свържи избрания документ</button>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="form-group">
+                    <label>Предписващ лекар</label>
+                    <input type="text" id="doctor_name" list="doctors_list" value="${currentDocName}" placeholder="Избери или въведи...">
+                    <datalist id="doctors_list">${docDatalist}</datalist>
+                </div>
+                
+                <div class="form-group">
+                    <label>Болница / Лечебно заведение</label>
+                    <input type="text" id="medical_center_name" list="mc_list" value="${currentMcName}" placeholder="Избери или въведи...">
+                    <datalist id="mc_list">${mcDatalist}</datalist>
+                </div>
+                
+                <div class="form-group"><label>Дата на рецептата</label><input type="date" id="prescription_date" value="${m.prescription_date||''}"></div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group" style="gap: 20px;">
+                        <label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> <span style="font-weight:bold; color:#E74C3C;">По ЗОК</span></label>
+                        <label><input type="checkbox" id="is_active" ${m.is_active?'checked':''}> <span style="font-weight:bold; color:#148F77;">Активно лекарство</span></label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Закупено от аптека</label>
+                    <input type="text" id="pharmacy_name" list="pharmacies_list" value="${pharmNameVal}" placeholder="Избери или въведи...">
+                    <datalist id="pharmacies_list">${pharmDatalist}</datalist>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group"><label>Стандартна цена (EUR)</label><input type="number" step="0.01" id="price_eur" value="${pEur}"></div>
+                    <div class="form-group"><label>Цена по ЗОК (EUR)</label><input type="number" step="0.01" id="price_zk_eur" value="${pZk}"></div>
+                </div>
+                
+                <div class="form-group"><label>Бележки</label><textarea id="notes">${m.notes||''}</textarea></div>
+                <div class="form-group"><label>Подробно описание</label><textarea id="desc">${m.description||''}</textarea></div>`;
+            
+            document.getElementById('editPanel').style.display = 'flex';
+        }
+
+        async function linkExistingDoc() {
+            const docId = document.getElementById('existing_doc_select').value;
+            if (!docId) return;
+            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json' };
+            
+            const res = await fetch(`${CONFIG.URL}/rest/v1/medication_documents`, {
+                method: 'POST',
+                headers: h,
+                body: JSON.stringify({ medication_id: state.currentId, document_id: docId })
+            });
+
+            if (res.ok) {
+                state.medication_documents.push({ medication_id: state.currentId, document_id: docId });
+                openPanel(state.currentId);
+                renderUI();
+            }
+        }
+
+        async function unlinkDocument(docId) {
+            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
+            await fetch(`${CONFIG.URL}/rest/v1/medication_documents?medication_id=eq.${state.currentId}&document_id=eq.${docId}`, {
+                method: 'DELETE',
+                headers: h
+            });
+            state.medication_documents = state.medication_documents.filter(md => !(String(md.medication_id) === String(state.currentId) && String(md.document_id) === String(docId)));
+            openPanel(state.currentId);
+            renderUI();
         }
 
         async function saveMed() {
-            const updates = { 
+            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+            const volValue = document.getElementById('vol').value.trim();
+
+            const docInputName = document.getElementById('doctor_name').value.trim();
+            let doctorId = null;
+            if (docInputName !== '') {
+                let existingDoc = state.doctors.find(d => d.name.toLowerCase() === docInputName.toLowerCase());
+                if (existingDoc) {
+                    doctorId = existingDoc.id;
+                } else {
+                    const newDocRes = await fetch(`${CONFIG.URL}/rest/v1/doctors`, {
+                        method: 'POST',
+                        headers: h,
+                        body: JSON.stringify({ name: docInputName })
+                    });
+                    const newDocData = await newDocRes.json();
+                    if (newDocData && newDocData.length > 0) {
+                        doctorId = newDocData[0].id;
+                        state.doctors.push(newDocData[0]);
+                    }
+                }
+            }
+
+            const mcInputName = document.getElementById('medical_center_name').value.trim();
+            let mcId = null;
+            if (mcInputName !== '') {
+                let existingMc = state.medicalCenters.find(c => c.name.toLowerCase() === mcInputName.toLowerCase());
+                if (existingMc) {
+                    mcId = existingMc.id;
+                } else {
+                    const newMcRes = await fetch(`${CONFIG.URL}/rest/v1/medical_centers`, {
+                        method: 'POST',
+                        headers: h,
+                        body: JSON.stringify({ name: mcInputName })
+                    });
+                    const newMcData = await newMcRes.json();
+                    if (newMcData && newMcData.length > 0) {
+                        mcId = newMcData[0].id;
+                        state.medicalCenters.push(newMcData[0]);
+                    }
+                }
+            }
+
+            const medUpdates = {
                 name_bg: document.getElementById('name_bg').value,
                 name_latin: document.getElementById('name_latin').value,
                 active_substance: document.getElementById('active').value,
-                health_insurance: document.getElementById('health_insurance').checked 
+                category_id: document.getElementById('category_id').value || null,
+                manufacturer_id: document.getElementById('manufacturer_id').value || null,
+                volume_quantity: volValue !== '' ? volValue : null,
+                volume_unit: document.getElementById('unit').value,
+                form: document.getElementById('form').value,
+                form_quantity: parseInt(document.getElementById('qty').value) || null,
+                dosage: document.getElementById('dosage').value,
+                doctor_id: doctorId,
+                prescription_medical_center_id: mcId,
+                prescription_date: document.getElementById('prescription_date').value || null,
+                health_insurance: document.getElementById('health_insurance').checked,
+                is_active: document.getElementById('is_active').checked,
+                notes: document.getElementById('notes').value,
+                description: document.getElementById('desc').value
             };
+
             await fetch(`${CONFIG.URL}/rest/v1/medications?id=eq.${state.currentId}`, {
                 method: 'PATCH',
-                headers: { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json' },
-                body: JSON.stringify(updates)
+                headers: h,
+                body: JSON.stringify(medUpdates)
             });
+
+            await fetch(`${CONFIG.URL}/rest/v1/medication_persons?medication_id=eq.${state.currentId}`, {
+                method: 'DELETE',
+                headers: h
+            });
+
+            const selectedPersons = Array.from(document.querySelectorAll('input[name="person_checkbox"]:checked')).map(cb => cb.value);
+            for (let personId of selectedPersons) {
+                await fetch(`${CONFIG.URL}/rest/v1/medication_persons`, {
+                    method: 'POST',
+                    headers: h,
+                    body: JSON.stringify({ medication_id: state.currentId, person_id: personId })
+                });
+            }
+
+            const priceEurVal = document.getElementById('price_eur').value;
+            const priceZkVal = document.getElementById('price_zk_eur').value;
+            const pharmNameInput = document.getElementById('pharmacy_name').value.trim();
+
+            const pEur = priceEurVal !== '' ? parseFloat(priceEurVal) : 0;
+            const pZk = priceZkVal !== '' ? parseFloat(priceZkVal) : 0;
+            
+            let pharmId = null;
+            if (pharmNameInput !== '') {
+                let existingPharm = state.pharmacies.find(p => p.name.toLowerCase() === pharmNameInput.toLowerCase());
+                if (existingPharm) {
+                    pharmId = existingPharm.id;
+                } else {
+                    const newPharmRes = await fetch(`${CONFIG.URL}/rest/v1/pharmacies`, {
+                        method: 'POST',
+                        headers: h,
+                        body: JSON.stringify({ name: pharmNameInput })
+                    });
+                    const newPharmData = await newPharmRes.json();
+                    if (newPharmData && newPharmData.length > 0) {
+                        pharmId = newPharmData[0].id;
+                        state.pharmacies.push(newPharmData[0]);
+                    }
+                }
+            }
+
+            const existingPurchases = state.purchases.filter(p => String(p.medication_id) === String(state.currentId));
+
+            if (existingPurchases.length > 0) {
+                await fetch(`${CONFIG.URL}/rest/v1/purchases?id=eq.${existingPurchases[0].id}`, {
+                    method: 'PATCH',
+                    headers: h,
+                    body: JSON.stringify({ price_eur: pEur, price_zk_eur: pZk, pharmacy_id: pharmId })
+                });
+            } else {
+                await fetch(`${CONFIG.URL}/rest/v1/purchases`, {
+                    method: 'POST',
+                    headers: h,
+                    body: JSON.stringify({ medication_id: state.currentId, price_eur: pEur, price_zk_eur: pZk, pharmacy_id: pharmId, purchase_date: new Date().toISOString().split('T')[0] })
+                });
+            }
+
             document.getElementById('editPanel').style.display = 'none';
             refreshData();
+        }
+
+        function openFullscreen(url, title) {
+            document.getElementById('fsTitle').innerText = title;
+            document.getElementById('fsContainer').innerHTML = `<iframe src="${url}" style="width:100%; height:100%; border:none;"></iframe>`;
+            document.getElementById('fullscreenModal').style.display = 'flex';
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreenModal').style.display = 'none';
+            document.getElementById('fsContainer').innerHTML = '';
         }
         
         window.onload = refreshData;
