@@ -30,7 +30,6 @@
         .card p { margin-bottom: 3px; color: #555; }
         .card-price { color: #148F77; font-weight: bold; font-size: 14px; margin-bottom: 6px; }
         
-        /* Фиксиран мобилен панел с правилно скролиране */
         .panel { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f4f6f9; display: none; flex-direction: column; z-index: 1000; }
         .panel-header { background: #fff; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 10; }
         .panel-header h2 { font-size: 17px; margin: 0; color: #2C3E50; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 75%; }
@@ -53,6 +52,10 @@
 
         .doc-btn { background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; font-size: 12px; margin-top: 4px; display: inline-block; text-decoration: none; font-weight: bold; }
         .doc-item { display: flex; justify-content: space-between; align-items: center; background: #EDF2F7; padding: 8px; border-radius: 6px; margin-bottom: 6px; }
+        
+        .history-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+        .history-table th { padding: 8px 6px; background: #f1f5f9; text-align: left; border-bottom: 1px solid #ddd; color: #4A5568; }
+        .history-table td { padding: 8px 6px; border-bottom: 1px solid #eee; }
         
         .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; }
         .fullscreen-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #1A202C; color: white; }
@@ -163,14 +166,34 @@
                 let priceHtml = 'Няма цена';
                 
                 if (medPurchases.length > 0) {
+                    const sortedPurchases = [...medPurchases].sort((a, b) => {
+                        const dateA = a.purchase_date ? new Date(a.purchase_date) : new Date(0);
+                        const dateB = b.purchase_date ? new Date(b.purchase_date) : new Date(0);
+                        if (dateB - dateA !== 0) return dateB - dateA;
+                        return (b.id || 0) - (a.id || 0);
+                    });
+
+                    const latestPerPharmacy = [];
+                    const seenPharmacies = new Set();
+                    sortedPurchases.forEach(p => {
+                        const pharmKey = p.pharmacy_id ? String(p.pharmacy_id) : 'unspecified';
+                        if (!seenPharmacies.has(pharmKey)) {
+                            seenPharmacies.add(pharmKey);
+                            latestPerPharmacy.push(p);
+                        }
+                    });
+
                     if (m.health_insurance) {
-                        const validZok = medPurchases.filter(p => p.price_zk_eur !== null && p.price_zk_eur !== undefined);
+                        const validZok = latestPerPharmacy.filter(p => p.price_zk_eur !== null && p.price_zk_eur !== undefined);
                         if (validZok.length > 0) {
                             validZok.sort((a, b) => a.price_zk_eur - b.price_zk_eur);
                             const bestZok = validZok[0];
                             const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestZok.pharmacy_id));
                             const pharmName = pharm ? pharm.name : 'Аптека';
-                            const bestStd = [...medPurchases].sort((a, b) => a.price_eur - b.price_eur)[0];
+                            
+                            const validStd = latestPerPharmacy.filter(p => p.price_eur !== null && p.price_eur !== undefined);
+                            validStd.sort((a, b) => a.price_eur - b.price_eur);
+                            const bestStd = validStd.length > 0 ? validStd[0] : null;
                             
                             if (bestZok.price_zk_eur === 0) {
                                 priceHtml = `<b>ЗОК:</b> 0.00 EUR (${pharmName})`;
@@ -178,14 +201,22 @@
                                 priceHtml = `<b>ЗОК:</b> ${bestZok.price_zk_eur.toFixed(2)} EUR (${pharmName})<br><span style="color:#666; font-size:12px; font-weight:normal;">Станд.: ${bestStd ? bestStd.price_eur.toFixed(2) : '0'} EUR</span>`;
                             }
                         } else {
-                            const bestStd = [...medPurchases].sort((a, b) => a.price_eur - b.price_eur)[0];
-                            const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestStd.pharmacy_id));
-                            priceHtml = `${bestStd.price_eur.toFixed(2)} EUR (${pharm ? pharm.name : ''})`;
+                            const validStd = latestPerPharmacy.filter(p => p.price_eur !== null && p.price_eur !== undefined);
+                            if (validStd.length > 0) {
+                                validStd.sort((a, b) => a.price_eur - b.price_eur);
+                                const bestStd = validStd[0];
+                                const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestStd.pharmacy_id));
+                                priceHtml = `${bestStd.price_eur.toFixed(2)} EUR (${pharm ? pharm.name : ''})`;
+                            }
                         }
                     } else {
-                        const bestStd = [...medPurchases].sort((a, b) => a.price_eur - b.price_eur)[0];
-                        const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestStd.pharmacy_id));
-                        priceHtml = `${bestStd.price_eur.toFixed(2)} EUR (${pharm ? pharm.name : 'Аптека'})`;
+                        const validStd = latestPerPharmacy.filter(p => p.price_eur !== null && p.price_eur !== undefined);
+                        if (validStd.length > 0) {
+                            validStd.sort((a, b) => a.price_eur - b.price_eur);
+                            const bestStd = validStd[0];
+                            const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestStd.pharmacy_id));
+                            priceHtml = `${bestStd.price_eur.toFixed(2)} EUR (${pharm ? pharm.name : 'Аптека'})`;
+                        }
                     }
                 }
 
@@ -227,20 +258,67 @@
             }).join('');
         }
 
+        async function deletePurchase(purchaseId) {
+            if (!confirm('Сигурни ли сте, че искате да изтриете този запис на цена?')) return;
+            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
+            await fetch(`${CONFIG.URL}/rest/v1/purchases?id=eq.${purchaseId}`, { method: 'DELETE', headers: h });
+            state.purchases = state.purchases.filter(p => String(p.id) !== String(purchaseId));
+            openPanel(state.currentId);
+            renderUI();
+        }
+
         function openPanel(id) {
             const m = state.meds.find(x => String(x.id) === String(id));
             state.currentId = id;
             document.getElementById('panelTitle').innerText = m.name_bg || 'Редактиране';
 
             const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
-            let pEur = 0, pZk = 0, pharmNameVal = '';
+            medPurchases.sort((a, b) => {
+                const dateA = a.purchase_date ? new Date(a.purchase_date) : new Date(0);
+                const dateB = b.purchase_date ? new Date(b.purchase_date) : new Date(0);
+                if (dateB - dateA !== 0) return dateB - dateA;
+                return (b.id || 0) - (a.id || 0);
+            });
+
+            let pEur = '', pZk = '', pharmNameVal = '';
+            let purchasesHistoryHtml = '<p style="font-size:13px; color:#777; margin-top:4px;">Няма въведена история за това лекарство.</p>';
+            
             if (medPurchases.length > 0) {
-                pEur = medPurchases[0].price_eur !== null && medPurchases[0].price_eur !== undefined ? medPurchases[0].price_eur : 0;
-                pZk = medPurchases[0].price_zk_eur !== null && medPurchases[0].price_zk_eur !== undefined ? medPurchases[0].price_zk_eur : 0;
-                if (medPurchases[0].pharmacy_id) {
-                    const phObj = state.pharmacies.find(ph => String(ph.id) === String(medPurchases[0].pharmacy_id));
-                    pharmNameVal = phObj ? phObj.name : '';
-                }
+                purchasesHistoryHtml = `
+                    <div style="overflow-x:auto;">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Дата</th>
+                                    <th>Аптека</th>
+                                    <th>Ст. (€)</th>
+                                    ${m.health_insurance ? '<th>ЗОК (€)</th>' : ''}
+                                    <th style="text-align:center;">Опц.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${medPurchases.map(p => {
+                                    const ph = state.pharmacies.find(x => String(x.id) === String(p.pharmacy_id));
+                                    const pName = ph ? ph.name : 'Непосочена';
+                                    const dStr = p.purchase_date || '-';
+                                    const eur = (p.price_eur !== null && p.price_eur !== undefined) ? p.price_eur.toFixed(2) : '-';
+                                    const zk = (p.price_zk_eur !== null && p.price_zk_eur !== undefined) ? p.price_zk_eur.toFixed(2) : '-';
+                                    return `
+                                        <tr>
+                                            <td style="white-space:nowrap;">${dStr}</td>
+                                            <td><b>${pName}</b></td>
+                                            <td>${eur}</td>
+                                            ${m.health_insurance ? `<td style="color:#E74C3C; font-weight:bold;">${zk}</td>` : ''}
+                                            <td style="text-align:center;">
+                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:6px 10px; border-radius:4px; font-weight:bold;">X</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
             }
 
             const currentDocObj = state.doctors.find(d => String(d.id) === String(m.doctor_id));
@@ -253,6 +331,7 @@
             const mcDatalist = state.medicalCenters.map(mc => `<option value="${mc.name}">`).join('');
             const pharmDatalist = state.pharmacies.map(ph => `<option value="${ph.name}">`).join('');
 
+            // Зареждане на категории САМО от базата
             const catOpts = '<option value="">-- Избери категория --</option>' + state.categories.map(c => `<option value="${c.id}" ${String(m.category_id) === String(c.id) ? 'selected' : ''}>${c.name}</option>`).join('');
             const manOpts = '<option value="">-- Избери производител --</option>' + state.manufacturers.map(mn => `<option value="${mn.id}" ${String(m.manufacturer_id) === String(mn.id) ? 'selected' : ''}>${mn.name}</option>`).join('');
 
@@ -262,30 +341,25 @@
                 return `<label><input type="checkbox" name="person_checkbox" value="${p.id}" ${checked}> <span>${p.name}</span></label>`;
             }).join('');
 
-            // Намиране на прикрепените документи
+            // Само показване на закачените документи (без опция за премахване/добавяне)
             const linkedDocIds = state.medication_documents.filter(md => String(md.medication_id) === String(m.id)).map(md => String(md.document_id));
             const currentMedDocs = state.documents.filter(doc => linkedDocIds.includes(String(doc.id)));
 
-            let docsListHtml = '<p style="font-size:12px; color:#718096;">Няма свързани рецепти/документи</p>';
+            let docsListHtml = '<p style="font-size:13px; color:#718096; margin-top: 4px;">Няма закачени рецепти/документи</p>';
             if (currentMedDocs.length > 0) {
                 docsListHtml = currentMedDocs.map(doc => {
                     const docName = doc.file_name || doc.title || 'Документ';
                     return `
                     <div class="doc-item">
                         <div>
-                            <strong style="color:#2B6CB0; display:block;">📄 ${docName}</strong>
-                            <a href="${doc.file_url}" target="_blank" style="font-size:11px; color:#4A5568;">Отвори в нов прозорец ↗</a>
+                            <strong style="color:#2B6CB0; display:block; font-size:14px;">📄 ${docName}</strong>
                         </div>
-                        <div style="display:flex; gap:4px;">
-                            <button type="button" class="doc-btn" onclick="openFullscreen('${doc.file_url}', '${docName}')" style="margin:0;">Виж</button>
-                            <button type="button" onclick="unlinkDocument('${doc.id}')" style="background:#E74C3C; color:white; border:none; padding:6px 8px; border-radius:4px; font-size:11px; font-weight:bold;">X</button>
-                        </div>
+                        <button type="button" class="doc-btn" onclick="openFullscreen('${doc.file_url}', '${docName}')" style="margin:0; padding: 10px 14px; font-size:14px;">Отвори</button>
                     </div>`;
                 }).join('');
             }
 
-            const availableDocs = state.documents.filter(doc => !linkedDocIds.includes(String(doc.id)));
-            let existingDocOpts = '<option value="">-- Избери от качените в базата --</option>' + availableDocs.map(doc => `<option value="${doc.id}">${doc.file_name || doc.title || 'Документ'}</option>`).join('');
+            const todayStr = new Date().toISOString().split('T')[0];
 
             document.getElementById('panelBody').innerHTML = `
                 <div class="form-row">
@@ -317,18 +391,10 @@
                 
                 <div class="form-group"><label>Дозировка / Прием</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
                 
-                <!-- Мобилна секция за прикрепени документи -->
+                <!-- Само преглед на документи -->
                 <div class="form-group" style="border: 1px solid #2980B9; background:#EBF8FF;">
-                    <label style="color: #2B6CB0; font-size:12px;">📑 Рецепти и Документи</label>
-                    <div style="margin-bottom:8px;">${docsListHtml}</div>
-                    
-                    ${availableDocs.length > 0 ? `
-                        <div style="margin-top: 8px; border-top: 1px solid #CBD5E0; padding-top: 8px;">
-                            <label style="font-size:11px; text-transform:none; color:#4A5568;">Свържи съществуваща рецепта от базата:</label>
-                            <select id="existing_doc_select" style="margin-bottom:6px;">${existingDocOpts}</select>
-                            <button type="button" onclick="linkExistingDoc()" style="background:#2B6CB0; color:white; border:none; padding:8px; border-radius:6px; font-size:12px; font-weight:bold; width:100%;">+ Свържи избрания документ</button>
-                        </div>
-                    ` : ''}
+                    <label style="color: #2B6CB0; font-size:12px;">📑 Закачени Рецепти и Документи</label>
+                    <div style="margin-top: 6px;">${docsListHtml}</div>
                 </div>
 
                 <div class="form-group">
@@ -352,10 +418,17 @@
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label>Закупено от аптека</label>
-                    <input type="text" id="pharmacy_name" list="pharmacies_list" value="${pharmNameVal}" placeholder="Избери или въведи...">
-                    <datalist id="pharmacies_list">${pharmDatalist}</datalist>
+                <!-- История и цени от десктоп версията -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label style="color:#2C3E50;">➕ Нова покупка (Аптека)</label>
+                        <input type="text" id="pharmacy_name" list="pharmacies_list" value="${pharmNameVal}" placeholder="Въведи само при нова покупка...">
+                        <datalist id="pharmacies_list">${pharmDatalist}</datalist>
+                    </div>
+                    <div class="form-group">
+                        <label>Дата на покупка</label>
+                        <input type="date" id="purchase_date" value="${todayStr}">
+                    </div>
                 </div>
 
                 <div class="form-row">
@@ -363,39 +436,15 @@
                     <div class="form-group"><label>Цена по ЗОК (EUR)</label><input type="number" step="0.01" id="price_zk_eur" value="${pZk}"></div>
                 </div>
                 
+                <div class="form-group" style="background: #F7FAFC; padding: 10px; border: 1px solid #CBD5E0; border-radius: 6px;">
+                    <label style="color: #2B6CB0; font-weight: bold; font-size: 13px;">📊 История на цените и аптеките:</label>
+                    ${purchasesHistoryHtml}
+                </div>
+
                 <div class="form-group"><label>Бележки</label><textarea id="notes">${m.notes||''}</textarea></div>
                 <div class="form-group"><label>Подробно описание</label><textarea id="desc">${m.description||''}</textarea></div>`;
             
             document.getElementById('editPanel').style.display = 'flex';
-        }
-
-        async function linkExistingDoc() {
-            const docId = document.getElementById('existing_doc_select').value;
-            if (!docId) return;
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json' };
-            
-            const res = await fetch(`${CONFIG.URL}/rest/v1/medication_documents`, {
-                method: 'POST',
-                headers: h,
-                body: JSON.stringify({ medication_id: state.currentId, document_id: docId })
-            });
-
-            if (res.ok) {
-                state.medication_documents.push({ medication_id: state.currentId, document_id: docId });
-                openPanel(state.currentId);
-                renderUI();
-            }
-        }
-
-        async function unlinkDocument(docId) {
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
-            await fetch(`${CONFIG.URL}/rest/v1/medication_documents?medication_id=eq.${state.currentId}&document_id=eq.${docId}`, {
-                method: 'DELETE',
-                headers: h
-            });
-            state.medication_documents = state.medication_documents.filter(md => !(String(md.medication_id) === String(state.currentId) && String(md.document_id) === String(docId)));
-            openPanel(state.currentId);
-            renderUI();
         }
 
         async function saveMed() {
@@ -483,6 +532,7 @@
                 });
             }
 
+            // Добавяне на НОВА покупка (логика от десктоп версията)
             const priceEurVal = document.getElementById('price_eur').value;
             const priceZkVal = document.getElementById('price_zk_eur').value;
             const pharmNameInput = document.getElementById('pharmacy_name').value.trim();
@@ -509,19 +559,20 @@
                 }
             }
 
-            const existingPurchases = state.purchases.filter(p => String(p.medication_id) === String(state.currentId));
-
-            if (existingPurchases.length > 0) {
-                await fetch(`${CONFIG.URL}/rest/v1/purchases?id=eq.${existingPurchases[0].id}`, {
-                    method: 'PATCH',
-                    headers: h,
-                    body: JSON.stringify({ price_eur: pEur, price_zk_eur: pZk, pharmacy_id: pharmId })
-                });
-            } else {
+            if (priceEurVal !== '' || priceZkVal !== '' || pharmNameInput !== '') {
+                const purchDateEl = document.getElementById('purchase_date');
+                const pDate = purchDateEl && purchDateEl.value ? purchDateEl.value : new Date().toISOString().split('T')[0];
+                
                 await fetch(`${CONFIG.URL}/rest/v1/purchases`, {
                     method: 'POST',
                     headers: h,
-                    body: JSON.stringify({ medication_id: state.currentId, price_eur: pEur, price_zk_eur: pZk, pharmacy_id: pharmId, purchase_date: new Date().toISOString().split('T')[0] })
+                    body: JSON.stringify({ 
+                        medication_id: state.currentId, 
+                        price_eur: pEur, 
+                        price_zk_eur: pZk, 
+                        pharmacy_id: pharmId, 
+                        purchase_date: pDate 
+                    })
                 });
             }
 
