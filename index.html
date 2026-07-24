@@ -23,8 +23,8 @@
         .filter-btn { padding: 10px 0; flex: 1; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 6px; font-size: 12px; font-weight: bold; min-width: 30%; text-align: center; }
         .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
         
-        .add-btn { width: 100%; padding: 12px; background: #E67E22; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; margin-bottom: 8px; }
-        .refresh-btn { width: 100%; padding: 12px; background: #148F77; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; }
+        .add-btn { width: 100%; padding: 12px; background: #E67E22; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; margin-bottom: 8px; cursor: pointer; }
+        .refresh-btn { width: 100%; padding: 12px; background: #148F77; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
         
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; padding-bottom: 20px; }
         .card { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 13px; cursor: pointer; }
@@ -32,10 +32,13 @@
         .card p { margin-bottom: 3px; color: #555; }
         .card-price { color: #148F77; font-weight: bold; font-size: 14px; margin-bottom: 6px; }
         
-        .panel { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f4f6f9; display: none; flex-direction: column; z-index: 1000; }
-        .panel-header { background: #fff; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 10; }
-        .panel-header h2 { font-size: 17px; margin: 0; color: #2C3E50; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 75%; }
-        .close-panel-btn { background: #E74C3C; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+        .panel { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f4f6f9; display: none; flex-direction: column; z-index: 1000; }
+        .panel-header { background: #fff; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 10; }
+        .panel-header h2 { font-size: 15px; margin: 0; color: #2C3E50; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 45%; }
+        
+        .header-buttons { display: flex; gap: 6px; }
+        .save-header-btn { background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; }
+        .close-panel-btn { background: #E74C3C; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; }
         
         .panel-body-content { padding: 12px; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         
@@ -45,12 +48,9 @@
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #CBD5E0; border-radius: 6px; background: #fff; }
         .form-group textarea { height: 70px; resize: none; }
         
-        .checkbox-group { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 4px; }
-        .checkbox-group label { font-size: 14px; display: flex; align-items: center; gap: 6px; font-weight: normal; color: #2D3748; }
-        .checkbox-group input[type="checkbox"] { width: 20px; height: 20px; }
-        
-        .save-btn-container { padding: 12px; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 10; }
-        .save-btn { width: 100%; padding: 14px; background: #148F77; color: white; border: none; border-radius: 6px; font-size: 17px; font-weight: bold; }
+        .checkbox-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+        .checkbox-group label { font-size: 13px; display: flex; align-items: center; gap: 4px; font-weight: normal; color: #2D3748; }
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; }
 
         .doc-btn { background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; font-size: 12px; margin-top: 4px; display: inline-block; text-decoration: none; font-weight: bold; cursor: pointer; }
         .doc-item { display: flex; justify-content: space-between; align-items: center; background: #EDF2F7; padding: 8px; border-radius: 6px; margin-bottom: 6px; }
@@ -62,7 +62,7 @@
         .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; }
         .fullscreen-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #1A202C; color: white; }
         .fullscreen-header h2 { font-size: 15px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 70%; }
-        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; }
         .fullscreen-content { flex: 1; width: 100%; background: #fff; overflow: hidden; }
         
         @media (min-width: 600px) {
@@ -79,6 +79,7 @@
         <div id="personFilters" class="filter-buttons"></div>
         <div id="zokFilters" class="filter-buttons"></div>
         <div id="activeFilters" class="filter-buttons"></div>
+        <div id="dailyFilters" class="filter-buttons"></div>
         <button class="add-btn" onclick="openPanel()">➕ Ново лекарство</button>
         <button class="refresh-btn" onclick="refreshData()">Опресни данните</button>
     </div>
@@ -88,12 +89,12 @@
     <div id="editPanel" class="panel">
         <div class="panel-header">
             <h2 id="panelTitle">Редактиране</h2>
-            <button class="close-panel-btn" onclick="document.getElementById('editPanel').style.display='none'">Затвори</button>
+            <div class="header-buttons">
+                <button class="save-header-btn" onclick="saveMed()">💾 Запази</button>
+                <button class="close-panel-btn" onclick="document.getElementById('editPanel').style.display='none'">X Затвори</button>
+            </div>
         </div>
         <div class="panel-body-content" id="panelBody"></div>
-        <div class="save-btn-container">
-            <button class="save-btn" onclick="saveMed()">ЗАПАЗИ ПРОМЕНИТЕ</button>
-        </div>
     </div>
 
     <div id="fullscreenModal" class="fullscreen-modal">
@@ -105,7 +106,7 @@
     </div>
 
     <script>
-        let state = { selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], currentId: null };
+        let state = { selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedDaily: 'all', meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], currentId: null };
 
         async function refreshData() {
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
@@ -144,6 +145,7 @@
             document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
             document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без ЗОК':'Всички'}</button>`).join('');
             document.getElementById('activeFilters').innerHTML = ['true', 'false', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':a==='false'?'Неактивни':'Всички'}</button>`).join('');
+            document.getElementById('dailyFilters').innerHTML = ['true', 'false', 'all'].map(d => `<button class="filter-btn ${state.selectedDaily===d?'active':''}" onclick="state.selectedDaily='${d}'; renderUI()">${d==='true'?'Ежедневни':d==='false'?'Неежедневни':'Всички'}</button>`).join('');
 
             const search = document.getElementById('search').value.toLowerCase().trim();
             
@@ -162,8 +164,9 @@
                 const matchPerson = state.selectedPerson === 'all' || personsForMed.includes(state.selectedPerson);
                 const matchZok = state.selectedZok === 'all' || m.health_insurance === (state.selectedZok === 'true');
                 const matchActive = state.selectedActive === 'all' || m.is_active === (state.selectedActive === 'true');
+                const matchDaily = state.selectedDaily === 'all' || m.is_daily === (state.selectedDaily === 'true');
 
-                return matchPerson && matchZok && matchActive;
+                return matchPerson && matchZok && matchActive && matchDaily;
             }).map(m => {
                 const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
                 let priceHtml = 'Няма цена';
@@ -250,7 +253,7 @@
 
                 return `
                     <div class="card" onclick="openPanel('${m.id}')">
-                        <h3>${displayName}</h3>
+                        <h3>${displayName} ${m.is_daily ? ' 🔄' : ''}</h3>
                         <p class="card-price">💶 ${priceHtml}</p>
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold; margin-top:4px;">За: ${assignedPersons}</p>` : ''}
@@ -295,7 +298,7 @@
                 currentMedDocs = state.documents.filter(doc => linkedDocIds.includes(String(doc.id)));
             } else {
                 document.getElementById('panelTitle').innerText = 'Ново лекарство';
-                m = { health_insurance: false, is_active: true }; // Задаваме активни стойности по подразбиране за ново
+                m = { health_insurance: false, is_active: true, is_daily: false };
             }
 
             let pEur = '', pZk = '', pharmNameVal = '';
@@ -328,7 +331,7 @@
                                             <td>${eur}</td>
                                             ${m.health_insurance ? `<td style="color:#E74C3C; font-weight:bold;">${zk}</td>` : ''}
                                             <td style="text-align:center;">
-                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:6px 10px; border-radius:4px; font-weight:bold;">X</button>
+                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:6px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">X</button>
                                             </td>
                                         </tr>
                                     `;
@@ -349,7 +352,6 @@
             const mcDatalist = state.medicalCenters.map(mc => `<option value="${mc.name}">`).join('');
             const pharmDatalist = state.pharmacies.map(ph => `<option value="${ph.name}">`).join('');
 
-            // Зареждане на категории САМО от базата
             const catOpts = '<option value="">-- Избери категория --</option>' + state.categories.map(c => `<option value="${c.id}" ${String(m.category_id) === String(c.id) ? 'selected' : ''}>${c.name}</option>`).join('');
             const manOpts = '<option value="">-- Избери производител --</option>' + state.manufacturers.map(mn => `<option value="${mn.id}" ${String(m.manufacturer_id) === String(mn.id) ? 'selected' : ''}>${mn.name}</option>`).join('');
 
@@ -358,7 +360,6 @@
                 return `<label><input type="checkbox" name="person_checkbox" value="${p.id}" ${checked}> <span>${p.name}</span></label>`;
             }).join('');
 
-            // Само показване на закачените документи (без опция за премахване/добавяне)
             let docsListHtml = '<p style="font-size:13px; color:#718096; margin-top: 4px;">Няма закачени рецепти/документи</p>';
             if (currentMedDocs.length > 0) {
                 docsListHtml = currentMedDocs.map(doc => {
@@ -407,7 +408,6 @@
                 
                 <div class="form-group"><label>Дозировка / Прием</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
                 
-                <!-- Само преглед на документи -->
                 <div class="form-group" style="border: 1px solid #2980B9; background:#EBF8FF;">
                     <label style="color: #2B6CB0; font-size:12px;">📑 Закачени Рецепти и Документи</label>
                     <div style="margin-top: 6px;">${docsListHtml}</div>
@@ -428,13 +428,13 @@
                 <div class="form-group"><label>Дата на рецептата</label><input type="date" id="prescription_date" value="${m.prescription_date||''}"></div>
                 
                 <div class="form-group">
-                    <div class="checkbox-group" style="gap: 20px;">
-                        <label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> <span style="font-weight:bold; color:#E74C3C;">По ЗОК</span></label>
-                        <label><input type="checkbox" id="is_active" ${m.is_active?'checked':''}> <span style="font-weight:bold; color:#148F77;">Активно лекарство</span></label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> <span style="font-weight:bold; color:#E74C3C;">ЗОК</span></label>
+                        <label><input type="checkbox" id="is_active" ${m.is_active?'checked':''}> <span style="font-weight:bold; color:#148F77;">Активно</span></label>
+                        <label><input type="checkbox" id="is_daily" ${m.is_daily?'checked':''}> <span style="font-weight:bold; color:#2980B9;">Ежедневно</span></label>
                     </div>
                 </div>
                 
-                <!-- История и цени от десктоп версията -->
                 <div class="form-row">
                     <div class="form-group">
                         <label style="color:#2C3E50;">➕ Нова покупка (Аптека)</label>
@@ -524,22 +524,20 @@
                 prescription_date: document.getElementById('prescription_date').value || null,
                 health_insurance: document.getElementById('health_insurance').checked,
                 is_active: document.getElementById('is_active').checked,
+                is_daily: document.getElementById('is_daily').checked,
                 notes: document.getElementById('notes').value,
                 description: document.getElementById('desc').value
             };
 
             let currentMedicationId = state.currentId;
 
-            // Запазване или създаване на лекарство
             if (currentMedicationId) {
-                // Редакция на съществуващо
                 await fetch(`${CONFIG.URL}/rest/v1/medications?id=eq.${currentMedicationId}`, {
                     method: 'PATCH',
                     headers: h,
                     body: JSON.stringify(medUpdates)
                 });
             } else {
-                // Създаване на ново
                 const newMedRes = await fetch(`${CONFIG.URL}/rest/v1/medications`, {
                     method: 'POST',
                     headers: h,
@@ -554,7 +552,6 @@
                 }
             }
 
-            // Управление на лицата, за които е предназначено
             await fetch(`${CONFIG.URL}/rest/v1/medication_persons?medication_id=eq.${currentMedicationId}`, {
                 method: 'DELETE',
                 headers: h
@@ -569,7 +566,6 @@
                 });
             }
 
-            // Добавяне на НОВА покупка/цена
             const priceEurVal = document.getElementById('price_eur').value;
             const priceZkVal = document.getElementById('price_zk_eur').value;
             const pharmNameInput = document.getElementById('pharmacy_name').value.trim();
