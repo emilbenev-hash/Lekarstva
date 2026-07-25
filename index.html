@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Здравен мениджър - Мобилен</title>
-    <!-- Добавяне на Tesseract.js за OCR (Разпознаване на текст) -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         const CONFIG = {
@@ -67,7 +66,6 @@
         .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; }
         .fullscreen-content { flex: 1; width: 100%; background: #fff; overflow: hidden; }
 
-        /* Стилове за екрана за сканиране */
         #ocrLoading {
             display: none;
             position: fixed;
@@ -102,8 +100,9 @@
         <div id="activeFilters" class="filter-buttons"></div>
         <div id="dailyFilters" class="filter-buttons"></div>
         
-        <button class="add-btn" style="background: #8E44AD; margin-bottom: 8px;" onclick="document.getElementById('receiptInput').click()">📸 Сканирай касова бележка</button>
-        <input type="file" id="receiptInput" accept="image/*" capture="environment" style="display: none;" onchange="handleReceiptUpload(event)">
+        <!-- Бутон за камера или избор от галерия -->
+        <button class="add-btn" style="background: #8E44AD; margin-bottom: 8px;" onclick="document.getElementById('receiptInput').click()">📸 Снимка / Галерия (Бон)</button>
+        <input type="file" id="receiptInput" accept="image/*" style="display: none;" onchange="handleReceiptUpload(event)">
         
         <button class="add-btn" onclick="openPanel()">➕ Ръчно въвеждане</button>
         <button class="refresh-btn" onclick="refreshData()">Опресни данните</button>
@@ -304,7 +303,6 @@
             renderUI();
         }
 
-        // Обновена функция openPanel, която поддържа предварително попълване на данни (от OCR)
         function openPanel(id = null, prefillData = null) {
             state.currentId = id;
             let m = {};
@@ -663,7 +661,6 @@
             document.getElementById('fsContainer').innerHTML = '';
         }
 
-        // --- ЛОГИКА ЗА СКЕНИРАНЕТО НА КАСОВА БЕЛЕЖКА ---
         async function handleReceiptUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -674,7 +671,6 @@
             statusText.innerText = 'Зареждане на системата...';
 
             try {
-                // Стартираме четенето с български език
                 const result = await Tesseract.recognize(file, 'bul', {
                     logger: m => {
                         if (m.status === 'recognizing text') {
@@ -686,7 +682,6 @@
                 const rawText = result.data.text;
                 console.log("Оригинален текст от бележката:", rawText);
 
-                // 1. Търсим датата (ДД.ММ.ГГГГ)
                 let foundDate = new Date().toISOString().split('T')[0];
                 let displayDate = "";
                 const dateMatch = rawText.match(/\b(\d{2})[\.\/-](\d{2})[\.\/-](\d{2,4})\b/);
@@ -702,7 +697,6 @@
                     displayDate = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
                 }
 
-                // 2. Търсим аптеката
                 let pharmacyName = "Непозната Аптека";
                 const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
                 const pharmacyKeywords = ["АПТЕКА", "ФАРМА", "МАРЕШКИ", "СУБАШКИ", "ПРОПОЛИС", "МЕДЕЯ", "РЕМЕДИУМ", "САНИТА", "SOPha", "СОФАРМА"];
@@ -716,10 +710,8 @@
                 if (pharmacyName === "Непозната Аптека" && lines.length > 0) {
                     pharmacyName = lines[0].trim();
                 }
-                // Изчистване на странни символи от името
                 pharmacyName = pharmacyName.replace(/[^а-яА-Яa-zA-Z0-9\s]/g, '').trim();
 
-                // 3. Подсигуряваме Pharmacy ID за автоматичните записи
                 const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
                 let pharmId = null;
                 let existingPharm = state.pharmacies.find(p => p.name.toLowerCase() === pharmacyName.toLowerCase());
@@ -734,22 +726,18 @@
                     }
                 }
 
-                // 4. Търсим всички артикули/лекарства
                 let parsedItems = [];
-                // Пропускаме редове, които са тотали или служебни
                 const skipWords = ["ОБЩА", "СУМА", "БРОЙ", "ДДС", "КАСОВ", "ФИСКАЛЕН", "ДАНЪК", "ОТСТЪПКА", "В БРОЙ", "БАНКА", "КАРТА", "ПРОМЯНА", "РЕСТО", "КЛИЕНТ"];
                 
                 for (let line of lines) {
                     if (skipWords.some(w => line.toUpperCase().includes(w))) continue;
                     
-                    // Търсим редове завършващи на цена (напр. 5.40, 12,50 лв)
                     const priceMatch = line.match(/(\d+[\.,]\d{2})\s*(?:лв|BGN|lv|nв|А|Б|В|A|B|V|Г|G)?$/i);
                     if (priceMatch) {
                         let priceRaw = parseFloat(priceMatch[1].replace(',', '.'));
                         let priceEur = parseFloat((priceRaw / 1.95583).toFixed(2));
                         
                         let itemName = line.replace(priceMatch[0], '').trim();
-                        // Махане на специални символи в началото/края
                         itemName = itemName.replace(/^[^\wа-яА-Я]+|[^\wа-яА-Я]+$/g, '');
                         
                         if (itemName.length > 2) {
@@ -763,20 +751,17 @@
                 let requiresRefresh = false;
 
                 if (parsedItems.length === 0) {
-                    resultsMsg += "⚠️ Не бяха открити конкретни лекарства и цени.\nМоже да отворите панела ръчно.";
+                    resultsMsg += "⚠️ Не бяха открити автоматични цени/лекарства.\nМоже да ги попълните ръчно от отления текст.";
                     pendingNewMeds.push({ name: "", priceBgn: 0, priceEur: 0 }); 
                 }
 
-                // 5. Проверка за дублиране и автоматично добавяне
                 for (let item of parsedItems) {
-                    // Търсене в базата по име
                     let existingMed = state.meds.find(m => 
                         (m.name_bg && m.name_bg.toLowerCase().includes(item.name.toLowerCase())) ||
                         (item.name.toLowerCase().includes(m.name_bg && m.name_bg.toLowerCase()))
                     );
 
                     if (existingMed) {
-                        // Проверка за съществуваща покупка
                         let isDuplicate = state.purchases.some(p => 
                             String(p.medication_id) === String(existingMed.id) &&
                             p.purchase_date === foundDate &&
@@ -787,7 +772,6 @@
                         if (isDuplicate) {
                             resultsMsg += `⛔ ${item.name} (${item.priceBgn} лв) - ДУБЛИРА СЕ (Записът вече съществува)\n`;
                         } else {
-                            // Автоматично добавяне, ако датата/цената са нови
                             await fetch(`${CONFIG.URL}/rest/v1/purchases`, {
                                 method: 'POST',
                                 headers: h,
@@ -803,7 +787,6 @@
                             requiresRefresh = true;
                         }
                     } else {
-                        // Непознато лекарство
                         resultsMsg += `❓ ${item.name} (${item.priceBgn} лв) - НЕПОЗНАТО ЛЕКАРСТВО\n`;
                         pendingNewMeds.push(item);
                     }
@@ -811,12 +794,10 @@
 
                 if (requiresRefresh) await refreshData();
 
-                // 6. Обновяване на UI спрямо резултатите
                 if (pendingNewMeds.length > 0) {
                     let firstNew = pendingNewMeds[0];
                     let allTextForNotes = `--- ОТЧЕТ ОТ СКЕНИРАНЕТО ---\n${resultsMsg}\n\n--- ОРИГИНАЛЕН ТЕКСТ (За проверка) ---\n${rawText}`;
                     
-                    // Отваряме панела с попълнени данни за първото непознато лекарство
                     openPanel(null, {
                         name_bg: firstNew.name,
                         price_eur: firstNew.priceEur,
@@ -825,9 +806,9 @@
                         notes: allTextForNotes
                     });
                     
-                    alert(`Сканирането приключи!\n\nОткрихме нови лекарства. Панелът е попълнен с първото от тях. Моля, прегледай го и го запази.\n\n${resultsMsg}`);
+                    alert(`Сканирането завърши!\n\nАко разпознаването е пропуснало лекарства, целият текст е запазен в полето "Бележки", за да можеш да го копираш.\n\n${resultsMsg}`);
                 } else {
-                    alert(`Сканирането приключи!\n\n${resultsMsg}`);
+                    alert(`Сканирането завърши!\n\n${resultsMsg}`);
                 }
 
             } catch (error) {
@@ -835,7 +816,7 @@
                 alert("Възникна грешка при разчитането на снимката.");
             } finally {
                 loadingOverlay.style.display = 'none';
-                event.target.value = ''; // Нулираме инпута
+                event.target.value = '';
             }
         }
         
