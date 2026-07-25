@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Здравен мениджър - Мобилен</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- Добавена библиотека за четене на QR кодове -->
+    <script src="https://cdn.jsdelivr.net/npm/jsQR@1.4.0/dist/jsQR.js"></script>
     <script>
         const CONFIG = {
             URL: "https://xwnjuqqudkjkqdkrndhg.supabase.co",
@@ -100,9 +102,9 @@
         <div id="activeFilters" class="filter-buttons"></div>
         <div id="dailyFilters" class="filter-buttons"></div>
         
-        <!-- Бутон за камера или избор от галерия -->
-        <button class="add-btn" style="background: #8E44AD; margin-bottom: 8px;" onclick="document.getElementById('receiptInput').click()">📸 Снимка / Галерия (Бон)</button>
-        <input type="file" id="receiptInput" accept="image/*" style="display: none;" onchange="handleReceiptUpload(event)">
+        <!-- Бутон за камера с директен запис в галерията на телефона -->
+        <button class="add-btn" style="background: #8E44AD; margin-bottom: 8px;" onclick="document.getElementById('receiptInput').click()">📸 Снимай бон (QR + Текст)</button>
+        <input type="file" id="receiptInput" accept="image/*" capture="environment" style="display: none;" onchange="handleReceiptUpload(event)">
         
         <button class="add-btn" onclick="openPanel()">➕ Ръчно въвеждане</button>
         <button class="refresh-btn" onclick="refreshData()">Опресни данните</button>
@@ -110,8 +112,8 @@
     
     <div id="ocrLoading">
         <div class="spinner">⚙️</div>
-        <h3 id="ocrStatus">Подготовка за четене...</h3>
-        <p style="font-size: 13px; margin-top: 15px; color: #ccc; text-align: center; padding: 0 20px;">Моля, изчакайте. Разпознаването на текст отнема няколко секунди.</p>
+        <h3 id="ocrStatus">Сканиране на бон...</h3>
+        <p style="font-size: 13px; margin-top: 15px; color: #ccc; text-align: center; padding: 0 20px;">Четене на QR код и разпознаване на текст...</p>
     </div>
 
     <div class="grid" id="medGrid"></div>
@@ -661,6 +663,7 @@
             document.getElementById('fsContainer').innerHTML = '';
         }
 
+        // Функция за обработка на снимка, четене на QR код + запазване в галерия
         async function handleReceiptUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -668,22 +671,46 @@
             const loadingOverlay = document.getElementById('ocrLoading');
             const statusText = document.getElementById('ocrStatus');
             loadingOverlay.style.display = 'flex';
-            statusText.innerText = 'Зареждане на системата...';
+            statusText.innerText = 'Анализиране на снимката и QR кода...';
 
             try {
-                const result = await Tesseract.recognize(file, 'bul', {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            statusText.innerText = 'Сканиране: ' + Math.round(m.progress * 100) + '%';
-                        }
-                    }
+                // Автоматично изтегляне / запазване на снимката локално към устройството/галерията
+                const imageUrl = URL.createObjectURL(file);
+                const downloadLink = document.createElement('a');
+                downloadLink.href = imageUrl;
+                downloadLink.download = `receipt_${new Date().toISOString().slice(0,10)}.jpg`;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+
+                // Зареждане на изображението за четене на QR код чрез canvas и jsQR
+                const img = new Image();
+                img.src = imageUrl;
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
                 });
 
-                const rawText = result.data.text;
-                console.log("Оригинален текст от бележката:", rawText);
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                context.drawImage(img, 0, 0, img.width, img.height);
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                
+                const qrCodeResult = jsQR(imageData.data, imageData.width, imageData.height);
+                let qrText = "";
+                if (qrCodeResult) {
+                    qrText = qrCodeResult.data;
+                    console.log("Разпознат QR код от бона:", qrText);
+                }
+
+                // Едновременно пускаме и OCR за текста на бележката като резервен вариант
+                statusText.innerText = 'Четене на текст от бележката...';
+                const tesseractResult = await Tesseract.recognize(file, 'bul');
+                const rawText = tesseractResult.data.text;
 
                 let foundDate = new Date().toISOString().split('T')[0];
-                let displayDate = "";
                 const dateMatch = rawText.match(/\b(\d{2})[\.\/-](\d{2})[\.\/-](\d{2,4})\b/);
                 if (dateMatch) {
                     let d = dateMatch[1];
@@ -691,129 +718,33 @@
                     let y = dateMatch[3];
                     if (y.length === 2) y = '20' + y;
                     foundDate = `${y}-${m}-${d}`;
-                    displayDate = `${d}.${m}.${y}`;
-                } else {
-                    const d = new Date();
-                    displayDate = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
                 }
 
-                let pharmacyName = "Непозната Аптека";
+                let pharmacyName = "Аптека";
                 const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
                 const pharmacyKeywords = ["АПТЕКА", "ФАРМА", "МАРЕШКИ", "СУБАШКИ", "ПРОПОЛИС", "МЕДЕЯ", "РЕМЕДИУМ", "САНИТА", "SOPha", "СОФАРМА"];
-                
                 for (let line of lines) {
                     if (pharmacyKeywords.some(kw => line.toUpperCase().includes(kw))) {
-                        pharmacyName = line.trim();
+                        pharmacyName = line;
                         break;
                     }
                 }
-                if (pharmacyName === "Непозната Аптека" && lines.length > 0) {
-                    pharmacyName = lines[0].trim();
-                }
-                pharmacyName = pharmacyName.replace(/[^а-яА-Яa-zA-Z0-9\s]/g, '').trim();
 
-                const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
-                let pharmId = null;
-                let existingPharm = state.pharmacies.find(p => p.name.toLowerCase() === pharmacyName.toLowerCase());
-                if (existingPharm) {
-                    pharmId = existingPharm.id;
-                } else {
-                    const newPharmRes = await fetch(`${CONFIG.URL}/rest/v1/pharmacies`, { method: 'POST', headers: h, body: JSON.stringify({ name: pharmacyName }) });
-                    const newPharmData = await newPharmRes.json();
-                    if (newPharmData && newPharmData.length > 0) {
-                        pharmId = newPharmData[0].id;
-                        state.pharmacies.push(newPharmData[0]);
-                    }
-                }
+                let summaryNotes = `--- QR КОД ЛИНК ---\n${qrText || 'Няма разпознат QR код'}\n\n--- ОРИГИНАЛЕН ТЕКСТ ---\n${rawText}`;
 
-                let parsedItems = [];
-                const skipWords = ["ОБЩА", "СУМА", "БРОЙ", "ДДС", "КАСОВ", "ФИСКАЛЕН", "ДАНЪК", "ОТСТЪПКА", "В БРОЙ", "БАНКА", "КАРТА", "ПРОМЯНА", "РЕСТО", "КЛИЕНТ"];
-                
-                for (let line of lines) {
-                    if (skipWords.some(w => line.toUpperCase().includes(w))) continue;
-                    
-                    const priceMatch = line.match(/(\d+[\.,]\d{2})\s*(?:лв|BGN|lv|nв|А|Б|В|A|B|V|Г|G)?$/i);
-                    if (priceMatch) {
-                        let priceRaw = parseFloat(priceMatch[1].replace(',', '.'));
-                        let priceEur = parseFloat((priceRaw / 1.95583).toFixed(2));
-                        
-                        let itemName = line.replace(priceMatch[0], '').trim();
-                        itemName = itemName.replace(/^[^\wа-яА-Я]+|[^\wа-яА-Я]+$/g, '');
-                        
-                        if (itemName.length > 2) {
-                            parsedItems.push({ name: itemName, priceBgn: priceRaw, priceEur: priceEur });
-                        }
-                    }
-                }
+                openPanel(null, {
+                    name_bg: "",
+                    price_eur: "",
+                    pharmacy_name: pharmacyName,
+                    purchase_date: foundDate,
+                    notes: summaryNotes
+                });
 
-                let resultsMsg = `Аптека: ${pharmacyName}\nДата: ${displayDate}\n\n`;
-                let pendingNewMeds = [];
-                let requiresRefresh = false;
-
-                if (parsedItems.length === 0) {
-                    resultsMsg += "⚠️ Не бяха открити автоматични цени/лекарства.\nМоже да ги попълните ръчно от отления текст.";
-                    pendingNewMeds.push({ name: "", priceBgn: 0, priceEur: 0 }); 
-                }
-
-                for (let item of parsedItems) {
-                    let existingMed = state.meds.find(m => 
-                        (m.name_bg && m.name_bg.toLowerCase().includes(item.name.toLowerCase())) ||
-                        (item.name.toLowerCase().includes(m.name_bg && m.name_bg.toLowerCase()))
-                    );
-
-                    if (existingMed) {
-                        let isDuplicate = state.purchases.some(p => 
-                            String(p.medication_id) === String(existingMed.id) &&
-                            p.purchase_date === foundDate &&
-                            Math.abs(p.price_eur - item.priceEur) < 0.05 &&
-                            String(p.pharmacy_id) === String(pharmId)
-                        );
-
-                        if (isDuplicate) {
-                            resultsMsg += `⛔ ${item.name} (${item.priceBgn} лв) - ДУБЛИРА СЕ (Записът вече съществува)\n`;
-                        } else {
-                            await fetch(`${CONFIG.URL}/rest/v1/purchases`, {
-                                method: 'POST',
-                                headers: h,
-                                body: JSON.stringify({ 
-                                    medication_id: existingMed.id, 
-                                    price_eur: item.priceEur, 
-                                    price_zk_eur: 0,
-                                    pharmacy_id: pharmId, 
-                                    purchase_date: foundDate 
-                                })
-                            });
-                            resultsMsg += `✅ ${item.name} (${item.priceBgn} лв) - УСПЕШНО ДОБАВЕНА НОВА ПОКУПКА\n`;
-                            requiresRefresh = true;
-                        }
-                    } else {
-                        resultsMsg += `❓ ${item.name} (${item.priceBgn} лв) - НЕПОЗНАТО ЛЕКАРСТВО\n`;
-                        pendingNewMeds.push(item);
-                    }
-                }
-
-                if (requiresRefresh) await refreshData();
-
-                if (pendingNewMeds.length > 0) {
-                    let firstNew = pendingNewMeds[0];
-                    let allTextForNotes = `--- ОТЧЕТ ОТ СКЕНИРАНЕТО ---\n${resultsMsg}\n\n--- ОРИГИНАЛЕН ТЕКСТ (За проверка) ---\n${rawText}`;
-                    
-                    openPanel(null, {
-                        name_bg: firstNew.name,
-                        price_eur: firstNew.priceEur,
-                        pharmacy_name: pharmacyName,
-                        purchase_date: foundDate,
-                        notes: allTextForNotes
-                    });
-                    
-                    alert(`Сканирането завърши!\n\nАко разпознаването е пропуснало лекарства, целият текст е запазен в полето "Бележки", за да можеш да го копираш.\n\n${resultsMsg}`);
-                } else {
-                    alert(`Сканирането завърши!\n\n${resultsMsg}`);
-                }
+                alert("Снимката е свалена на телефона/галерията и бонът е анализиран! Можете да попълните данните.");
 
             } catch (error) {
-                console.error("Грешка при OCR:", error);
-                alert("Възникна грешка при разчитането на снимката.");
+                console.error("Грешка при обработка на бона:", error);
+                alert("Възникна грешка при обработката на снимката.");
             } finally {
                 loadingOverlay.style.display = 'none';
                 event.target.value = '';
