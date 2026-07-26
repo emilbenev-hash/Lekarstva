@@ -2,781 +2,210 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Здравен мениджър - Мобилен</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Здравно приложение - Скенер на бонове</title>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Tesseract.js OCR -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsQR@1.4.0/dist/jsQR.js"></script>
-    <script>
-        const CONFIG = {
-            URL: "https://xwnjuqqudkjkqdkrndhg.supabase.co",
-            KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34"
-        };
-    </script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #667eea; padding: 8px; font-size: 14px; }
-        
-        .header { background: #E74C3C; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .header h1 { font-size: 20px; }
-        
-        .filters { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .search-input { width: 100%; padding: 12px; font-size: 16px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; }
-        .filter-buttons { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
-        .filter-btn { padding: 10px 0; flex: 1; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 6px; font-size: 12px; font-weight: bold; min-width: 30%; text-align: center; }
-        .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
-        
-        .add-btn { width: 100%; padding: 12px; background: #E67E22; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; margin-bottom: 8px; cursor: pointer; }
-        .refresh-btn { width: 100%; padding: 12px; background: #148F77; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
-        
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; padding-bottom: 20px; }
-        .card { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 13px; cursor: pointer; }
-        .card h3 { font-size: 16px; margin-bottom: 4px; color: #2C3E50; }
-        .card p { margin-bottom: 3px; color: #555; }
-        .card-price { color: #148F77; font-weight: bold; font-size: 14px; margin-bottom: 6px; }
-        
-        .panel { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f4f6f9; display: none; flex-direction: column; z-index: 1000; }
-        .panel-header { background: #fff; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 10; }
-        .panel-header h2 { font-size: 15px; margin: 0; color: #2C3E50; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 45%; }
-        
-        .header-buttons { display: flex; gap: 6px; }
-        .save-header-btn { background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; }
-        .close-panel-btn { background: #E74C3C; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; }
-        
-        .panel-body-content { padding: 12px; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        
-        .form-row { display: flex; flex-direction: column; gap: 0; }
-        .form-group { margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .form-group label { display: block; font-size: 11px; font-weight: bold; color: #4A5568; margin-bottom: 4px; text-transform: uppercase; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #CBD5E0; border-radius: 6px; background: #fff; }
-        .form-group textarea { height: 120px; resize: none; font-size: 13px; }
-        
-        .checkbox-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
-        .checkbox-group label { font-size: 13px; display: flex; align-items: center; gap: 4px; font-weight: normal; color: #2D3748; }
-        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; }
-
-        .doc-btn { background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; font-size: 12px; margin-top: 4px; display: inline-block; text-decoration: none; font-weight: bold; cursor: pointer; }
-        .doc-item { display: flex; justify-content: space-between; align-items: center; background: #EDF2F7; padding: 8px; border-radius: 6px; margin-bottom: 6px; }
-        
-        .history-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
-        .history-table th { padding: 8px 6px; background: #f1f5f9; text-align: left; border-bottom: 1px solid #ddd; color: #4A5568; }
-        .history-table td { padding: 8px 6px; border-bottom: 1px solid #eee; }
-        
-        .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; }
-        .fullscreen-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #1A202C; color: white; }
-        .fullscreen-header h2 { font-size: 15px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 70%; }
-        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; }
-        .fullscreen-content { flex: 1; width: 100%; background: #fff; overflow: hidden; }
-
-        #ocrLoading {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.85);
-            z-index: 9999;
-            color: white;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .spinner {
-            font-size: 50px;
-            margin-bottom: 20px;
-            animation: spin 2s linear infinite;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        
-        @media (min-width: 600px) {
-            .form-row { flex-direction: row; gap: 8px; }
-            .form-group { flex: 1; }
-        }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; }
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+        .btn { background-color: #3498db; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; transition: background 0.3s; flex: 1; text-align: center; }
+        .btn:hover { background-color: #2980b9; }
+        .btn-success { background-color: #2ecc71; }
+        .btn-success:hover { background-color: #27ae60; }
+        input[type="file"] { display: none; }
+        #status { text-align: center; font-weight: bold; margin-top: 15px; color: #e67e22; }
+        #log { margin-top: 20px; font-size: 14px; background: #ecf0f1; padding: 10px; border-radius: 6px; max-height: 180px; overflow-y: auto; }
     </style>
 </head>
 <body>
-    <div class="header"><h1>📱 Здравен мениджър</h1></div>
-    
-    <div class="filters">
-        <input type="text" id="search" class="search-input" placeholder="Търси лекарство..." oninput="renderUI()">
-        <div id="personFilters" class="filter-buttons"></div>
-        <div id="zokFilters" class="filter-buttons"></div>
-        <div id="activeFilters" class="filter-buttons"></div>
-        <div id="dailyFilters" class="filter-buttons"></div>
+    <div class="container">
+        <h2>Скенер на фискални бонове</h2>
         
-        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-            <button class="add-btn" style="background: #8E44AD; margin-bottom: 0; flex: 1;" onclick="document.getElementById('receiptCameraInput').click()">📸 Снимай бон</button>
-            <button class="add-btn" style="background: #2980B9; margin-bottom: 0; flex: 1;" onclick="document.getElementById('receiptGalleryInput').click()">🖼️ Избери от галерия</button>
+        <div class="btn-group">
+            <button class="btn btn-success" onclick="document.getElementById('cameraInput').click()">Снимай бон</button>
+            <button class="btn" onclick="document.getElementById('galleryInput').click()">Избери от галерия</button>
         </div>
-        
+
         <!-- Скрити полета за камера и галерия -->
-        <input type="file" id="receiptCameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleReceiptUpload(event)">
-        <input type="file" id="receiptGalleryInput" accept="image/*" style="display: none;" onchange="handleReceiptUpload(event)">
-        
-        <button class="add-btn" onclick="openPanel()">➕ Ръчно въвеждане</button>
-        <button class="refresh-btn" onclick="refreshData()">Опресни данните</button>
-    </div>
-    
-    <div id="ocrLoading">
-        <div class="spinner">⚙️</div>
-        <h3 id="ocrStatus">Сканиране на бон...</h3>
-        <p style="font-size: 13px; margin-top: 15px; color: #ccc; text-align: center; padding: 0 20px;">Анализ и подготовка на данните...</p>
-    </div>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleReceipt(event)">
+        <input type="file" id="galleryInput" accept="image/*" onchange="handleReceipt(event)">
 
-    <div class="grid" id="medGrid"></div>
-    
-    <div id="editPanel" class="panel">
-        <div class="panel-header">
-            <h2 id="panelTitle">Редактиране</h2>
-            <div class="header-buttons">
-                <button class="save-header-btn" onclick="saveMed()">💾 Запази</button>
-                <button class="close-panel-btn" onclick="document.getElementById('editPanel').style.display='none'">X Затвори</button>
-            </div>
-        </div>
-        <div class="panel-body-content" id="panelBody"></div>
-    </div>
-
-    <div id="fullscreenModal" class="fullscreen-modal">
-        <div class="fullscreen-header">
-            <h2 id="fsTitle">Документ</h2>
-            <button class="close-fs-btn" onclick="closeFullscreen()">X Затвори</button>
-        </div>
-        <div class="fullscreen-content" id="fsContainer"></div>
+        <div id="status">Готово за сканиране</div>
+        <div id="log"></div>
     </div>
 
     <script>
-        let state = { selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedDaily: 'all', meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], currentId: null };
+        // Инициализация на Supabase (заменете с вашите реални ключове)
+        const SUPABASE_URL = 'ВАШИЯТ_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'ВАШИЯТ_SUPABASE_ANON_KEY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        async function refreshData() {
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
-            try {
-                const [medsRes, purchRes, pharmRes, docRes, mcRes, catRes, manRes, persRes, medPersRes, docsRes, medDocsRes] = await Promise.all([
-                    fetch(CONFIG.URL + '/rest/v1/medications?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/purchases?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/pharmacies?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/doctors?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/medical_centers?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/categories?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/manufacturers?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/persons?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/medication_persons?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/documents?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/medication_documents?select=*', { headers: h })
-                ]);
-
-                state.meds = medsRes.ok ? await medsRes.json() : [];
-                state.purchases = purchRes.ok ? await purchRes.json() : [];
-                state.pharmacies = pharmRes.ok ? await pharmRes.json() : [];
-                state.doctors = docRes.ok ? await docRes.json() : [];
-                state.medicalCenters = mcRes.ok ? await mcRes.json() : [];
-                state.categories = catRes.ok ? await catRes.json() : [];
-                state.manufacturers = manRes.ok ? await manRes.json() : [];
-                state.persons = persRes.ok ? await persRes.json() : [];
-                state.medicationPersons = medPersRes.ok ? await medPersRes.json() : [];
-                state.documents = docsRes.ok ? await docsRes.json() : [];
-                state.medication_documents = medDocsRes.ok ? await medDocsRes.json() : [];
-
-                renderUI();
-            } catch (e) { console.error("Грешка при зареждане:", e); }
+        function logMessage(msg) {
+            const logEl = document.getElementById('log');
+            logEl.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            logEl.scrollTop = logEl.scrollHeight;
         }
 
-        function renderUI() {
-            document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
-            document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без ЗОК':'Всички'}</button>`).join('');
-            document.getElementById('activeFilters').innerHTML = ['true', 'false', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':a==='false'?'Неактивни':'Всички'}</button>`).join('');
-            document.getElementById('dailyFilters').innerHTML = ['true', 'false', 'all'].map(d => `<button class="filter-btn ${state.selectedDaily===d?'active':''}" onclick="state.selectedDaily='${d}'; renderUI()">${d==='true'?'Ежедневни':d==='false'?'Неежедневни':'Всички'}</button>`).join('');
-
-            const search = document.getElementById('search').value.toLowerCase().trim();
-            
-            document.getElementById('medGrid').innerHTML = state.meds.filter(m => {
-                const personsForMed = state.medicationPersons.filter(mp => String(mp.medication_id) === String(m.id)).map(mp => {
-                    const pObj = state.persons.find(p => String(p.id) === String(mp.person_id));
-                    return pObj ? pObj.name.toLowerCase() : '';
-                });
-
-                if (search !== '') {
-                    const matchNameBg = m.name_bg && m.name_bg.toLowerCase().includes(search);
-                    const matchNameLatin = m.name_latin && m.name_latin.toLowerCase().includes(search);
-                    return matchNameBg || matchNameLatin;
-                }
-
-                const matchPerson = state.selectedPerson === 'all' || personsForMed.includes(state.selectedPerson);
-                const matchZok = state.selectedZok === 'all' || m.health_insurance === (state.selectedZok === 'true');
-                const matchActive = state.selectedActive === 'all' || m.is_active === (state.selectedActive === 'true');
-                const matchDaily = state.selectedDaily === 'all' || m.is_daily === (state.selectedDaily === 'true');
-
-                return matchPerson && matchZok && matchActive && matchDaily;
-            }).map(m => {
-                const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
-                let priceHtml = 'Няма цена';
-                
-                if (medPurchases.length > 0) {
-                    const sortedPurchases = [...medPurchases].sort((a, b) => {
-                        const dateA = a.purchase_date ? new Date(a.purchase_date) : new Date(0);
-                        const dateB = b.purchase_date ? new Date(b.purchase_date) : new Date(0);
-                        if (dateB - dateA !== 0) return dateB - dateA;
-                        return (b.id || 0) - (a.id || 0);
-                    });
-
-                    const latestPerPharmacy = [];
-                    const seenPharmacies = new Set();
-                    sortedPurchases.forEach(p => {
-                        const pharmKey = p.pharmacy_id ? String(p.pharmacy_id) : 'unspecified';
-                        if (!seenPharmacies.has(pharmKey)) {
-                            seenPharmacies.add(pharmKey);
-                            latestPerPharmacy.push(p);
-                        }
-                    });
-
-                    if (m.health_insurance) {
-                        const validZok = latestPerPharmacy.filter(p => p.price_zk_eur !== null && p.price_zk_eur !== undefined);
-                        if (validZok.length > 0) {
-                            validZok.sort((a, b) => a.price_zk_eur - b.price_zk_eur);
-                            const bestZok = validZok[0];
-                            const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestZok.pharmacy_id));
-                            const pharmName = pharm ? pharm.name : 'Аптека';
-                            
-                            const validStd = latestPerPharmacy.filter(p => p.price_eur !== null && p.price_eur !== undefined);
-                            validStd.sort((a, b) => a.price_eur - b.price_eur);
-                            const bestStd = validStd.length > 0 ? validStd[0] : null;
-                            
-                            if (bestZok.price_zk_eur === 0) {
-                                priceHtml = `<b>ЗОК:</b> 0.00 EUR (${pharmName})`;
-                            } else {
-                                priceHtml = `<b>ЗОК:</b> ${bestZok.price_zk_eur.toFixed(2)} EUR (${pharmName})<br><span style="color:#666; font-size:12px; font-weight:normal;">Станд.: ${bestStd ? bestStd.price_eur.toFixed(2) : '0'} EUR</span>`;
-                            }
-                        } else {
-                            const validStd = latestPerPharmacy.filter(p => p.price_eur !== null && p.price_eur !== undefined);
-                            if (validStd.length > 0) {
-                                validStd.sort((a, b) => a.price_eur - b.price_eur);
-                                const bestStd = validStd[0];
-                                const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestStd.pharmacy_id));
-                                priceHtml = `${bestStd.price_eur.toFixed(2)} EUR (${pharm ? pharm.name : ''})`;
-                            }
-                        }
-                    } else {
-                        const validStd = latestPerPharmacy.filter(p => p.price_eur !== null && p.price_eur !== undefined);
-                        if (validStd.length > 0) {
-                            validStd.sort((a, b) => a.price_eur - b.price_eur);
-                            const bestStd = validStd[0];
-                            const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestStd.pharmacy_id));
-                            priceHtml = `${bestStd.price_eur.toFixed(2)} EUR (${pharm ? pharm.name : 'Аптека'})`;
-                        }
-                    }
-                }
-
-                const dosageText = m.dosage ? `Дозировка: ${m.dosage}` : 'Няма дозировка';
-                const doctor = state.doctors.find(d => String(d.id) === String(m.doctor_id));
-                const mc = state.medicalCenters.find(c => String(c.id) === String(m.prescription_medical_center_id));
-                const assignedPersons = state.medicationPersons.filter(mp => String(mp.medication_id) === String(m.id)).map(mp => {
-                    const p = state.persons.find(x => String(x.id) === String(mp.person_id));
-                    return p ? p.name : '';
-                }).filter(Boolean).join(', ');
-
-                let displayName = m.name_bg || 'Без име';
-                if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
-                if (m.volume_unit) displayName += ` ${m.volume_unit}`;
-
-                const linkedDocIds = state.medication_documents.filter(md => String(md.medication_id) === String(m.id)).map(md => String(md.document_id));
-                const medDocs = state.documents.filter(doc => linkedDocIds.includes(String(doc.id)));
-
-                let docButtonsHtml = '';
-                if (medDocs.length > 0) {
-                    docButtonsHtml = `<div style="margin-top: 8px; border-top: 1px dashed #ddd; padding-top: 6px;">`;
-                    medDocs.forEach(doc => {
-                        const docName = doc.file_name || doc.title || 'Документ';
-                        docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${doc.file_url}', '${docName}')">📄 ${docName}</button> `;
-                    });
-                    docButtonsHtml += `</div>`;
-                }
-
-                return `
-                    <div class="card" onclick="openPanel('${m.id}')">
-                        <h3>${displayName} ${m.is_daily ? ' 🔄' : ''}</h3>
-                        <p class="card-price">💶 ${priceHtml}</p>
-                        <p>${dosageText}</p>
-                        ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold; margin-top:4px;">За: ${assignedPersons}</p>` : ''}
-                        ${doctor ? `<p style="color:#444;">Лекар: ${doctor.name}</p>` : ''}
-                        ${mc ? `<p style="color:#444;">Център: ${mc.name}</p>` : ''}
-                        ${docButtonsHtml}
-                    </div>`;
-            }).join('');
-        }
-
-        async function deletePurchase(purchaseId) {
-            if (!confirm('Сигурни ли сте, че искате да изтриете този запис на цена?')) return;
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
-            await fetch(`${CONFIG.URL}/rest/v1/purchases?id=eq.${purchaseId}`, { method: 'DELETE', headers: h });
-            state.purchases = state.purchases.filter(p => String(p.id) !== String(purchaseId));
-            openPanel(state.currentId);
-            renderUI();
-        }
-
-        function openPanel(id = null, prefillData = null) {
-            state.currentId = id;
-            let m = {};
-            let medPurchases = [];
-            let currentPersonsIds = [];
-            let currentMedDocs = [];
-            
-            if (id) {
-                m = state.meds.find(x => String(x.id) === String(id)) || {};
-                document.getElementById('panelTitle').innerText = m.name_bg || 'Редактиране';
-                
-                medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
-                medPurchases.sort((a, b) => {
-                    const dateA = a.purchase_date ? new Date(a.purchase_date) : new Date(0);
-                    const dateB = b.purchase_date ? new Date(b.purchase_date) : new Date(0);
-                    if (dateB - dateA !== 0) return dateB - dateA;
-                    return (b.id || 0) - (a.id || 0);
-                });
-
-                currentPersonsIds = state.medicationPersons.filter(mp => String(mp.medication_id) === String(m.id)).map(mp => String(mp.person_id));
-                
-                const linkedDocIds = state.medication_documents.filter(md => String(md.medication_id) === String(m.id)).map(md => String(md.document_id));
-                currentMedDocs = state.documents.filter(doc => linkedDocIds.includes(String(doc.id)));
-            } else {
-                document.getElementById('panelTitle').innerText = 'Ново лекарство';
-                m = { health_insurance: false, is_active: true, is_daily: false };
-                if (prefillData) {
-                    m.name_bg = prefillData.name_bg;
-                }
-            }
-
-            let pEur = prefillData ? prefillData.price_eur : '';
-            let pZk = '';
-            let pharmNameVal = prefillData ? prefillData.pharmacy_name : '';
-            const notesVal = prefillData && prefillData.notes ? prefillData.notes : (m.notes || '');
-            
-            let purchasesHistoryHtml = '<p style="font-size:13px; color:#777; margin-top:4px;">Няма въведена история за това лекарство.</p>';
-            
-            if (medPurchases.length > 0) {
-                purchasesHistoryHtml = `
-                    <div style="overflow-x:auto;">
-                        <table class="history-table">
-                            <thead>
-                                <tr>
-                                    <th>Дата</th>
-                                    <th>Аптека</th>
-                                    <th>Ст. (€)</th>
-                                    ${m.health_insurance ? '<th>ЗОК (€)</th>' : ''}
-                                    <th style="text-align:center;">Опц.</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${medPurchases.map(p => {
-                                    const ph = state.pharmacies.find(x => String(x.id) === String(p.pharmacy_id));
-                                    const pName = ph ? ph.name : 'Непосочена';
-                                    const dStr = p.purchase_date || '-';
-                                    const eur = (p.price_eur !== null && p.price_eur !== undefined) ? p.price_eur.toFixed(2) : '-';
-                                    const zk = (p.price_zk_eur !== null && p.price_zk_eur !== undefined) ? p.price_zk_eur.toFixed(2) : '-';
-                                    return `
-                                        <tr>
-                                            <td style="white-space:nowrap;">${dStr}</td>
-                                            <td><b>${pName}</b></td>
-                                            <td>${eur}</td>
-                                            ${m.health_insurance ? `<td style="color:#E74C3C; font-weight:bold;">${zk}</td>` : ''}
-                                            <td style="text-align:center;">
-                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:6px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">X</button>
-                                            </td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            }
-
-            const currentDocObj = state.doctors.find(d => String(d.id) === String(m.doctor_id));
-            const currentDocName = currentDocObj ? currentDocObj.name : '';
-
-            const currentMcObj = state.medicalCenters.find(c => String(c.id) === String(m.prescription_medical_center_id));
-            const currentMcName = currentMcObj ? currentMcObj.name : '';
-
-            const docDatalist = state.doctors.map(d => `<option value="${d.name}">`).join('');
-            const mcDatalist = state.medicalCenters.map(mc => `<option value="${mc.name}">`).join('');
-            const pharmDatalist = state.pharmacies.map(ph => `<option value="${ph.name}">`).join('');
-
-            const catOpts = '<option value="">-- Избери категория --</option>' + state.categories.map(c => `<option value="${c.id}" ${String(m.category_id) === String(c.id) ? 'selected' : ''}>${c.name}</option>`).join('');
-            const manOpts = '<option value="">-- Избери производител --</option>' + state.manufacturers.map(mn => `<option value="${mn.id}" ${String(m.manufacturer_id) === String(mn.id) ? 'selected' : ''}>${mn.name}</option>`).join('');
-
-            const personsCheckboxes = state.persons.map(p => {
-                const checked = currentPersonsIds.includes(String(p.id)) ? 'checked' : '';
-                return `<label><input type="checkbox" name="person_checkbox" value="${p.id}" ${checked}> <span>${p.name}</span></label>`;
-            }).join('');
-
-            let docsListHtml = '<p style="font-size:13px; color:#718096; margin-top: 4px;">Няма закачени рецепти/документи</p>';
-            if (currentMedDocs.length > 0) {
-                docsListHtml = currentMedDocs.map(doc => {
-                    const docName = doc.file_name || doc.title || 'Документ';
-                    return `
-                    <div class="doc-item">
-                        <div>
-                            <strong style="color:#2B6CB0; display:block; font-size:14px;">📄 ${docName}</strong>
-                        </div>
-                        <button type="button" class="doc-btn" onclick="openFullscreen('${doc.file_url}', '${docName}')" style="margin:0; padding: 10px 14px; font-size:14px;">Отвори</button>
-                    </div>`;
-                }).join('');
-            } else if (!id) {
-                docsListHtml = '<p style="font-size:13px; color:#718096; margin-top: 4px;">Документи могат да се преглеждат само на вече създадено лекарство.</p>';
-            }
-
-            const todayStr = (prefillData && prefillData.purchase_date) ? prefillData.purchase_date : new Date().toISOString().split('T')[0];
-
-            document.getElementById('panelBody').innerHTML = `
-                <div class="form-row">
-                    <div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div>
-                    <div class="form-group"><label>Име (Латински)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div>
-                </div>
-                
-                <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
-                
-                <div class="form-row">
-                    <div class="form-group"><label>Категория</label><select id="category_id">${catOpts}</select></div>
-                    <div class="form-group"><label>Производител</label><select id="manufacturer_id">${manOpts}</select></div>
-                </div>
-                
-                <div class="form-group">
-                    <label>За кого е предназначено:</label>
-                    <div class="checkbox-group">${personsCheckboxes || 'Няма лица'}</div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group"><label>Количество</label><input type="text" id="vol" value="${m.volume_quantity !== null && m.volume_quantity !== undefined ? m.volume_quantity : ''}"></div>
-                    <div class="form-group"><label>Единица (мл, мг...)</label><input type="text" id="unit" value="${m.volume_unit||''}"></div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group"><label>Форма (табл, капс...)</label><input type="text" id="form" value="${m.form||''}"></div>
-                    <div class="form-group"><label>Брой в опаковка</label><input type="number" id="qty" value="${m.form_quantity||''}"></div>
-                </div>
-                
-                <div class="form-group"><label>Дозировка / Прием</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
-                
-                <div class="form-group" style="border: 1px solid #2980B9; background:#EBF8FF;">
-                    <label style="color: #2B6CB0; font-size:12px;">📑 Закачени Рецепти и Документи</label>
-                    <div style="margin-top: 6px;">${docsListHtml}</div>
-                </div>
-
-                <div class="form-group">
-                    <label>Предписващ лекар</label>
-                    <input type="text" id="doctor_name" list="doctors_list" value="${currentDocName}" placeholder="Избери или въведи...">
-                    <datalist id="doctors_list">${docDatalist}</datalist>
-                </div>
-                
-                <div class="form-group">
-                    <label>Болница / Лечебно заведение</label>
-                    <input type="text" id="medical_center_name" list="mc_list" value="${currentMcName}" placeholder="Избери или въведи...">
-                    <datalist id="mc_list">${mcDatalist}</datalist>
-                </div>
-                
-                <div class="form-group"><label>Дата на рецептата</label><input type="date" id="prescription_date" value="${m.prescription_date||''}"></div>
-                
-                <div class="form-group">
-                    <div class="checkbox-group">
-                        <label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> <span style="font-weight:bold; color:#E74C3C;">ЗОК</span></label>
-                        <label><input type="checkbox" id="is_active" ${m.is_active?'checked':''}> <span style="font-weight:bold; color:#148F77;">Активно</span></label>
-                        <label><input type="checkbox" id="is_daily" ${m.is_daily?'checked':''}> <span style="font-weight:bold; color:#2980B9;">Ежедневно</span></label>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label style="color:#2C3E50;">➕ Нова покупка (Аптека)</label>
-                        <input type="text" id="pharmacy_name" list="pharmacies_list" value="${pharmNameVal}" placeholder="Въведи аптека...">
-                        <datalist id="pharmacies_list">${pharmDatalist}</datalist>
-                    </div>
-                    <div class="form-group">
-                        <label>Дата на покупка</label>
-                        <input type="date" id="purchase_date" value="${todayStr}">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group"><label>Стандартна цена (EUR)</label><input type="number" step="0.01" id="price_eur" value="${pEur}"></div>
-                    <div class="form-group"><label>Цена по ЗОК (EUR)</label><input type="number" step="0.01" id="price_zk_eur" value="${pZk}"></div>
-                </div>
-                
-                <div class="form-group" style="background: #F7FAFC; padding: 10px; border: 1px solid #CBD5E0; border-radius: 6px;">
-                    <label style="color: #2B6CB0; font-weight: bold; font-size: 13px;">📊 История на цените и аптеките:</label>
-                    ${purchasesHistoryHtml}
-                </div>
-
-                <div class="form-group"><label>Бележки</label><textarea id="notes">${notesVal}</textarea></div>
-                <div class="form-group"><label>Подробно описание</label><textarea id="desc">${m.description||''}</textarea></div>`;
-            
-            document.getElementById('editPanel').style.display = 'flex';
-        }
-
-        async function saveMed() {
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
-
-            const volValue = document.getElementById('vol').value.trim();
-
-            const docInputName = document.getElementById('doctor_name').value.trim();
-            let doctorId = null;
-            if (docInputName !== '') {
-                let existingDoc = state.doctors.find(d => d.name.toLowerCase() === docInputName.toLowerCase());
-                if (existingDoc) {
-                    doctorId = existingDoc.id;
-                } else {
-                    const newDocRes = await fetch(`${CONFIG.URL}/rest/v1/doctors`, {
-                        method: 'POST',
-                        headers: h,
-                        body: JSON.stringify({ name: docInputName })
-                    });
-                    const newDocData = await newDocRes.json();
-                    if (newDocData && newDocData.length > 0) {
-                        doctorId = newDocData[0].id;
-                        state.doctors.push(newDocData[0]);
-                    }
-                }
-            }
-
-            const mcInputName = document.getElementById('medical_center_name').value.trim();
-            let mcId = null;
-            if (mcInputName !== '') {
-                let existingMc = state.medicalCenters.find(c => c.name.toLowerCase() === mcInputName.toLowerCase());
-                if (existingMc) {
-                    mcId = existingMc.id;
-                } else {
-                    const newMcRes = await fetch(`${CONFIG.URL}/rest/v1/medical_centers`, {
-                        method: 'POST',
-                        headers: h,
-                        body: JSON.stringify({ name: mcInputName })
-                    });
-                    const newMcData = await newMcRes.json();
-                    if (newMcData && newMcData.length > 0) {
-                        mcId = newMcData[0].id;
-                        state.medicalCenters.push(newMcData[0]);
-                    }
-                }
-            }
-
-            const medUpdates = {
-                name_bg: document.getElementById('name_bg').value,
-                name_latin: document.getElementById('name_latin').value,
-                active_substance: document.getElementById('active').value,
-                category_id: document.getElementById('category_id').value || null,
-                manufacturer_id: document.getElementById('manufacturer_id').value || null,
-                volume_quantity: volValue !== '' ? volValue : null,
-                volume_unit: document.getElementById('unit').value,
-                form: document.getElementById('form').value,
-                form_quantity: parseInt(document.getElementById('qty').value) || null,
-                dosage: document.getElementById('dosage').value,
-                doctor_id: doctorId,
-                prescription_medical_center_id: mcId,
-                prescription_date: document.getElementById('prescription_date').value || null,
-                health_insurance: document.getElementById('health_insurance').checked,
-                is_active: document.getElementById('is_active').checked,
-                is_daily: document.getElementById('is_daily').checked,
-                notes: document.getElementById('notes').value,
-                description: document.getElementById('desc').value
-            };
-
-            let currentMedicationId = state.currentId;
-
-            if (currentMedicationId) {
-                await fetch(`${CONFIG.URL}/rest/v1/medications?id=eq.${currentMedicationId}`, {
-                    method: 'PATCH',
-                    headers: h,
-                    body: JSON.stringify(medUpdates)
-                });
-            } else {
-                const newMedRes = await fetch(`${CONFIG.URL}/rest/v1/medications`, {
-                    method: 'POST',
-                    headers: h,
-                    body: JSON.stringify(medUpdates)
-                });
-                const newMedData = await newMedRes.json();
-                if (newMedData && newMedData.length > 0) {
-                    currentMedicationId = newMedData[0].id;
-                } else {
-                    alert("Възникна грешка при създаването на новото лекарство.");
-                    return;
-                }
-            }
-
-            await fetch(`${CONFIG.URL}/rest/v1/medication_persons?medication_id=eq.${currentMedicationId}`, {
-                method: 'DELETE',
-                headers: h
-            });
-
-            const selectedPersons = Array.from(document.querySelectorAll('input[name="person_checkbox"]:checked')).map(cb => cb.value);
-            for (let personId of selectedPersons) {
-                await fetch(`${CONFIG.URL}/rest/v1/medication_persons`, {
-                    method: 'POST',
-                    headers: h,
-                    body: JSON.stringify({ medication_id: currentMedicationId, person_id: personId })
-                });
-            }
-
-            const priceEurVal = document.getElementById('price_eur').value;
-            const priceZkVal = document.getElementById('price_zk_eur').value;
-            const pharmNameInput = document.getElementById('pharmacy_name').value.trim();
-
-            const pEur = priceEurVal !== '' ? parseFloat(priceEurVal) : 0;
-            const pZk = priceZkVal !== '' ? parseFloat(priceZkVal) : 0;
-            
-            let pharmId = null;
-            if (pharmNameInput !== '') {
-                let existingPharm = state.pharmacies.find(p => p.name.toLowerCase() === pharmNameInput.toLowerCase());
-                if (existingPharm) {
-                    pharmId = existingPharm.id;
-                } else {
-                    const newPharmRes = await fetch(`${CONFIG.URL}/rest/v1/pharmacies`, {
-                        method: 'POST',
-                        headers: h,
-                        body: JSON.stringify({ name: pharmNameInput })
-                    });
-                    const newPharmData = await newPharmRes.json();
-                    if (newPharmData && newPharmData.length > 0) {
-                        pharmId = newPharmData[0].id;
-                        state.pharmacies.push(newPharmData[0]);
-                    }
-                }
-            }
-
-            if (priceEurVal !== '' || priceZkVal !== '' || pharmNameInput !== '') {
-                const purchDateEl = document.getElementById('purchase_date');
-                const pDate = purchDateEl && purchDateEl.value ? purchDateEl.value : new Date().toISOString().split('T')[0];
-                
-                await fetch(`${CONFIG.URL}/rest/v1/purchases`, {
-                    method: 'POST',
-                    headers: h,
-                    body: JSON.stringify({ 
-                        medication_id: currentMedicationId, 
-                        price_eur: pEur, 
-                        price_zk_eur: pZk, 
-                        pharmacy_id: pharmId, 
-                        purchase_date: pDate 
-                    })
-                });
-            }
-
-            document.getElementById('editPanel').style.display = 'none';
-            refreshData();
-        }
-
-        function openFullscreen(url, title) {
-            document.getElementById('fsTitle').innerText = title;
-            document.getElementById('fsContainer').innerHTML = `<iframe src="${url}" style="width:100%; height:100%; border:none;"></iframe>`;
-            document.getElementById('fullscreenModal').style.display = 'flex';
-        }
-
-        function closeFullscreen() {
-            document.getElementById('fullscreenModal').style.display = 'none';
-            document.getElementById('fsContainer').innerHTML = '';
-        }
-
-        async function handleReceiptUpload(event) {
+        async function handleReceipt(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            const loadingOverlay = document.getElementById('ocrLoading');
-            const statusText = document.getElementById('ocrStatus');
-            loadingOverlay.style.display = 'flex';
-            statusText.innerText = 'Подготовка на снимката...';
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = "Разпознаване на текста (OCR)...";
+            logMessage(`Файлът е зареден: ${file.name}`);
 
             try {
-                const imageUrl = URL.createObjectURL(file);
-                
-                statusText.innerText = 'Оразмеряване за анализ...';
-                const img = new Image();
-                img.src = imageUrl;
-                await new Promise((resolve, reject) => {
-                    img.onload = resolve;
-                    img.onerror = reject;
-                });
-
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 1000;
-                let width = img.width;
-                let height = img.height;
-                if (width > MAX_WIDTH) {
-                    height = Math.round((height * MAX_WIDTH) / width);
-                    width = MAX_WIDTH;
-                }
-                canvas.width = width;
-                canvas.height = height;
-                
-                const context = canvas.getContext('2d');
-                context.drawImage(img, 0, 0, width, height);
-
-                statusText.innerText = 'Четене на QR код...';
-                let qrText = "";
-                try {
-                    const imageData = context.getImageData(0, 0, width, height);
-                    const qrCodeResult = jsQR(imageData.data, imageData.width, imageData.height);
-                    if (qrCodeResult) {
-                        qrText = qrCodeResult.data;
-                    }
-                } catch (qrErr) {
-                    console.warn("QR кодът не беше открит:", qrErr);
-                }
-
-                statusText.innerText = 'Подготовка за разпознаване на текст...';
-                let rawText = "";
-                try {
-                    const imageBase64 = canvas.toDataURL('image/jpeg');
-                    
-                    const tesseractResult = await Tesseract.recognize(imageBase64, 'bul', {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                statusText.innerText = `Четене на текст... ${Math.round(m.progress * 100)}%`;
-                            } else if (m.status === 'loading language traineddata') {
-                                statusText.innerText = 'Зареждане на БГ език...';
-                            }
+                // Използване на Tesseract.js директно в браузъра за български и английски
+                const { data: { text } } = await Tesseract.recognize(file, 'bul+eng', {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            statusEl.innerText = `OCR: ${Math.round(m.progress * 100)}%`;
                         }
-                    });
-                    rawText = tesseractResult.data.text;
-                } catch (ocrErr) {
-                    console.warn("OCR грешка:", ocrErr);
-                    rawText = "OCR разпознаването не успя, но снимката е запазена.";
-                }
-
-                URL.revokeObjectURL(imageUrl);
-
-                let foundDate = new Date().toISOString().split('T')[0];
-                const dateMatch = rawText.match(/\b(\d{2})[\.\/-](\d{2})[\.\/-](\d{2,4})\b/);
-                if (dateMatch) {
-                    let d = dateMatch[1];
-                    let m = dateMatch[2];
-                    let y = dateMatch[3];
-                    if (y.length === 2) y = '20' + y;
-                    foundDate = `${y}-${m}-${d}`;
-                }
-
-                let pharmacyName = "Аптека";
-                const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
-                const pharmacyKeywords = ["АПТЕКА", "ФАРМА", "МАРЕШКИ", "СУБАШКИ", "ПРОПОЛИС", "МЕДЕЯ", "РЕМЕДИУМ", "САНИТА", "SOPHA", "СОФАРМА"];
-                for (let line of lines) {
-                    if (pharmacyKeywords.some(kw => line.toUpperCase().includes(kw))) {
-                        pharmacyName = line;
-                        break;
                     }
-                }
-
-                let summaryNotes = `--- QR КОД ЛИНК ---\n${qrText || 'Няма разпознат QR код'}\n\n--- ОРИГИНАЛЕН ТЕКСТ ---\n${rawText}`;
-
-                openPanel(null, {
-                    name_bg: "",
-                    price_eur: "",
-                    pharmacy_name: pharmacyName,
-                    purchase_date: foundDate,
-                    notes: summaryNotes
                 });
 
-            } catch (error) {
-                console.error("Грешка при обработка на бона:", error);
-                alert("Възникна техническа грешка при автоматичния анализ. Моля, попълнете данните ръчно.");
-                openPanel(null);
+                logMessage("Текстът от бона е разпознат успешно.");
+                statusEl.innerText = "Анализиране на данните...";
+
+                const parsed = parseReceiptText(text);
+                logMessage(`Открито: ${parsed.medicineName} | Цена: ${parsed.priceEur} EUR | Дата: ${parsed.date}`);
+
+                await saveToDatabase(parsed);
+                statusEl.innerText = "Готово! Данните са записани.";
+            } catch (err) {
+                console.error(err);
+                statusEl.innerText = "Грешка при обработката.";
+                logMessage(`Грешка: ${err.message}`);
             } finally {
-                loadingOverlay.style.display = 'none';
-                document.getElementById('receiptCameraInput').value = '';
-                document.getElementById('receiptGalleryInput').value = '';
+                event.target.value = ''; // Изчистване на input полето
             }
         }
-        
-        window.onload = refreshData;
+
+        function parseReceiptText(text) {
+            let medicineName = "Неизвестно лекарство";
+            let priceEur = 0.00;
+            let date = new Date().toISOString().split('T')[0];
+            let pharmacyName = "Аптека";
+
+            const lines = text.split('\n');
+            for (let line of lines) {
+                const upper = line.toUpperCase();
+                if (upper.includes("ТАБЛ") || upper.includes("КАПС") || upper.includes("АНРАЗОЛ") || upper.includes("ПАНРАЗОЛ")) {
+                    medicineName = line.trim();
+                }
+            }
+
+            // Търсене на сума в евро
+            const eurMatches = text.match(/\d+[.,]\d{2}/g);
+            if (eurMatches && eurMatches.length > 0) {
+                priceEur = parseFloat(eurMatches[eurMatches.length - 1].replace(',', '.'));
+            }
+
+            // Търсене на дата във формат ДД-ММ-ГГГГ или ДД.ММ.ГГГГ
+            const dateMatch = text.match(/\d{2}[-.]\d{2}[-.]\d{4}/);
+            if (dateMatch) {
+                let clean = dateMatch[0].replace(/\./g, '-');
+                const parts = clean.split('-');
+                if (parts.length === 3) {
+                    date = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+            }
+
+            return { medicineName, priceEur, date, pharmacyName };
+        }
+
+        async function saveToDatabase(parsed) {
+            // 1. Проверка или създаване на аптека
+            let { data: pharmacyData } = await supabase
+                .from('pharmacies')
+                .select('id')
+                .ilike('name', `%${parsed.pharmacyName}%`)
+                .limit(1);
+
+            let pharmacyId = null;
+            if (pharmacyData && pharmacyData.length > 0) {
+                pharmacyId = pharmacyData[0].id;
+            } else {
+                let { data: newPharm, error: pErr } = await supabase
+                    .from('pharmacies')
+                    .insert([{ name: parsed.pharmacyName }])
+                    .select('id')
+                    .single();
+                if (!pErr && newPharm) pharmacyId = newPharm.id;
+            }
+
+            // 2. Проверка или създаване на лекарство в таблицата medications
+            let { data: medData } = await supabase
+                .from('medications')
+                .select('id')
+                .ilike('name_bg', `%${parsed.medicineName}%`)
+                .limit(1);
+
+            let medicationId = null;
+            if (medData && medData.length > 0) {
+                medicationId = medData[0].id;
+            } else {
+                let { data: newMed, error: mErr } = await supabase
+                    .from('medications')
+                    .insert([{ name_bg: parsed.medicineName, is_active: true }])
+                    .select('id')
+                    .single();
+                if (!mErr && newMed) medicationId = newMed.id;
+            }
+
+            if (!medicationId) {
+                throw new Error("Неуспешно намиране или създаване на лекарство в базата.");
+            }
+
+            // 3. Проверка за дублиране в таблицата purchases
+            let { data: existingPurchases, error: dupErr } = await supabase
+                .from('purchases')
+                .select('id, price_eur')
+                .eq('medication_id', medicationId)
+                .eq('purchase_date', parsed.date);
+
+            if (existingPurchases && existingPurchases.length > 0) {
+                const existing = existingPurchases[0];
+                const overwrite = confirm(`Намерен е съществуващ запис за "${parsed.medicineName}" на дата ${parsed.date} с цена ${existing.price_eur} EUR.\n\nЖелаете ли да презапишете записа?\n(Натиснете "Отказ", за да го пропуснете)`);
+                
+                if (!overwrite) {
+                    logMessage("Записът беше отменен от потребителя поради дублиране.");
+                    return;
+                }
+
+                // Презаписване (Update) на съществуващия запис
+                let { error: updateErr } = await supabase
+                    .from('purchases')
+                    .update({
+                        price_eur: parsed.priceEur,
+                        pharmacy_id: pharmacyId,
+                        notes: 'Презаписано чрез сканиране на бон'
+                    })
+                    .eq('id', existing.id);
+
+                if (updateErr) throw updateErr;
+                logMessage("Съществуващият запис беше презаписан успешно.");
+            } else {
+                // Нов запис (Insert)
+                let { error: insertErr } = await supabase
+                    .from('purchases')
+                    .insert([{
+                        medication_id: medicationId,
+                        pharmacy_id: pharmacyId,
+                        purchase_date: parsed.date,
+                        price_eur: parsed.priceEur,
+                        notes: 'Добавено чрез сканиране на бон'
+                    }]);
+
+                if (insertErr) throw insertErr;
+                logMessage("Новият запис е добавен успешно в базата.");
+            }
+        }
     </script>
 </body>
 </html>
