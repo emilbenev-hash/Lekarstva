@@ -667,7 +667,6 @@
             document.getElementById('fsContainer').innerHTML = '';
         }
 
-        // Защитена функция за анализ на снимка (от камера или галерия)
         async function handleReceiptUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -675,17 +674,11 @@
             const loadingOverlay = document.getElementById('ocrLoading');
             const statusText = document.getElementById('ocrStatus');
             loadingOverlay.style.display = 'flex';
-            statusText.innerText = 'Запис на снимката...';
+            statusText.innerText = 'Подготовка на снимката...';
 
             try {
                 const imageUrl = URL.createObjectURL(file);
-                const downloadLink = document.createElement('a');
-                downloadLink.href = imageUrl;
-                downloadLink.download = `receipt_${new Date().toISOString().slice(0,10)}.jpg`;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
+                
                 statusText.innerText = 'Оразмеряване за анализ...';
                 const img = new Image();
                 img.src = imageUrl;
@@ -720,15 +713,27 @@
                     console.warn("QR кодът не беше открит:", qrErr);
                 }
 
-                statusText.innerText = 'Разпознаване на текст от бележката...';
+                statusText.innerText = 'Подготовка за разпознаване на текст...';
                 let rawText = "";
                 try {
-                    const tesseractResult = await Tesseract.recognize(canvas, 'bul');
+                    const imageBase64 = canvas.toDataURL('image/jpeg');
+                    
+                    const tesseractResult = await Tesseract.recognize(imageBase64, 'bul', {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                statusText.innerText = `Четене на текст... ${Math.round(m.progress * 100)}%`;
+                            } else if (m.status === 'loading language traineddata') {
+                                statusText.innerText = 'Зареждане на БГ език...';
+                            }
+                        }
+                    });
                     rawText = tesseractResult.data.text;
                 } catch (ocrErr) {
                     console.warn("OCR грешка:", ocrErr);
-                    rawText = "OCR разпознаването не успя да се зареди напълно, но снимката е запазена.";
+                    rawText = "OCR разпознаването не успя, но снимката е запазена.";
                 }
+
+                URL.revokeObjectURL(imageUrl);
 
                 let foundDate = new Date().toISOString().split('T')[0];
                 const dateMatch = rawText.match(/\b(\d{2})[\.\/-](\d{2})[\.\/-](\d{2,4})\b/);
@@ -742,7 +747,7 @@
 
                 let pharmacyName = "Аптека";
                 const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
-                const pharmacyKeywords = ["АПТЕКА", "ФАРМА", "МАРЕШКИ", "СУБАШКИ", "ПРОПОЛИС", "МЕДЕЯ", "РЕМЕДИУМ", "САНИТА", "SOPha", "СОФАРМА"];
+                const pharmacyKeywords = ["АПТЕКА", "ФАРМА", "МАРЕШКИ", "СУБАШКИ", "ПРОПОЛИС", "МЕДЕЯ", "РЕМЕДИУМ", "САНИТА", "SOPHA", "СОФАРМА"];
                 for (let line of lines) {
                     if (pharmacyKeywords.some(kw => line.toUpperCase().includes(kw))) {
                         pharmacyName = line;
@@ -762,7 +767,7 @@
 
             } catch (error) {
                 console.error("Грешка при обработка на бона:", error);
-                alert("Снимката е свалена, но възникна техническа грешка при автоматичния анализ. Моля, попълнете данните ръчно.");
+                alert("Възникна техническа грешка при автоматичния анализ. Моля, попълнете данните ръчно.");
                 openPanel(null);
             } finally {
                 loadingOverlay.style.display = 'none';
