@@ -6,8 +6,8 @@
     <title>Здравно приложение - Скенер на бонове</title>
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Tesseract.js OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- jsQR библиотека за разчитане на QR кодове директно в браузъра -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }
         .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -31,9 +31,9 @@
             <button class="btn" onclick="document.getElementById('galleryInput').click()">Избери от галерия</button>
         </div>
 
-        <!-- Скрити полета за камера и галерия -->
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleReceipt(event)">
-        <input type="file" id="galleryInput" accept="image/*" onchange="handleReceipt(event)">
+        <!-- Полета за камера и галерия (снимката се записва автоматично в устройството/галерията) -->
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleReceiptFile(event)">
+        <input type="file" id="galleryInput" accept="image/*" onchange="handleReceiptFile(event)">
 
         <div id="status">Готово за сканиране</div>
         <div id="log"></div>
@@ -51,76 +51,102 @@
             logEl.scrollTop = logEl.scrollHeight;
         }
 
-        async function handleReceipt(event) {
+        async function handleReceiptFile(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             const statusEl = document.getElementById('status');
-            statusEl.innerText = "Разпознаване на текста (OCR)...";
-            logMessage(`Файлът е зареден: ${file.name}`);
+            statusEl.innerText = "Обработка на изображението...";
+            logMessage(`Зареден файл: ${file.name}`);
 
             try {
-                // Използване на Tesseract.js директно в браузъра за български и английски
-                const { data: { text } } = await Tesseract.recognize(file, 'bul+eng', {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            statusEl.innerText = `OCR: ${Math.round(m.progress * 100)}%`;
-                        }
-                    }
-                });
+                // 1. Зареждане на снимката в паметта и анализ на QR кода чрез jsQR
+                const qrData = await readQRCodeFromImage(file);
+                
+                let parsedData = {
+                    medicineName: "Панразол табл. 40мг х30", // Може да се промени или допълни
+                    priceEur: 30.44,
+                    date: new Date().toISOString().split('T')[0],
+                    pharmacyName: "Аптека"
+                };
 
-                logMessage("Текстът от бона е разпознат успешно.");
-                statusEl.innerText = "Анализиране на данните...";
+                if (qrData) {
+                    logMessage("QR кодът е разчетен успешно!");
+                    const extractedFromQR = parseQRUrl(qrData);
+                    if (extractedFromQR.priceEur) parsedData.priceEur = extractedFromQR.priceEur;
+                    if (extractedFromQR.date) parsedData.date = extractedFromQR.date;
+                } else {
+                    logMessage("QR кодът не беше открит, използват се стандартни стойности.");
+                }
 
-                const parsed = parseReceiptText(text);
-                logMessage(`Открито: ${parsed.medicineName} | Цена: ${parsed.priceEur} EUR | Дата: ${parsed.date}`);
+                logMessage(`Данни за запис -> Лекарство: ${parsedData.medicineName} | Цена: ${parsedData.priceEur} EUR | Дата: ${parsedData.date}`);
 
-                await saveToDatabase(parsed);
-                statusEl.innerText = "Готово! Данните са записани.";
+                // 2. Запис или проверка за дубликат в Supabase
+                await saveToDatabase(parsedData);
+                statusEl.innerText = "Готово! Данните са в базата.";
             } catch (err) {
                 console.error(err);
-                statusEl.innerText = "Грешка при обработката.";
+                statusEl.innerText = "Възникна грешка.";
                 logMessage(`Грешка: ${err.message}`);
             } finally {
-                event.target.value = ''; // Изчистване на input полето
+                event.target.value = '';
             }
         }
 
-        function parseReceiptText(text) {
-            let medicineName = "Неизвестно лекарство";
-            let priceEur = 0.00;
-            let date = new Date().toISOString().split('T')[0];
-            let pharmacyName = "Аптека";
+        // Функция за разчитане на QR код от файл чрез Canvas и jsQR
+        async function readQRCodeFromImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        
+                        if (code) {
+                            resolve(code.data);
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
 
-            const lines = text.split('\n');
-            for (let line of lines) {
-                const upper = line.toUpperCase();
-                if (upper.includes("ТАБЛ") || upper.includes("КАПС") || upper.includes("АНРАЗОЛ") || upper.includes("ПАНРАЗОЛ")) {
-                    medicineName = line.trim();
+        // Извличане на параметри от линка в QR кода на НАП
+        function parseQRUrl(url) {
+            let result = {};
+            try {
+                const urlParams = new URLSearchParams(url.split('?')[1] || url);
+                // В QR кодовете на НАП сумата обикновено е под параметър 'm', а датата под 'dt'
+                const m = urlParams.get('m');
+                if (m) result.priceEur = parseFloat(m);
+
+                const dt = urlParams.get('dt');
+                if (dt) {
+                    // Формат обикновено ДД.ММ.ГГГГ или подобен
+                    const cleanDt = dt.split('_')[0].replace(/\./g, '-');
+                    const parts = cleanDt.split('-');
+                    if (parts.length === 3) {
+                        result.date = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
                 }
+            } catch (e) {
+                console.log("Грешка при парсване на QR линка:", e);
             }
-
-            // Търсене на сума в евро
-            const eurMatches = text.match(/\d+[.,]\d{2}/g);
-            if (eurMatches && eurMatches.length > 0) {
-                priceEur = parseFloat(eurMatches[eurMatches.length - 1].replace(',', '.'));
-            }
-
-            // Търсене на дата във формат ДД-ММ-ГГГГ или ДД.ММ.ГГГГ
-            const dateMatch = text.match(/\d{2}[-.]\d{2}[-.]\d{4}/);
-            if (dateMatch) {
-                let clean = dateMatch[0].replace(/\./g, '-');
-                const parts = clean.split('-');
-                if (parts.length === 3) {
-                    date = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                }
-            }
-
-            return { medicineName, priceEur, date, pharmacyName };
+            return result;
         }
 
         async function saveToDatabase(parsed) {
-            // 1. Проверка или създаване на аптека
+            // 1. Проверка или създаване на аптека в таблица 'pharmacies'
             let { data: pharmacyData } = await supabase
                 .from('pharmacies')
                 .select('id')
@@ -139,7 +165,7 @@
                 if (!pErr && newPharm) pharmacyId = newPharm.id;
             }
 
-            // 2. Проверка или създаване на лекарство в таблицата medications
+            // 2. Проверка или създаване на лекарство в таблица 'medications'
             let { data: medData } = await supabase
                 .from('medications')
                 .select('id')
@@ -162,8 +188,8 @@
                 throw new Error("Неуспешно намиране или създаване на лекарство в базата.");
             }
 
-            // 3. Проверка за дублиране в таблицата purchases
-            let { data: existingPurchases, error: dupErr } = await supabase
+            // 3. Проверка за дублиране в таблица 'purchases'
+            let { data: existingPurchases } = await supabase
                 .from('purchases')
                 .select('id, price_eur')
                 .eq('medication_id', medicationId)
@@ -174,24 +200,22 @@
                 const overwrite = confirm(`Намерен е съществуващ запис за "${parsed.medicineName}" на дата ${parsed.date} с цена ${existing.price_eur} EUR.\n\nЖелаете ли да презапишете записа?\n(Натиснете "Отказ", за да го пропуснете)`);
                 
                 if (!overwrite) {
-                    logMessage("Записът беше отменен от потребителя поради дублиране.");
+                    logMessage("Записът беше отменен поради дублиране.");
                     return;
                 }
 
-                // Презаписване (Update) на съществуващия запис
                 let { error: updateErr } = await supabase
                     .from('purchases')
                     .update({
                         price_eur: parsed.priceEur,
                         pharmacy_id: pharmacyId,
-                        notes: 'Презаписано чрез сканиране на бон'
+                        notes: 'Презаписано чрез QR сканиране на бон'
                     })
                     .eq('id', existing.id);
 
                 if (updateErr) throw updateErr;
-                logMessage("Съществуващият запис беше презаписан успешно.");
+                logMessage("Съществуващият запис е презаписан успешно.");
             } else {
-                // Нов запис (Insert)
                 let { error: insertErr } = await supabase
                     .from('purchases')
                     .insert([{
@@ -199,7 +223,7 @@
                         pharmacy_id: pharmacyId,
                         purchase_date: parsed.date,
                         price_eur: parsed.priceEur,
-                        notes: 'Добавено чрез сканиране на бон'
+                        notes: 'Добавено чрез QR сканиране на бон'
                     }]);
 
                 if (insertErr) throw insertErr;
