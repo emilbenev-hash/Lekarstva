@@ -30,7 +30,7 @@
         .card h3 { font-size: 16px; margin: 0 0 8px 0; color: #333; }
         .card p { margin: 0 0 4px 0; color: #555; }
         
-        /* Стилове за формата (Мобилно-оптимизирани) */
+        /* Стилове за формата */
         .panel { position: fixed; right: 0; top: 0; width: 100vw; height: 100vh; background: white; padding: 15px; padding-bottom: 40px; display: none; overflow-y: auto; z-index: 1000; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
         .panel-header h2 { font-size: 18px; margin: 0; color: #333; }
@@ -38,7 +38,6 @@
         
         .form-group { margin-bottom: 15px; width: 100%; }
         .form-group label.title-label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 5px; }
-        /* font-size: 16px е задължителен за iOS, за да не зуумва екрана при клик в поле */
         .form-group input[type="text"], 
         .form-group input[type="number"], 
         .form-group input[type="date"], 
@@ -46,7 +45,6 @@
         .form-group textarea { width: 100%; padding: 12px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; background: #fff; font-family: inherit; }
         .form-group textarea { resize: vertical; min-height: 80px; }
         
-        /* Ред за малки полета (напр. Количество и Мярка), които могат да стоят едно до друго */
         .form-row-mobile { display: flex; gap: 10px; margin-bottom: 15px; width: 100%; }
         .form-row-mobile .form-group { margin-bottom: 0; flex: 1; }
 
@@ -62,7 +60,7 @@
         .fullscreen-content { flex: 1; width: 100%; background: #fff; overflow: hidden; }
         
         .doc-btn { background: #2980B9; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 6px; display: inline-block; text-decoration: none; margin-right: 6px; }
-        .doc-item { display: flex; justify-content: space-between; align-items: center; background: #f1f1f1; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; }
+        .doc-item { padding: 10px; background: #f1f1f1; border-radius: 6px; margin-bottom: 8px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -146,10 +144,7 @@
 
             document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
             document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без ЗОК':'Всички'}</button>`).join('');
-            
-            // Логиката за активни е запазена (само Активни и Всички)
             document.getElementById('activeFilters').innerHTML = ['true', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':'Всички'}</button>`).join('');
-            
             document.getElementById('dailyFilters').innerHTML = ['true', 'all'].map(d => `<button class="filter-btn ${state.selectedDaily===d?'active':''}" onclick="state.selectedDaily='${d}'; renderUI()">${d==='true'?'Ежедневни':'Всички'}</button>`).join('');
 
             const search = document.getElementById('search').value.toLowerCase().trim();
@@ -364,14 +359,10 @@
                     const docName = doc.file_name || doc.title || 'Документ';
                     return `
                     <div class="doc-item">
-                        <a href="${doc.file_url}" target="_blank" style="color:#2980B9; font-weight:bold; text-decoration:none; max-width:70%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${docName}</a>
-                        <button type="button" onclick="unlinkDocument('${doc.id}')" style="background:#E74C3C; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-size: 13px;">Премахни</button>
+                        <a href="#" onclick="event.preventDefault(); openFullscreen('${doc.file_url}', '${docName}')" style="color:#2980B9; font-weight:bold; text-decoration:none; display:block; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📄 ${docName}</a>
                     </div>`;
                 }).join('');
             }
-
-            const availableDocs = state.documents.filter(doc => !linkedDocIds.includes(String(doc.id)));
-            let existingDocOpts = '<option value="">-- Избери от качените --</option>' + availableDocs.map(doc => `<option value="${doc.id}">${doc.file_name || doc.title || 'Документ'}</option>`).join('');
 
             const todayStr = new Date().toISOString().split('T')[0];
 
@@ -408,22 +399,9 @@
                 
                 <div class="form-group"><label class="title-label">Дозировка и прием</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
                 
-                <div class="form-group" style="background: #f9f9f9; padding: 12px; border: 1px dashed #148F77; border-radius: 6px;">
-                    <label class="title-label" style="color: #148F77;">Свързани документи / рецепти:</label>
-                    <div style="margin-bottom: 12px;">${docsListHtml}</div>
-                    
-                    ${availableDocs.length > 0 ? `
-                        <div style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
-                            <label class="title-label">Свържи вече качен документ:</label>
-                            <select id="existing_doc_select" style="margin-top:4px; margin-bottom:8px;">${existingDocOpts}</select>
-                            <button type="button" onclick="linkExistingDoc()" style="background:#2980B9; color:white; border:none; padding:10px; width:100%; border-radius:6px; cursor:pointer; font-size:14px; font-weight:bold;">+ Добави избрания</button>
-                        </div>
-                    ` : ''}
-
-                    <div style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
-                        <label class="title-label">Качи чисто нов документ (PDF / Снимка):</label>
-                        <input type="file" id="new_doc_file" accept=".pdf,image/*" style="margin-top: 6px; padding: 8px; border: 1px solid #ccc; width: 100%; background: #fff;">
-                    </div>
+                <div class="form-group" style="background: #f9f9f9; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
+                    <label class="title-label" style="color: #2980B9;">Свързани документи / рецепти:</label>
+                    <div style="margin-top: 8px;">${docsListHtml}</div>
                 </div>
 
                 <div class="form-group">
@@ -440,15 +418,15 @@
                 
                 <div class="form-group"><label class="title-label">Дата на рецептата</label><input type="date" id="prescription_date" value="${m.prescription_date||''}"></div>
                 
-                <div class="form-group" style="background:#fff; border:1px solid #ddd; padding:12px; border-radius:6px;">
-                    <label style="display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:15px; font-weight:500;">
-                        <input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> Поема се от ЗОК
+                <div class="form-group" style="background:#fff; border:1px solid #ddd; padding:12px; border-radius:6px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px;">
+                    <label style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#333; cursor:pointer;">
+                        <input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''} style="width:20px; height:20px; margin:0;"> ЗОК
                     </label>
-                    <label style="display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:15px; font-weight:500;">
-                        <input type="checkbox" id="is_active" ${m.is_active?'checked':''}> Активно лекарство
+                    <label style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#333; cursor:pointer;">
+                        <input type="checkbox" id="is_active" ${m.is_active?'checked':''} style="width:20px; height:20px; margin:0;"> Активно
                     </label>
-                    <label style="display:flex; align-items:center; gap:10px; font-size:15px; font-weight:500;">
-                        <input type="checkbox" id="is_daily" ${m.is_daily?'checked':''}> Ежедневен прием
+                    <label style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#333; cursor:pointer;">
+                        <input type="checkbox" id="is_daily" ${m.is_daily?'checked':''} style="width:20px; height:20px; margin:0;"> Ежедневно
                     </label>
                 </div>
                 
@@ -479,82 +457,10 @@
             document.getElementById('editPanel').style.display = 'block';
         }
 
-        async function linkExistingDoc() {
-            const docId = document.getElementById('existing_doc_select').value;
-            if (!docId) return;
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json' };
-            
-            const res = await fetch(`${CONFIG.URL}/rest/v1/medication_documents`, {
-                method: 'POST',
-                headers: h,
-                body: JSON.stringify({ medication_id: state.currentId, document_id: docId })
-            });
-
-            if (res.ok) {
-                state.medication_documents.push({ medication_id: state.currentId, document_id: docId });
-                openPanel(state.currentId);
-                renderUI();
-            }
-        }
-
-        async function unlinkDocument(docId) {
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
-            await fetch(`${CONFIG.URL}/rest/v1/medication_documents?medication_id=eq.${state.currentId}&document_id=eq.${docId}`, {
-                method: 'DELETE',
-                headers: h
-            });
-            state.medication_documents = state.medication_documents.filter(md => !(String(md.medication_id) === String(state.currentId) && String(md.document_id) === String(docId)));
-            openPanel(state.currentId);
-            renderUI();
-        }
-
         async function saveMed() {
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
             const volValue = document.getElementById('vol').value.trim();
-            const fileInput = document.getElementById('new_doc_file');
-
-            if (fileInput && fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0];
-                const cleanFileName = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${file.name.split('.').pop()}`;
-                
-                const uploadRes = await fetch(`${CONFIG.URL}/storage/v1/object/medical-docs/${cleanFileName}`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': CONFIG.KEY,
-                        'Authorization': 'Bearer ' + CONFIG.KEY,
-                        'Content-Type': file.type
-                    },
-                    body: file
-                });
-
-                if (uploadRes.ok) {
-                    const publicUrl = `${CONFIG.URL}/storage/v1/object/public/medical-docs/${cleanFileName}`;
-                    
-                    const newDocRes = await fetch(`${CONFIG.URL}/rest/v1/documents`, {
-                        method: 'POST',
-                        headers: h,
-                        body: JSON.stringify({ file_url: publicUrl, file_name: file.name })
-                    });
-                    const newDocData = await newDocRes.json();
-                    
-                    if (newDocData && newDocData.length > 0) {
-                        const createdDoc = newDocData[0];
-                        state.documents.push(createdDoc);
-
-                        await fetch(`${CONFIG.URL}/rest/v1/medication_documents`, {
-                            method: 'POST',
-                            headers: h,
-                            body: JSON.stringify({ medication_id: state.currentId, document_id: createdDoc.id })
-                        });
-                        state.medication_documents.push({ medication_id: state.currentId, document_id: createdDoc.id });
-                    }
-                } else {
-                    const errText = await uploadRes.text();
-                    alert("Грешка при качване в Storage: " + errText);
-                    return;
-                }
-            }
 
             const catInputName = document.getElementById('category_name').value.trim();
             let categoryId = null;
