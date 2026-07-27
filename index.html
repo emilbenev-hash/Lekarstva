@@ -2,7 +2,8 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <title>Здравен мениджър - Пълен (Десктоп)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Здравен мениджър - Мобилен</title>
     <script>
         const CONFIG = {
             URL: "https://xwnjuqqudkjkqdkrndhg.supabase.co",
@@ -11,36 +12,40 @@
     </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: sans-serif; background: #667eea; padding: 10px; }
-        .header { background: #E74C3C; color: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; }
-        .filters { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-        .search-input { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px; }
-        .filter-buttons { display: flex; gap: 5px; margin-bottom: 5px; flex-wrap: wrap; }
-        .filter-btn { padding: 4px 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; font-size: 11px; }
-        .filter-btn.active { background: #148F77; color: white; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
-        .card { background: white; padding: 10px; border-radius: 8px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 12px; }
-        .card h3 { font-size: 14px; margin-bottom: 4px; color: #333; }
-        .card p { margin-bottom: 2px; color: #555; }
-        .panel { position: fixed; right: 0; top: 0; width: 100%; max-width: 550px; height: 100%; background: white; padding: 15px; display: none; overflow-y: auto; z-index: 1000; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
-        .form-row { display: flex; gap: 5px; }
-        .form-group { flex: 1; margin-bottom: 8px; }
-        .form-group label { display: block; font-size: 10px; font-weight: bold; color: #555; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
-        .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
-        .checkbox-group label { font-weight: normal; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #667eea; padding: 10px; font-size: 14px; }
+        .header { background: #E74C3C; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; }
+        .header h1 { font-size: 18px; }
+        .filters { background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .search-input { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        .filter-buttons { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
+        .filter-btn { padding: 6px 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 6px; font-size: 12px; font-weight: 500; }
+        .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
+        .grid { display: flex; flex-direction: column; gap: 10px; }
+        .card { background: white; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 13px; }
+        .card h3 { font-size: 15px; margin-bottom: 6px; color: #333; }
+        .card p { margin-bottom: 3px; color: #555; }
+        .panel { position: fixed; right: 0; top: 0; width: 100%; height: 100%; background: white; padding: 15px; display: none; overflow-y: auto; z-index: 1000; }
+        .form-row { display: flex; gap: 8px; flex-direction: row; }
+        @media (max-width: 480px) {
+            .form-row { flex-direction: column; gap: 0; }
+        }
+        .form-group { flex: 1; margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 11px; font-weight: bold; color: #555; margin-bottom: 3px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .checkbox-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+        .checkbox-group label { font-weight: normal; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
         
-        .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 2000; display: none; flex-direction: column; padding: 20px; }
+        .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 2000; display: none; flex-direction: column; padding: 10px; }
         .fullscreen-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: white; }
-        .fullscreen-header h2 { font-size: 18px; }
-        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .fullscreen-header h2 { font-size: 16px; }
+        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .fullscreen-content { flex: 1; width: 100%; background: #fff; border-radius: 8px; overflow: hidden; }
-        .doc-btn { background: #2980B9; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-top: 3px; display: inline-block; text-decoration: none; margin-right: 4px; }
-        .doc-item { display: flex; justify-content: space-between; align-items: center; background: #f1f1f1; padding: 5px 8px; border-radius: 4px; margin-bottom: 4px; font-size: 11px; }
+        .doc-btn { background: #2980B9; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 4px; display: inline-block; text-decoration: none; margin-right: 4px; }
+        .doc-item { display: flex; justify-content: space-between; align-items: center; background: #f1f1f1; padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 12px; }
     </style>
 </head>
 <body>
-    <div class="header"><h1>Здравен мениджър (Десктоп)</h1></div>
+    <div class="header"><h1>Здравен мениджър (Мобилен)</h1></div>
     <div class="filters">
         <input type="text" id="search" class="search-input" placeholder="Търси лекарство..." oninput="renderUI()">
         <select id="categoryFilter" class="search-input" onchange="state.selectedCategory=this.value; renderUI()">
@@ -50,15 +55,15 @@
         <div id="zokFilters" class="filter-buttons"></div>
         <div id="activeFilters" class="filter-buttons"></div>
         <div id="dailyFilters" class="filter-buttons"></div>
-        <button onclick="refreshData()" style="width:100%; padding: 8px; background:#148F77; color:white; border:none; border-radius:4px; cursor:pointer;">Опресни</button>
+        <button onclick="refreshData()" style="width:100%; padding: 10px; background:#148F77; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; margin-top:4px;">Опресни</button>
     </div>
     <div class="grid" id="medGrid"></div>
     
     <div id="editPanel" class="panel">
-        <h2 id="panelTitle" style="font-size: 16px; margin-bottom: 10px;">Редактиране</h2>
-        <button onclick="document.getElementById('editPanel').style.display='none'" style="padding: 5px 10px; margin-bottom: 10px; cursor:pointer;">Затвори</button>
+        <h2 id="panelTitle" style="font-size: 18px; margin-bottom: 12px;">Редактиране</h2>
+        <button onclick="document.getElementById('editPanel').style.display='none'" style="padding: 8px 14px; margin-bottom: 12px; cursor:pointer; border-radius:6px; border:1px solid #ccc; background:#f5f5f5;">Затвори</button>
         <div id="panelBody"></div>
-        <button onclick="saveMed()" style="padding:10px; width:100%; background:#148F77; color:white; border:none; border-radius:4px; margin-top:10px; cursor:pointer; font-weight:bold;">ЗАПАЗИ</button>
+        <button onclick="saveMed()" style="padding:12px; width:100%; background:#148F77; color:white; border:none; border-radius:6px; margin-top:12px; cursor:pointer; font-weight:bold; font-size:15px;">ЗАПАЗИ</button>
     </div>
 
     <div id="fullscreenModal" class="fullscreen-modal">
@@ -115,7 +120,10 @@
 
             document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
             document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без ЗОК':'Всички'}</button>`).join('');
-            document.getElementById('activeFilters').innerHTML = ['true', 'false', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':a==='false'?'Неактивни':'Всички'}</button>`).join('');
+            
+            // Премахнат е бутонът "Неактивни" - налични са само "Активни" и "Всички"
+            document.getElementById('activeFilters').innerHTML = ['true', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':'Всички'}</button>`).join('');
+            
             document.getElementById('dailyFilters').innerHTML = ['true', 'all'].map(d => `<button class="filter-btn ${state.selectedDaily===d?'active':''}" onclick="state.selectedDaily='${d}'; renderUI()">${d==='true'?'Ежедневни':'Всички'}</button>`).join('');
 
             const search = document.getElementById('search').value.toLowerCase().trim();
@@ -215,7 +223,7 @@
 
                 let docButtonsHtml = '';
                 if (medDocs.length > 0) {
-                    docButtonsHtml = `<div style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 3px;">`;
+                    docButtonsHtml = `<div style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px;">`;
                     medDocs.forEach(doc => {
                         const docName = doc.file_name || doc.title || 'Документ';
                         docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${doc.file_url}', '${docName}')">📄 ${docName}</button>`;
@@ -225,7 +233,7 @@
 
                 return `
                     <div class="card" onclick="openPanel('${m.id}')">
-                        <h3>${displayName}</h3>
+                        <h3>${displayName} ${m.is_daily ? ' 🔄' : ''}</h3>
                         <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">💶 ${priceHtml}</p>
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold;">За: ${assignedPersons}</p>` : ''}
@@ -263,37 +271,39 @@
             let purchasesHistoryHtml = '<p style="font-size:11px; color:#777; margin-top:4px;">Няма въведена история за това лекарство.</p>';
             if (medPurchases.length > 0) {
                 purchasesHistoryHtml = `
-                    <table style="width:100%; border-collapse:collapse; font-size:11px; margin-top:6px; background:#fff; border:1px solid #ddd;">
-                        <thead>
-                            <tr style="background:#f1f5f9; text-align:left; border-bottom:1px solid #ddd;">
-                                <th style="padding:4px 6px;">Дата</th>
-                                <th style="padding:4px 6px;">Аптека</th>
-                                <th style="padding:4px 6px;">Станд. (€)</th>
-                                ${m.health_insurance ? '<th style="padding:4px 6px;">ЗОК (€)</th>' : ''}
-                                <th style="padding:4px 6px; text-align:center;">Опции</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${medPurchases.map(p => {
-                                const ph = state.pharmacies.find(x => String(x.id) === String(p.pharmacy_id));
-                                const pName = ph ? ph.name : 'Непосочена';
-                                const dStr = p.purchase_date || '-';
-                                const eur = (p.price_eur !== null && p.price_eur !== undefined) ? p.price_eur.toFixed(2) : '-';
-                                const zk = (p.price_zk_eur !== null && p.price_zk_eur !== undefined) ? p.price_zk_eur.toFixed(2) : '-';
-                                return `
-                                    <tr style="border-bottom:1px solid #eee;">
-                                        <td style="padding:4px 6px;">${dStr}</td>
-                                        <td style="padding:4px 6px;"><b>${pName}</b></td>
-                                        <td style="padding:4px 6px;">${eur} €</td>
-                                        ${m.health_insurance ? `<td style="padding:4px 6px; color:#E74C3C; font-weight:bold;">${zk} €</td>` : ''}
-                                        <td style="padding:4px 6px; text-align:center;">
-                                            <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:3px 6px; border-radius:3px; cursor:pointer;" title="Изтрий">🗑️</button>
-                                        </td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; border-collapse:collapse; font-size:11px; margin-top:6px; background:#fff; border:1px solid #ddd;">
+                            <thead>
+                                <tr style="background:#f1f5f9; text-align:left; border-bottom:1px solid #ddd;">
+                                    <th style="padding:4px 6px;">Дата</th>
+                                    <th style="padding:4px 6px;">Аптека</th>
+                                    <th style="padding:4px 6px;">Станд. (€)</th>
+                                    ${m.health_insurance ? '<th style="padding:4px 6px;">ЗОК (€)</th>' : ''}
+                                    <th style="padding:4px 6px; text-align:center;">Опции</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${medPurchases.map(p => {
+                                    const ph = state.pharmacies.find(x => String(x.id) === String(p.pharmacy_id));
+                                    const pName = ph ? ph.name : 'Непосочена';
+                                    const dStr = p.purchase_date || '-';
+                                    const eur = (p.price_eur !== null && p.price_eur !== undefined) ? p.price_eur.toFixed(2) : '-';
+                                    const zk = (p.price_zk_eur !== null && p.price_zk_eur !== undefined) ? p.price_zk_eur.toFixed(2) : '-';
+                                    return `
+                                        <tr style="border-bottom:1px solid #eee;">
+                                            <td style="padding:4px 6px;">${dStr}</td>
+                                            <td style="padding:4px 6px;"><b>${pName}</b></td>
+                                            <td style="padding:4px 6px;">${eur} €</td>
+                                            ${m.health_insurance ? `<td style="padding:4px 6px; color:#E74C3C; font-weight:bold;">${zk} €</td>` : ''}
+                                            <td style="padding:4px 6px; text-align:center;">
+                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:3px 6px; border-radius:3px; cursor:pointer;" title="Изтрий">🗑️</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
                 `;
             }
 
@@ -329,7 +339,7 @@
                     return `
                     <div class="doc-item">
                         <a href="${doc.file_url}" target="_blank" style="color:#2980B9; font-weight:bold; text-decoration:underline;">📄 ${docName}</a>
-                        <button type="button" onclick="unlinkDocument('${doc.id}')" style="background:#E74C3C; color:white; border:none; padding:2px 6px; border-radius:3px; cursor:pointer;">Премахни</button>
+                        <button type="button" onclick="unlinkDocument('${doc.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Премахни</button>
                     </div>`;
                 }).join('');
             }
@@ -361,20 +371,20 @@
                 <div class="form-row"><div class="form-group"><label>Форма</label><input type="text" id="form" value="${m.form||''}"></div><div class="form-group"><label>Брой</label><input type="number" id="qty" value="${m.form_quantity||''}"></div></div>
                 <div class="form-group"><label>Дозировка</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
                 
-                <div class="form-group" style="background: #f9f9f9; padding: 10px; border: 1px dashed #148F77; border-radius: 4px;">
+                <div class="form-group" style="background: #f9f9f9; padding: 10px; border: 1px dashed #148F77; border-radius: 6px;">
                     <label style="color: #148F77; font-weight: bold; margin-bottom: 5px;">Свързани документи / рецепти:</label>
                     <div style="margin-bottom: 8px;">${docsListHtml}</div>
                     
                     ${availableDocs.length > 0 ? `
                         <div style="margin-top: 8px;">
-                            <label style="font-size:10px;">Или избери съществуващ документ:</label>
+                            <label style="font-size:11px;">Или избери съществуващ документ:</label>
                             <select id="existing_doc_select" style="margin-top:2px; margin-bottom:4px;">${existingDocOpts}</select>
-                            <button type="button" onclick="linkExistingDoc()" style="background:#2980B9; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px;">Свържи избрания</button>
+                            <button type="button" onclick="linkExistingDoc()" style="background:#2980B9; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:12px;">Свържи избрания</button>
                         </div>
                     ` : ''}
 
                     <div style="margin-top: 8px;">
-                        <label style="font-size:10px;">Качи чисто нов документ:</label>
+                        <label style="font-size:11px;">Качи чисто нов документ:</label>
                         <input type="file" id="new_doc_file" accept=".pdf,image/*" style="margin-top: 4px;">
                     </div>
                 </div>
@@ -414,7 +424,7 @@
                     <div class="form-group"><label>Цена по ЗОК (EUR)</label><input type="number" step="0.01" id="price_zk_eur" value="${pZk}"></div>
                 </div>
 
-                <div class="form-group" style="background: #F7FAFC; padding: 10px; border: 1px solid #CBD5E0; border-radius: 4px;">
+                <div class="form-group" style="background: #F7FAFC; padding: 10px; border: 1px solid #CBD5E0; border-radius: 6px;">
                     <label style="color: #2B6CB0; font-weight: bold;">📊 История на цените и аптеките:</label>
                     ${purchasesHistoryHtml}
                 </div>
