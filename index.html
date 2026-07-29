@@ -2,7 +2,8 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <title>Здравен мениджър - Пълен (Десктоп)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Здравен мениджър - Мобилен</title>
     <script>
         const CONFIG = {
             URL: "https://xwnjuqqudkjkqdkrndhg.supabase.co",
@@ -10,37 +11,60 @@
         };
     </script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: sans-serif; background: #667eea; padding: 10px; }
-        .header { background: #E74C3C; color: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; }
-        .filters { background: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-        .search-input { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px; }
-        .filter-buttons { display: flex; gap: 5px; margin-bottom: 5px; flex-wrap: wrap; }
-        .filter-btn { padding: 4px 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px; font-size: 11px; }
-        .filter-btn.active { background: #148F77; color: white; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
-        .card { background: white; padding: 10px; border-radius: 8px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 12px; }
-        .card h3 { font-size: 14px; margin-bottom: 4px; color: #333; }
-        .card p { margin-bottom: 2px; color: #555; }
-        .panel { position: fixed; right: 0; top: 0; width: 100%; max-width: 550px; height: 100%; background: white; padding: 15px; display: none; overflow-y: auto; z-index: 1000; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
-        .form-row { display: flex; gap: 5px; }
-        .form-group { flex: 1; margin-bottom: 8px; }
-        .form-group label { display: block; font-size: 10px; font-weight: bold; color: #555; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
-        .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
-        .checkbox-group label { font-weight: normal; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+        /* Глобални стилове за правилно оразмеряване на мобилни устройства */
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; padding: 10px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #667eea; font-size: 14px; }
         
-        .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 2000; display: none; flex-direction: column; padding: 20px; }
-        .fullscreen-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: white; }
-        .fullscreen-header h2 { font-size: 18px; }
-        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .fullscreen-content { flex: 1; width: 100%; background: #fff; border-radius: 8px; overflow: hidden; }
-        .doc-btn { background: #2980B9; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-top: 3px; display: inline-block; text-decoration: none; margin-right: 4px; }
-        .doc-item { display: flex; justify-content: space-between; align-items: center; background: #f1f1f1; padding: 5px 8px; border-radius: 4px; margin-bottom: 4px; font-size: 11px; }
+        .header { background: #E74C3C; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; }
+        .header h1 { font-size: 18px; margin: 0; }
+        
+        .filters { background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .search-input { width: 100%; padding: 12px 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; font-family: inherit; }
+        
+        .filter-buttons { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
+        .filter-btn { padding: 8px 12px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: 500; }
+        .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
+        
+        .grid { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+        .card { background: white; padding: 15px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-size: 14px; }
+        .card h3 { font-size: 16px; margin: 0 0 8px 0; color: #333; }
+        .card p { margin: 0 0 4px 0; color: #555; }
+        
+        /* Стилове за формата */
+        .panel { position: fixed; right: 0; top: 0; width: 100vw; height: 100vh; background: white; padding: 15px; padding-bottom: 40px; display: none; overflow-y: auto; z-index: 1000; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .panel-header h2 { font-size: 18px; margin: 0; color: #333; }
+        .close-btn { background: #E74C3C; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        
+        .form-group { margin-bottom: 15px; width: 100%; }
+        .form-group label.title-label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 5px; }
+        .form-group input[type="text"], 
+        .form-group input[type="number"], 
+        .form-group input[type="date"], 
+        .form-group select, 
+        .form-group textarea { width: 100%; padding: 12px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; background: #fff; font-family: inherit; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        
+        .form-row-mobile { display: flex; gap: 10px; margin-bottom: 15px; width: 100%; }
+        .form-row-mobile .form-group { margin-bottom: 0; flex: 1; }
+
+        .checkbox-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 5px; }
+        .checkbox-group label { font-weight: 500; font-size: 15px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; }
+
+        /* Fullscreen Modal за документи */
+        .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; }
+        .fullscreen-header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #222; color: white; }
+        .fullscreen-header h2 { font-size: 16px; margin: 0; }
+        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .fullscreen-content { flex: 1; width: 100%; background: #fff; overflow: hidden; }
+        
+        .doc-btn { background: #2980B9; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 6px; display: inline-block; text-decoration: none; margin-right: 6px; }
+        .doc-item { padding: 10px; background: #f1f1f1; border-radius: 6px; margin-bottom: 8px; font-size: 14px; }
     </style>
 </head>
 <body>
-    <div class="header"><h1>Здравен мениджър (Десктоп)</h1></div>
+    <div class="header"><h1>Здравен мениджър (Мобилен)</h1></div>
     <div class="filters">
         <input type="text" id="search" class="search-input" placeholder="Търси лекарство..." oninput="renderUI()">
         <select id="categoryFilter" class="search-input" onchange="state.selectedCategory=this.value; renderUI()">
@@ -50,37 +74,32 @@
         <div id="zokFilters" class="filter-buttons"></div>
         <div id="activeFilters" class="filter-buttons"></div>
         <div id="dailyFilters" class="filter-buttons"></div>
-        <button onclick="refreshData()" style="width:100%; padding: 8px; background:#148F77; color:white; border:none; border-radius:4px; cursor:pointer;">Опресни</button>
+        <button onclick="refreshData()" style="width:100%; padding: 12px; background:#148F77; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:16px; margin-top:8px;">Опресни данните</button>
     </div>
+    
     <div class="grid" id="medGrid"></div>
     
+    <!-- Панел за Редактиране -->
     <div id="editPanel" class="panel">
-        <h2 id="panelTitle" style="font-size: 16px; margin-bottom: 10px;">Редактиране</h2>
-        <button onclick="document.getElementById('editPanel').style.display='none'" style="padding: 5px 10px; margin-bottom: 10px; cursor:pointer;">Затвори</button>
+        <div class="panel-header">
+            <h2 id="panelTitle">Редактиране</h2>
+            <button class="close-btn" onclick="document.getElementById('editPanel').style.display='none'">Затвори</button>
+        </div>
         <div id="panelBody"></div>
-        <button onclick="saveMed()" style="padding:10px; width:100%; background:#148F77; color:white; border:none; border-radius:4px; margin-top:10px; cursor:pointer; font-weight:bold;">ЗАПАЗИ</button>
+        <button onclick="saveMed()" style="padding:15px; width:100%; background:#148F77; color:white; border:none; border-radius:8px; margin-top:10px; margin-bottom:20px; cursor:pointer; font-weight:bold; font-size:16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">ЗАПАЗИ ПРОМЕНИТЕ</button>
     </div>
 
+    <!-- Модал за преглед на документи -->
     <div id="fullscreenModal" class="fullscreen-modal">
         <div class="fullscreen-header">
             <h2 id="fsTitle">Преглед на документ</h2>
-            <button class="close-fs-btn" onclick="closeFullscreen()">Затвори [X]</button>
+            <button class="close-fs-btn" onclick="closeFullscreen()">X</button>
         </div>
         <div class="fullscreen-content" id="fsContainer"></div>
     </div>
 
     <script>
         let state = { selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedDaily: 'all', selectedCategory: 'all', meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], currentId: null };
-
-        // Помощна функция за форматиране на дата от yyyy-mm-dd към dd.mm.yyyy[cite: 6]
-        function formatDateToBG(dateStr) {
-            if (!dateStr) return '-';
-            const parts = dateStr.split('-');
-            if (parts.length === 3) {
-                return `${parts[2]}.${parts[1]}.${parts[0]}`;
-            }
-            return dateStr;
-        }
 
         async function refreshData() {
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
@@ -125,7 +144,7 @@
 
             document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
             document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без ЗОК':'Всички'}</button>`).join('');
-            document.getElementById('activeFilters').innerHTML = ['true', 'false', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':a==='false'?'Неактивни':'Всички'}</button>`).join('');
+            document.getElementById('activeFilters').innerHTML = ['true', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':'Всички'}</button>`).join('');
             document.getElementById('dailyFilters').innerHTML = ['true', 'all'].map(d => `<button class="filter-btn ${state.selectedDaily===d?'active':''}" onclick="state.selectedDaily='${d}'; renderUI()">${d==='true'?'Ежедневни':'Всички'}</button>`).join('');
 
             const search = document.getElementById('search').value.toLowerCase().trim();
@@ -151,7 +170,7 @@
                 return matchPerson && matchZok && matchActive && matchDaily && matchCategory;
             }).map(m => {
                 const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
-                let priceHtml = 'Няма цена';
+                let priceHtml = 'Няма въведена цена';
                 
                 if (medPurchases.length > 0) {
                     const sortedPurchases = [...medPurchases].sort((a, b) => {
@@ -186,7 +205,7 @@
                             if (bestZok.price_zk_eur === 0) {
                                 priceHtml = `<b>ЗОК:</b> 0.00 EUR (${pharmName})`;
                             } else {
-                                priceHtml = `<b>ЗОК:</b> ${bestZok.price_zk_eur.toFixed(2)} EUR (${pharmName})<br><span style="color:#666;">Стандартна: ${bestStd ? bestStd.price_eur.toFixed(2) : '0'} EUR</span>`;
+                                priceHtml = `<b>ЗОК:</b> ${bestZok.price_zk_eur.toFixed(2)} EUR (${pharmName})<br><span style="color:#777; font-size: 13px;">Стандартна: ${bestStd ? bestStd.price_eur.toFixed(2) : '0'} EUR</span>`;
                             }
                         } else {
                             const validStd = latestPerPharmacy.filter(p => p.price_eur !== null && p.price_eur !== undefined);
@@ -225,7 +244,7 @@
 
                 let docButtonsHtml = '';
                 if (medDocs.length > 0) {
-                    docButtonsHtml = `<div style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 3px;">`;
+                    docButtonsHtml = `<div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">`;
                     medDocs.forEach(doc => {
                         const docName = doc.file_name || doc.title || 'Документ';
                         docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${doc.file_url}', '${docName}')">?? ${docName}</button>`;
@@ -235,12 +254,12 @@
 
                 return `
                     <div class="card" onclick="openPanel('${m.id}')">
-                        <h3>${displayName}</h3>
-                        <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">?? ${priceHtml}</p>
+                        <h3>${displayName} ${m.is_daily ? ' ??' : ''}</h3>
+                        <p style="color: #148F77; font-weight: bold; font-size: 15px; margin-bottom: 6px;">?? ${priceHtml}</p>
                         <p>${dosageText}</p>
-                        ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold;">За: ${assignedPersons}</p>` : ''}
-                        ${doctor ? `<p style="color:#444;">Лекар: ${doctor.name}</p>` : ''}
-                        ${mc ? `<p style="color:#444;">Център: ${mc.name}</p>` : ''}
+                        ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold; margin-top: 4px;">За: ${assignedPersons}</p>` : ''}
+                        ${doctor ? `<p style="color:#666; font-size: 13px; margin-top: 2px;">Лекар: ${doctor.name}</p>` : ''}
+                        ${mc ? `<p style="color:#666; font-size: 13px;">Център: ${mc.name}</p>` : ''}
                         ${docButtonsHtml}
                     </div>`;
             }).join('');
@@ -270,40 +289,42 @@
 
             let pEur = '', pZk = '', pharmNameVal = '';
 
-            let purchasesHistoryHtml = '<p style="font-size:11px; color:#777; margin-top:4px;">Няма въведена история за това лекарство.</p>';
+            let purchasesHistoryHtml = '<p style="font-size:13px; color:#777; margin-top:4px;">Няма въведена история за това лекарство.</p>';
             if (medPurchases.length > 0) {
                 purchasesHistoryHtml = `
-                    <table style="width:100%; border-collapse:collapse; font-size:11px; margin-top:6px; background:#fff; border:1px solid #ddd;">
-                        <thead>
-                            <tr style="background:#f1f5f9; text-align:left; border-bottom:1px solid #ddd;">
-                                <th style="padding:4px 6px;">Дата</th>
-                                <th style="padding:4px 6px;">Аптека</th>
-                                <th style="padding:4px 6px;">Станд. (€)</th>
-                                ${m.health_insurance ? '<th style="padding:4px 6px;">ЗОК (€)</th>' : ''}
-                                <th style="padding:4px 6px; text-align:center;">Опции</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${medPurchases.map(p => {
-                                const ph = state.pharmacies.find(x => String(x.id) === String(p.pharmacy_id));
-                                const pName = ph ? ph.name : 'Непосочена';
-                                const dStr = formatDateToBG(p.purchase_date);
-                                const eur = (p.price_eur !== null && p.price_eur !== undefined) ? p.price_eur.toFixed(2) : '-';
-                                const zk = (p.price_zk_eur !== null && p.price_zk_eur !== undefined) ? p.price_zk_eur.toFixed(2) : '-';
-                                return `
-                                    <tr style="border-bottom:1px solid #eee;">
-                                        <td style="padding:4px 6px;">${dStr}</td>
-                                        <td style="padding:4px 6px;"><b>${pName}</b></td>
-                                        <td style="padding:4px 6px;">${eur} €</td>
-                                        ${m.health_insurance ? `<td style="padding:4px 6px; color:#E74C3C; font-weight:bold;">${zk} €</td>` : ''}
-                                        <td style="padding:4px 6px; text-align:center;">
-                                            <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:3px 6px; border-radius:3px; cursor:pointer;" title="Изтрий">???</button>
-                                        </td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
+                    <div style="overflow-x:auto; margin-top: 10px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:13px; background:#fff; border:1px solid #ddd;">
+                            <thead>
+                                <tr style="background:#f1f5f9; text-align:left; border-bottom:1px solid #ddd;">
+                                    <th style="padding:6px;">Дата</th>
+                                    <th style="padding:6px;">Аптека</th>
+                                    <th style="padding:6px;">Ст. (€)</th>
+                                    ${m.health_insurance ? '<th style="padding:6px;">ЗОК (€)</th>' : ''}
+                                    <th style="padding:6px; text-align:center;">Изтрий</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${medPurchases.map(p => {
+                                    const ph = state.pharmacies.find(x => String(x.id) === String(p.pharmacy_id));
+                                    const pName = ph ? ph.name : 'Непосочена';
+                                    const dStr = p.purchase_date || '-';
+                                    const eur = (p.price_eur !== null && p.price_eur !== undefined) ? p.price_eur.toFixed(2) : '-';
+                                    const zk = (p.price_zk_eur !== null && p.price_zk_eur !== undefined) ? p.price_zk_eur.toFixed(2) : '-';
+                                    return `
+                                        <tr style="border-bottom:1px solid #eee;">
+                                            <td style="padding:6px;">${dStr}</td>
+                                            <td style="padding:6px;"><b>${pName}</b></td>
+                                            <td style="padding:6px;">${eur} €</td>
+                                            ${m.health_insurance ? `<td style="padding:6px; color:#E74C3C; font-weight:bold;">${zk} €</td>` : ''}
+                                            <td style="padding:6px; text-align:center;">
+                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;" title="Изтрий">???</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
                 `;
             }
 
@@ -332,185 +353,114 @@
             const linkedDocIds = state.medication_documents.filter(md => String(md.medication_id) === String(m.id)).map(md => String(md.document_id));
             const currentMedDocs = state.documents.filter(doc => linkedDocIds.includes(String(doc.id)));
 
-            let docsListHtml = 'Няма свързани документи';
+            let docsListHtml = '<span style="color:#777; font-size:13px;">Няма свързани документи</span>';
             if (currentMedDocs.length > 0) {
                 docsListHtml = currentMedDocs.map(doc => {
                     const docName = doc.file_name || doc.title || 'Документ';
                     return `
                     <div class="doc-item">
-                        <a href="${doc.file_url}" target="_blank" style="color:#2980B9; font-weight:bold; text-decoration:underline;">?? ${docName}</a>
-                        <button type="button" onclick="unlinkDocument('${doc.id}')" style="background:#E74C3C; color:white; border:none; padding:2px 6px; border-radius:3px; cursor:pointer;">Премахни</button>
+                        <a href="#" onclick="event.preventDefault(); openFullscreen('${doc.file_url}', '${docName}')" style="color:#2980B9; font-weight:bold; text-decoration:none; display:block; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">?? ${docName}</a>
                     </div>`;
                 }).join('');
             }
 
-            const availableDocs = state.documents.filter(doc => !linkedDocIds.includes(String(doc.id)));
-            let existingDocOpts = '<option value="">-- Избери от вече качените --</option>' + availableDocs.map(doc => `<option value="${doc.id}">${doc.file_name || doc.title || 'Документ'}</option>`).join('');
-
             const todayStr = new Date().toISOString().split('T')[0];
 
             document.getElementById('panelBody').innerHTML = `
-                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div></div>
-                <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
+                <div class="form-group"><label class="title-label">Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div>
+                <div class="form-group"><label class="title-label">Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div>
+                <div class="form-group"><label class="title-label">Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Категория (пиши или избери)</label>
-                        <input type="text" id="category_name" list="category_list" value="${currentCatName}" placeholder="Въведи или избери категория...">
-                        <datalist id="category_list">${catDatalist}</datalist>
-                    </div>
-                    <div class="form-group"><label>Производител</label><select id="manufacturer_id">${manOpts}</select></div>
+                <div class="form-group">
+                    <label class="title-label">Категория (избери или въведи нова)</label>
+                    <input type="text" id="category_name" list="category_list" value="${currentCatName}" placeholder="Категория...">
+                    <datalist id="category_list">${catDatalist}</datalist>
                 </div>
                 
                 <div class="form-group">
-                    <label>Предназначено за лица:</label>
+                    <label class="title-label">Производител</label>
+                    <select id="manufacturer_id">${manOpts}</select>
+                </div>
+                
+                <div class="form-group" style="background: #f4f6f7; padding: 12px; border: 1px solid #e0e0e0; border-radius: 6px;">
+                    <label class="title-label">Предназначено за лица:</label>
                     <div class="checkbox-group">${personsCheckboxes || 'Няма въведени лица'}</div>
                 </div>
 
-                <div class="form-row"><div class="form-group"><label>Количество</label><input type="text" id="vol" value="${m.volume_quantity !== null && m.volume_quantity !== undefined ? m.volume_quantity : ''}"></div><div class="form-group"><label>Единица</label><input type="text" id="unit" value="${m.volume_unit||''}"></div></div>
-                <div class="form-row"><div class="form-group"><label>Форма</label><input type="text" id="form" value="${m.form||''}"></div><div class="form-group"><label>Брой</label><input type="number" id="qty" value="${m.form_quantity||''}"></div></div>
-                <div class="form-group"><label>Дозировка</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
+                <div class="form-row-mobile">
+                    <div class="form-group"><label class="title-label">Количество</label><input type="text" id="vol" value="${m.volume_quantity !== null && m.volume_quantity !== undefined ? m.volume_quantity : ''}"></div>
+                    <div class="form-group"><label class="title-label">Мярка (мл, гр)</label><input type="text" id="unit" value="${m.volume_unit||''}"></div>
+                </div>
                 
-                <div class="form-group" style="background: #f9f9f9; padding: 10px; border: 1px dashed #148F77; border-radius: 4px;">
-                    <label style="color: #148F77; font-weight: bold; margin-bottom: 5px;">Свързани документи / рецепти:</label>
-                    <div style="margin-bottom: 8px;">${docsListHtml}</div>
-                    
-                    ${availableDocs.length > 0 ? `
-                        <div style="margin-top: 8px;">
-                            <label style="font-size:10px;">Или избери съществуващ документ:</label>
-                            <select id="existing_doc_select" style="margin-top:2px; margin-bottom:4px;">${existingDocOpts}</select>
-                            <button type="button" onclick="linkExistingDoc()" style="background:#2980B9; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px;">Свържи избрания</button>
-                        </div>
-                    ` : ''}
-
-                    <div style="margin-top: 8px;">
-                        <label style="font-size:10px;">Качи чисто нов документ:</label>
-                        <input type="file" id="new_doc_file" accept=".pdf,image/*" style="margin-top: 4px;">
-                    </div>
+                <div class="form-row-mobile">
+                    <div class="form-group"><label class="title-label">Форма</label><input type="text" id="form" value="${m.form||''}"></div>
+                    <div class="form-group"><label class="title-label">Брой в оп.</label><input type="number" id="qty" value="${m.form_quantity||''}"></div>
+                </div>
+                
+                <div class="form-group"><label class="title-label">Дозировка и прием</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
+                
+                <div class="form-group" style="background: #f9f9f9; padding: 12px; border: 1px solid #ddd; border-radius: 6px;">
+                    <label class="title-label" style="color: #2980B9;">Свързани документи / рецепти:</label>
+                    <div style="margin-top: 8px;">${docsListHtml}</div>
                 </div>
 
                 <div class="form-group">
-                    <label>Лекар (пиши свободно или изберете)</label>
-                    <input type="text" id="doctor_name" list="doctors_list" value="${currentDocName}" placeholder="Въведи или избери лекар...">
+                    <label class="title-label">Изписано от Лекар</label>
+                    <input type="text" id="doctor_name" list="doctors_list" value="${currentDocName}" placeholder="Лекар...">
                     <datalist id="doctors_list">${docDatalist}</datalist>
                 </div>
+                
                 <div class="form-group">
-                    <label>Болница / Център (пиши свободно или изберете)</label>
-                    <input type="text" id="medical_center_name" list="mc_list" value="${currentMcName}" placeholder="Въведи или избери център...">
+                    <label class="title-label">Болница / Медицински център</label>
+                    <input type="text" id="medical_center_name" list="mc_list" value="${currentMcName}" placeholder="Център...">
                     <datalist id="mc_list">${mcDatalist}</datalist>
                 </div>
-                <div class="form-group"><label>Дата на рецепта</label><input type="date" id="prescription_date" value="${m.prescription_date||''}"></div>
                 
-                <div class="form-row">
-                    <div class="form-group"><label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> ЗОК</label></div>
-                    <div class="form-group"><label><input type="checkbox" id="is_active" ${m.is_active?'checked':''}> Активно</label></div>
-                    <div class="form-group"><label><input type="checkbox" id="is_daily" ${m.is_daily?'checked':''}> Ежедневно</label></div>
+                <div class="form-group"><label class="title-label">Дата на рецептата</label><input type="date" id="prescription_date" value="${m.prescription_date||''}"></div>
+                
+                <div class="form-group" style="background:#fff; border:1px solid #ddd; padding:12px; border-radius:6px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px;">
+                    <label style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#333; cursor:pointer;">
+                        <input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''} style="width:20px; height:20px; margin:0;"> ЗОК
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#333; cursor:pointer;">
+                        <input type="checkbox" id="is_active" ${m.is_active?'checked':''} style="width:20px; height:20px; margin:0;"> Активно
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#333; cursor:pointer;">
+                        <input type="checkbox" id="is_daily" ${m.is_daily?'checked':''} style="width:20px; height:20px; margin:0;"> Ежедневно
+                    </label>
                 </div>
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Аптека (нова регистрация/цена)</label>
-                        <input type="text" id="pharmacy_name" list="pharmacies_list" value="${pharmNameVal}" placeholder="Въведи само ако купуваш ново...">
-                        <datalist id="pharmacies_list">${pharmDatalist}</datalist>
-                    </div>
-                    <div class="form-group">
-                        <label>Дата на покупка</label>
-                        <input type="date" id="purchase_date" value="${todayStr}">
-                    </div>
+                <div class="form-group" style="margin-top:20px; border-top:2px solid #eee; padding-top:20px;">
+                    <label class="title-label" style="color:#E74C3C; font-size: 15px;">Аптека (При въвеждане на нова покупка)</label>
+                    <input type="text" id="pharmacy_name" list="pharmacies_list" value="${pharmNameVal}" placeholder="Въведи само при нова покупка...">
+                    <datalist id="pharmacies_list">${pharmDatalist}</datalist>
+                </div>
+                
+                <div class="form-group">
+                    <label class="title-label">Дата на покупка</label>
+                    <input type="date" id="purchase_date" value="${todayStr}">
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group"><label>Стандартна цена (EUR)</label><input type="number" step="0.01" id="price_eur" value="${pEur}"></div>
-                    <div class="form-group"><label>Цена по ЗОК (EUR)</label><input type="number" step="0.01" id="price_zk_eur" value="${pZk}"></div>
+                <div class="form-row-mobile">
+                    <div class="form-group"><label class="title-label">Стандартна цена (€)</label><input type="number" step="0.01" id="price_eur" value="${pEur}"></div>
+                    <div class="form-group"><label class="title-label">Цена по ЗОК (€)</label><input type="number" step="0.01" id="price_zk_eur" value="${pZk}"></div>
                 </div>
 
-                <div class="form-group" style="background: #F7FAFC; padding: 10px; border: 1px solid #CBD5E0; border-radius: 4px;">
-                    <label style="color: #2B6CB0; font-weight: bold;">?? История на цените и аптеките:</label>
+                <div class="form-group" style="background: #F7FAFC; padding: 12px; border: 1px solid #CBD5E0; border-radius: 6px;">
+                    <label class="title-label" style="color: #2B6CB0; font-size: 14px;">?? История на цените и покупките:</label>
                     ${purchasesHistoryHtml}
                 </div>
 
-                <div class="form-group"><label>Бележки</label><textarea id="notes">${m.notes||''}</textarea></div>
-                <div class="form-group"><label>Описание</label><textarea id="desc">${m.description||''}</textarea></div>`;
+                <div class="form-group"><label class="title-label">Допълнителни бележки</label><textarea id="notes">${m.notes||''}</textarea></div>
+                <div class="form-group"><label class="title-label">Описание на лекарството</label><textarea id="desc">${m.description||''}</textarea></div>`;
             
             document.getElementById('editPanel').style.display = 'block';
-        }
-
-        async function linkExistingDoc() {
-            const docId = document.getElementById('existing_doc_select').value;
-            if (!docId) return;
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json' };
-            
-            const res = await fetch(`${CONFIG.URL}/rest/v1/medication_documents`, {
-                method: 'POST',
-                headers: h,
-                body: JSON.stringify({ medication_id: state.currentId, document_id: docId })
-            });
-
-            if (res.ok) {
-                state.medication_documents.push({ medication_id: state.currentId, document_id: docId });
-                openPanel(state.currentId);
-                renderUI();
-            }
-        }
-
-        async function unlinkDocument(docId) {
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
-            await fetch(`${CONFIG.URL}/rest/v1/medication_documents?medication_id=eq.${state.currentId}&document_id=eq.${docId}`, {
-                method: 'DELETE',
-                headers: h
-            });
-            state.medication_documents = state.medication_documents.filter(md => !(String(md.medication_id) === String(state.currentId) && String(md.document_id) === String(docId)));
-            openPanel(state.currentId);
-            renderUI();
         }
 
         async function saveMed() {
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
             const volValue = document.getElementById('vol').value.trim();
-            const fileInput = document.getElementById('new_doc_file');
-
-            if (fileInput && fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0];
-                const cleanFileName = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${file.name.split('.').pop()}`;
-                
-                const uploadRes = await fetch(`${CONFIG.URL}/storage/v1/object/medical-docs/${cleanFileName}`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': CONFIG.KEY,
-                        'Authorization': 'Bearer ' + CONFIG.KEY,
-                        'Content-Type': file.type
-                    },
-                    body: file
-                });
-
-                if (uploadRes.ok) {
-                    const publicUrl = `${CONFIG.URL}/storage/v1/object/public/medical-docs/${cleanFileName}`;
-                    
-                    const newDocRes = await fetch(`${CONFIG.URL}/rest/v1/documents`, {
-                        method: 'POST',
-                        headers: h,
-                        body: JSON.stringify({ file_url: publicUrl, file_name: file.name })
-                    });
-                    const newDocData = await newDocRes.json();
-                    
-                    if (newDocData && newDocData.length > 0) {
-                        const createdDoc = newDocData[0];
-                        state.documents.push(createdDoc);
-
-                        await fetch(`${CONFIG.URL}/rest/v1/medication_documents`, {
-                            method: 'POST',
-                            headers: h,
-                            body: JSON.stringify({ medication_id: state.currentId, document_id: createdDoc.id })
-                        });
-                        state.medication_documents.push({ medication_id: state.currentId, document_id: createdDoc.id });
-                    }
-                } else {
-                    const errText = await uploadRes.text();
-                    alert("Грешка при качване в Storage: " + errText);
-                    return;
-                }
-            }
 
             const catInputName = document.getElementById('category_name').value.trim();
             let categoryId = null;
@@ -661,7 +611,7 @@
         }
 
         function openFullscreen(url, title) {
-            document.getElementById('fsTitle').innerText = "Документ: " + title;
+            document.getElementById('fsTitle').innerText = title;
             document.getElementById('fsContainer').innerHTML = `<iframe src="${url}" style="width:100%; height:100%; border:none;"></iframe>`;
             document.getElementById('fullscreenModal').style.display = 'flex';
         }
