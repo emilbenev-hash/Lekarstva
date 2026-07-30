@@ -247,15 +247,15 @@
                     docButtonsHtml = `<div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">`;
                     medDocs.forEach(doc => {
                         const docName = doc.file_name || doc.title || 'Документ';
-                        docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${doc.file_url}', '${docName}')">?? ${docName}</button>`;
+                        docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${doc.file_url}', '${docName}')">📄 ${docName}</button>`;
                     });
                     docButtonsHtml += `</div>`;
                 }
 
                 return `
                     <div class="card" onclick="openPanel('${m.id}')">
-                        <h3>${displayName} ${m.is_daily ? ' ??' : ''}</h3>
-                        <p style="color: #148F77; font-weight: bold; font-size: 15px; margin-bottom: 6px;">?? ${priceHtml}</p>
+                        <h3>${displayName} ${m.is_daily ? ' 🔄' : ''}</h3>
+                        <p style="color: #148F77; font-weight: bold; font-size: 15px; margin-bottom: 6px;">💶 ${priceHtml}</p>
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold; margin-top: 4px;">За: ${assignedPersons}</p>` : ''}
                         ${doctor ? `<p style="color:#666; font-size: 13px; margin-top: 2px;">Лекар: ${doctor.name}</p>` : ''}
@@ -277,14 +277,15 @@
         function openPanel(id) {
             const m = state.meds.find(x => String(x.id) === String(id));
             state.currentId = id;
-            document.getElementById('panelTitle').innerText = "Редактиране: " + m.name_bg;
+            document.getElementById('panelTitle').innerText = "Редактиране: " + (m.name_bg || '');
 
             const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
+            // Хронологичен ред: от по-стара към по-нова покупка
             medPurchases.sort((a, b) => {
                 const dateA = a.purchase_date ? new Date(a.purchase_date) : new Date(0);
                 const dateB = b.purchase_date ? new Date(b.purchase_date) : new Date(0);
-                if (dateB - dateA !== 0) return dateB - dateA;
-                return (b.id || 0) - (a.id || 0);
+                if (dateA - dateB !== 0) return dateA - dateB;
+                return (a.id || 0) - (b.id || 0);
             });
 
             let pEur = '', pZk = '', pharmNameVal = '';
@@ -317,7 +318,7 @@
                                             <td style="padding:6px;">${eur} €</td>
                                             ${m.health_insurance ? `<td style="padding:6px; color:#E74C3C; font-weight:bold;">${zk} €</td>` : ''}
                                             <td style="padding:6px; text-align:center;">
-                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;" title="Изтрий">???</button>
+                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;" title="Изтрий">🗑️</button>
                                             </td>
                                         </tr>
                                     `;
@@ -359,7 +360,7 @@
                     const docName = doc.file_name || doc.title || 'Документ';
                     return `
                     <div class="doc-item">
-                        <a href="#" onclick="event.preventDefault(); openFullscreen('${doc.file_url}', '${docName}')" style="color:#2980B9; font-weight:bold; text-decoration:none; display:block; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">?? ${docName}</a>
+                        <a href="#" onclick="event.preventDefault(); openFullscreen('${doc.file_url}', '${docName}')" style="color:#2980B9; font-weight:bold; text-decoration:none; display:block; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📄 ${docName}</a>
                     </div>`;
                 }).join('');
             }
@@ -447,7 +448,7 @@
                 </div>
 
                 <div class="form-group" style="background: #F7FAFC; padding: 12px; border: 1px solid #CBD5E0; border-radius: 6px;">
-                    <label class="title-label" style="color: #2B6CB0; font-size: 14px;">?? История на цените и покупките:</label>
+                    <label class="title-label" style="color: #2B6CB0; font-size: 14px;">📊 История на цените и покупките:</label>
                     ${purchasesHistoryHtml}
                 </div>
 
