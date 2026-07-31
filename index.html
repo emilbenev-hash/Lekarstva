@@ -99,10 +99,23 @@
         let state = { selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedDaily: 'all', selectedCategory: 'all', meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], currentId: null };
 
         function formatDateToBG(dateStr) {
-            if (!dateStr) return '-';
+            if (!dateStr) return '';
             const parts = dateStr.split('-');
             if (parts.length === 3) {
                 return `${parts[2]}.${parts[1]}.${parts[0]}`;
+            }
+            return dateStr;
+        }
+
+        function parseDateToISO(dateStr) {
+            if (!dateStr) return null;
+            dateStr = dateStr.trim();
+            const parts = dateStr.split('.');
+            if (parts.length === 3) {
+                const d = parts[0].padStart(2, '0');
+                const m = parts[1].padStart(2, '0');
+                const y = parts[2];
+                return `${y}-${m}-${d}`;
             }
             return dateStr;
         }
@@ -260,7 +273,7 @@
 
                 return `
                     <div class="card" onclick="openPanel('${m.id}')">
-                        <h3>${displayName} ${m.is_daily ? ' 🔄' : ''}</h3>
+                        <h3>${displayName} ${m.is_daily ? ' ☀️' : ''}</h3>
                         <p style="color: #148F77; font-weight: bold; font-size: 15px; margin-bottom: 6px;">💶 ${priceHtml}</p>
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold; margin-top: 4px;">За: ${assignedPersons}</p>` : ''}
@@ -313,7 +326,7 @@
                                 ${medPurchases.map(p => {
                                     const ph = state.pharmacies.find(x => String(x.id) === String(p.pharmacy_id));
                                     const pName = ph ? ph.name : 'Непосочена';
-                                    const dStr = formatDateToBG(p.purchase_date);
+                                    const dStr = formatDateToBG(p.purchase_date) || '-';
                                     const eur = (p.price_eur !== null && p.price_eur !== undefined) ? p.price_eur.toFixed(2) : '-';
                                     const zk = (p.price_zk_eur !== null && p.price_zk_eur !== undefined) ? p.price_zk_eur.toFixed(2) : '-';
                                     return `
@@ -338,6 +351,10 @@
             const currentCatName = currentCatObj ? currentCatObj.name : '';
             const catDatalist = state.categories.map(c => `<option value="${c.name}">`).join('');
 
+            const currentManObj = state.manufacturers.find(mn => String(mn.id) === String(m.manufacturer_id));
+            const currentManName = currentManObj ? currentManObj.name : '';
+            const manDatalist = state.manufacturers.map(mn => `<option value="${mn.name}">`).join('');
+
             const currentDocObj = state.doctors.find(d => String(d.id) === String(m.doctor_id));
             const currentDocName = currentDocObj ? currentDocObj.name : '';
 
@@ -347,8 +364,6 @@
             const docDatalist = state.doctors.map(d => `<option value="${d.name}">`).join('');
             const mcDatalist = state.medicalCenters.map(mc => `<option value="${mc.name}">`).join('');
             const pharmDatalist = state.pharmacies.map(ph => `<option value="${ph.name}">`).join('');
-
-            const manOpts = '<option value="">-- Избери производител --</option>' + state.manufacturers.map(mn => `<option value="${mn.id}" ${String(m.manufacturer_id) === String(mn.id) ? 'selected' : ''}>${mn.name}</option>`).join('');
 
             const currentPersonsIds = state.medicationPersons.filter(mp => String(mp.medication_id) === String(m.id)).map(mp => String(mp.person_id));
             const personsCheckboxes = state.persons.map(p => {
@@ -384,8 +399,9 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="title-label">Производител</label>
-                    <select id="manufacturer_id">${manOpts}</select>
+                    <label class="title-label">Производител (избери или въведи нов)</label>
+                    <input type="text" id="manufacturer_name" list="manufacturers_list" value="${currentManName}" placeholder="Избери или въведи...">
+                    <datalist id="manufacturers_list">${manDatalist}</datalist>
                 </div>
                 
                 <div class="form-group" style="background: #f4f6f7; padding: 12px; border: 1px solid #e0e0e0; border-radius: 6px;">
@@ -422,7 +438,10 @@
                     <datalist id="mc_list">${mcDatalist}</datalist>
                 </div>
                 
-                <div class="form-group"><label class="title-label">Дата на рецептата</label><input type="date" id="prescription_date" value="${m.prescription_date||''}"></div>
+                <div class="form-group">
+                    <label class="title-label">Дата на рецептата</label>
+                    <input type="text" id="prescription_date" value="${formatDateToBG(m.prescription_date)}" placeholder="дд.мм.гггг">
+                </div>
                 
                 <div class="form-group" style="background:#fff; border:1px solid #ddd; padding:12px; border-radius:6px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px;">
                     <label style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:bold; color:#333; cursor:pointer;">
@@ -444,7 +463,7 @@
                 
                 <div class="form-group">
                     <label class="title-label">Дата на покупка</label>
-                    <input type="date" id="purchase_date" value="${todayStr}">
+                    <input type="text" id="purchase_date" value="${formatDateToBG(todayStr)}" placeholder="дд.мм.гггг">
                 </div>
 
                 <div class="form-row-mobile">
@@ -528,12 +547,35 @@
                 }
             }
 
+            const manInputName = document.getElementById('manufacturer_name').value.trim();
+            let manufacturerId = null;
+            if (manInputName !== '') {
+                let existingMan = state.manufacturers.find(mn => mn.name.toLowerCase() === manInputName.toLowerCase());
+                if (existingMan) {
+                    manufacturerId = existingMan.id;
+                } else {
+                    const newManRes = await fetch(`${CONFIG.URL}/rest/v1/manufacturers`, {
+                        method: 'POST',
+                        headers: h,
+                        body: JSON.stringify({ name: manInputName })
+                    });
+                    const newManData = await newManRes.json();
+                    if (newManData && newManData.length > 0) {
+                        manufacturerId = newManData[0].id;
+                        state.manufacturers.push(newManData[0]);
+                    }
+                }
+            }
+
+            const pDateEl = document.getElementById('prescription_date');
+            const prescriptionDateVal = pDateEl && pDateEl.value ? parseDateToISO(pDateEl.value) : null;
+
             const medUpdates = {
                 name_bg: document.getElementById('name_bg').value,
                 name_latin: document.getElementById('name_latin').value,
                 active_substance: document.getElementById('active').value,
                 category_id: categoryId,
-                manufacturer_id: document.getElementById('manufacturer_id').value || null,
+                manufacturer_id: manufacturerId,
                 volume_quantity: volValue !== '' ? volValue : null,
                 volume_unit: document.getElementById('unit').value,
                 form: document.getElementById('form').value,
@@ -541,7 +583,7 @@
                 dosage: document.getElementById('dosage').value,
                 doctor_id: doctorId,
                 prescription_medical_center_id: mcId,
-                prescription_date: document.getElementById('prescription_date').value || null,
+                prescription_date: prescriptionDateVal,
                 health_insurance: document.getElementById('health_insurance').checked,
                 is_active: document.getElementById('is_active').checked,
                 is_daily: document.getElementById('is_daily').checked,
@@ -597,7 +639,8 @@
 
             if (priceEurVal !== '' || priceZkVal !== '' || pharmNameInput !== '') {
                 const purchDateEl = document.getElementById('purchase_date');
-                const pDate = purchDateEl && purchDateEl.value ? purchDateEl.value : new Date().toISOString().split('T')[0];
+                const pDateVal = purchDateEl && purchDateEl.value ? purchDateEl.value : '';
+                const pDate = pDateVal ? parseDateToISO(pDateVal) : new Date().toISOString().split('T')[0];
                 
                 await fetch(`${CONFIG.URL}/rest/v1/purchases`, {
                     method: 'POST',
