@@ -82,10 +82,17 @@
     <div id="labModule" style="display:none;">
         <div class="filters">
             <div id="labPersonFilters" class="filter-buttons"></div>
-            <div id="labSectionFilters" class="filter-buttons" style="margin-top:6px;"></div>
+            <!-- Ред с бутона "ВСИЧКО", бутона "Само отклонения" и компактно падащо меню за категории -->
             <div style="margin-top:6px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                <div id="labSectionButtonsInline" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; flex:1;"></div>
+                <button id="labOORBtn" onclick="state.labOnlyOOR=!state.labOnlyOOR; renderLabs()" style="padding:6px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Само отклонения</button>
+                <select id="labSectionSelect" onchange="state.labSection=this.value; renderLabs()" style="padding:6px 8px; border:1px solid #ccc; border-radius:6px; font-size:12px; background:#fff; font-family:inherit;">
+                    <option value="all">-- Всички категории --</option>
+                </select>
+            </div>
+            <!-- Поле за търсене на показател и опресняване -->
+            <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
                 <input type="text" id="labSearch" placeholder="Търси показател..." oninput="state.labSearch=this.value; renderLabs()" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; flex:1; min-width:160px; font-size:14px;">
-                <button id="labOORBtn" onclick="state.labOnlyOOR=!state.labOnlyOOR; renderLabs()" style="padding:8px 12px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Само отклонения</button>
                 <button onclick="refreshData()" style="padding: 8px 12px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Опресни</button>
             </div>
         </div>
@@ -383,7 +390,12 @@
             }
 
             const personObj = state.persons.find(p => p.name === state.labPerson);
-            if (!personObj) { document.getElementById('labSectionFilters').innerHTML=''; document.getElementById('labContainer').innerHTML = '<p style="color:#666; padding:15px;">Няма данни за това лице.</p>'; return; }
+            if (!personObj) { 
+                document.getElementById('labSectionButtonsInline').innerHTML=''; 
+                document.getElementById('labSectionSelect').innerHTML='<option value="all">-- Всички категории --</option>';
+                document.getElementById('labContainer').innerHTML = '<p style="color:#666; padding:15px;">Няма данни за това лице.</p>'; 
+                return; 
+            }
 
             const rawTests = state.labTests
                 .filter(t => String(t.person_id) === String(personObj.id))
@@ -393,7 +405,12 @@
                     return (a.test_time||'').localeCompare(b.test_time||'');
                 });
 
-            if (rawTests.length === 0) { document.getElementById('labSectionFilters').innerHTML=''; document.getElementById('labContainer').innerHTML = '<p style="color:#666; padding:15px;">Няма изследвания за това лице.</p>'; return; }
+            if (rawTests.length === 0) { 
+                document.getElementById('labSectionButtonsInline').innerHTML=''; 
+                document.getElementById('labSectionSelect').innerHTML='<option value="all">-- Всички категории --</option>';
+                document.getElementById('labContainer').innerHTML = '<p style="color:#666; padding:15px;">Няма изследвания за това лице.</p>'; 
+                return; 
+            }
 
             const testMap = new Map();
             const groupedTestIds = {};
@@ -418,11 +435,16 @@
                 params.some(p => String(p.category_id)===String(cat.id) && usedParamIds.has(String(p.id)))
             );
 
+            // Бутон "ВСИЧКО" непосредствено до "Само отклонения"
             let secBtns = `<button class="filter-btn ${state.labSection==='all'?'active':''}" onclick="state.labSection='all'; renderLabs()">ВСИЧКО</button>`;
-            secBtns += catsWithData.map(c =>
-                `<button class="filter-btn ${state.labSection===String(c.id)?'active':''}" onclick="state.labSection='${c.id}'; renderLabs()">${c.name}</button>`
+            document.getElementById('labSectionButtonsInline').innerHTML = secBtns;
+
+            // Падащо меню за категориите
+            let selectOpts = `<option value="all">-- Всички категории --</option>`;
+            selectOpts += catsWithData.map(c =>
+                `<option value="${c.id}" ${state.labSection===String(c.id)?'selected':''}>${c.name}</option>`
             ).join('');
-            document.getElementById('labSectionFilters').innerHTML = secBtns;
+            document.getElementById('labSectionSelect').innerHTML = selectOpts;
 
             const shownCats = state.labSection==='all' ? catsWithData : catsWithData.filter(c => String(c.id)===state.labSection);
             const search = (state.labSearch||'').toLowerCase().trim();
