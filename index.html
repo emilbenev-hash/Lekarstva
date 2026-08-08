@@ -58,6 +58,11 @@
         
         .doc-btn { background: #2980B9; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 4px; display: inline-block; text-decoration: none; margin-right: 4px; }
         .doc-item { padding: 8px; background: #f1f1f1; border-radius: 6px; margin-bottom: 6px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+
+        .qty-btn { background: #2980B9; color: white; border: none; padding: 6px 12px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; }
+        .qty-btn:hover { background: #1F618D; }
+        .qty-btn.minus { background: #E74C3C; }
+        .qty-btn.minus:hover { background: #C0392B; }
     </style>
 </head>
 <body>
@@ -67,14 +72,32 @@
     </div>
 
     <!-- НАЧАЛНО МЕНЮ -->
-    <div id="homeMenu" style="display:flex; gap:20px; justify-content:center; align-items:center; margin-top:50px; flex-wrap:wrap;">
-        <div onclick="showMeds()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
-            <div style="font-size:48px;">&#128138;</div>
-            <div style="font-size:18px; font-weight:bold; color:#148F77;">Лекарства</div>
+    <div id="homeMenu" style="display:flex; gap:15px; justify-content:center; align-items:center; margin-top:40px; flex-wrap:wrap;">
+        <div onclick="showMeds()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
+            <div style="font-size:38px;">&#128138;</div>
+            <div style="font-size:15px; font-weight:bold; color:#148F77;">Лекарства</div>
         </div>
-        <div onclick="showLabs()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
-            <div style="font-size:48px;">&#129514;</div>
-            <div style="font-size:18px; font-weight:bold; color:#2980B9;">Изследвания</div>
+        <div onclick="showLabs()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
+            <div style="font-size:38px;">&#129514;</div>
+            <div style="font-size:15px; font-weight:bold; color:#2980B9;">Изследвания</div>
+        </div>
+        <div onclick="showShopping()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
+            <div style="font-size:38px;">🛒</div>
+            <div style="font-size:15px; font-weight:bold; color:#E67E22;">Закупуване</div>
+        </div>
+    </div>
+
+    <!-- МОДУЛ СПИСЪК ЗА ЗАКУПУВАНЕ -->
+    <div id="shoppingModule" style="display:none;">
+        <div class="filters" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <h2 style="color:#333; font-size:15px; margin:0;">🛒 Списък за закупуване</h2>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button onclick="addShoppingItem()" style="padding: 6px 12px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">➕ Ново поле</button>
+                <button onclick="clearShoppingList()" style="padding: 6px 12px; background:#7F8C8D; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Изчисти</button>
+            </div>
+        </div>
+        <div id="shoppingContainer" style="background:white; padding:10px; border-radius:8px; min-height:350px; overflow-y:auto;">
+            <!-- Съдържанието на списъка се генерира динамично -->
         </div>
     </div>
 
@@ -82,7 +105,6 @@
     <div id="labModule" style="display:none;">
         <div class="filters">
             <div id="labPersonFilters" class="filter-buttons"></div>
-            <!-- Ред с бутона "ВСИЧКО", бутона "Само отклонения" и компактно падащо меню за категории -->
             <div style="margin-top:6px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                 <div id="labSectionButtonsInline" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; flex:1;"></div>
                 <button id="labOORBtn" onclick="state.labOnlyOOR=!state.labOnlyOOR; renderLabs()" style="padding:6px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Само отклонения</button>
@@ -90,7 +112,6 @@
                     <option value="all">-- Всички категории --</option>
                 </select>
             </div>
-            <!-- Поле за търсене на показател и опресняване -->
             <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
                 <input type="text" id="labSearch" placeholder="Търси показател..." oninput="state.labSearch=this.value; renderLabs()" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; flex:1; min-width:160px; font-size:14px;">
                 <button onclick="refreshData()" style="padding: 8px 12px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Опресни</button>
@@ -186,12 +207,19 @@
     </div>
 
     <script>
-        let state = { selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedDaily: 'all', selectedEmergency: 'all', selectedCategory: 'all', meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], currentId: null, editingPurchaseId: null, labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false };
+        let state = { 
+            selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedDaily: 'all', selectedEmergency: 'all', selectedCategory: 'all', 
+            meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], 
+            currentId: null, editingPurchaseId: null, 
+            labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false,
+            shoppingList: [] // Състояние за мобилния списък за закупуване
+        };
 
         function showHome() {
             document.getElementById('homeMenu').style.display = 'flex';
             document.getElementById('medsModule').style.display = 'none';
             document.getElementById('labModule').style.display = 'none';
+            document.getElementById('shoppingModule').style.display = 'none';
             document.getElementById('backHomeBtn').style.display = 'none';
         }
 
@@ -199,6 +227,7 @@
             document.getElementById('homeMenu').style.display = 'none';
             document.getElementById('medsModule').style.display = 'block';
             document.getElementById('labModule').style.display = 'none';
+            document.getElementById('shoppingModule').style.display = 'none';
             document.getElementById('backHomeBtn').style.display = 'inline-block';
         }
 
@@ -206,8 +235,100 @@
             document.getElementById('homeMenu').style.display = 'none';
             document.getElementById('medsModule').style.display = 'none';
             document.getElementById('labModule').style.display = 'block';
+            document.getElementById('shoppingModule').style.display = 'none';
             document.getElementById('backHomeBtn').style.display = 'inline-block';
             renderLabs();
+        }
+
+        function showShopping() {
+            document.getElementById('homeMenu').style.display = 'none';
+            document.getElementById('medsModule').style.display = 'none';
+            document.getElementById('labModule').style.display = 'none';
+            document.getElementById('shoppingModule').style.display = 'block';
+            document.getElementById('backHomeBtn').style.display = 'inline-block';
+            
+            if (state.shoppingList.length === 0) {
+                addShoppingItem();
+            } else {
+                renderShoppingList();
+            }
+        }
+
+        function addShoppingItem() {
+            state.shoppingList.push({ id: Date.now(), medName: '', qty: 1 });
+            renderShoppingList();
+        }
+
+        function removeShoppingItem(id) {
+            state.shoppingList = state.shoppingList.filter(item => item.id !== id);
+            renderShoppingList();
+        }
+
+        function clearShoppingList() {
+            if(confirm("Сигурни ли сте, че искате да изчистите списъка?")) {
+                state.shoppingList = [];
+                renderShoppingList();
+            }
+        }
+
+        function updateShoppingItem(id, field, value) {
+            const item = state.shoppingList.find(i => i.id === id);
+            if (item) item[field] = value;
+        }
+
+        function changeShoppingQty(id, delta) {
+            const item = state.shoppingList.find(i => i.id === id);
+            if (item) {
+                item.qty = Math.max(1, item.qty + delta);
+                renderShoppingList();
+            }
+        }
+
+        function renderShoppingList() {
+            let container = document.getElementById('shoppingContainer');
+            if (state.shoppingList.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#777; margin-top:20px;">Списъкът е празен. Натиснете "➕ Ново поле".</p>';
+                return;
+            }
+
+            let baseMedOptions = '<option value="">-- Изберете лекарство --</option>';
+            state.meds.forEach(m => {
+                let displayName = m.name_bg || m.name_latin || 'Без име';
+                if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
+                if (m.volume_unit) displayName += ` ${m.volume_unit}`;
+                let safeVal = displayName.replace(/"/g, '&quot;');
+                baseMedOptions += `<option value="${safeVal}">${displayName}</option>`;
+            });
+
+            let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
+
+            state.shoppingList.forEach(item => {
+                let safeItemVal = (item.medName || '').replace(/"/g, '&quot;');
+                let currentOptions = baseMedOptions.replace(`value="${safeItemVal}"`, `value="${safeItemVal}" selected`);
+
+                html += `
+                    <div style="background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #ddd; display:flex; flex-direction:column; gap:8px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:bold; color:#555; margin-bottom:2px; display:block;">Лекарство:</label>
+                            <select onchange="updateShoppingItem(${item.id}, 'medName', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:white;">
+                                ${currentOptions}
+                            </select>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label style="font-size:11px; font-weight:bold; color:#555;">Количество:</label>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <button class="qty-btn minus" onclick="changeShoppingQty(${item.id}, -1)">-</button>
+                                <span style="font-weight:bold; font-size:15px; min-width:20px; text-align:center;">${item.qty}</span>
+                                <button class="qty-btn" onclick="changeShoppingQty(${item.id}, 1)">+</button>
+                                <button onclick="removeShoppingItem(${item.id})" style="background:#E74C3C; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:10px;" title="Премахни">❌</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         function labValueDisplay(results) {
@@ -436,11 +557,9 @@
                 params.some(p => String(p.category_id)===String(cat.id) && usedParamIds.has(String(p.id)))
             );
 
-            // Бутон "ВСИЧКО" непосредствено до "Само отклонения"
             let secBtns = `<button class="filter-btn ${state.labSection==='all'?'active':''}" onclick="state.labSection='all'; renderLabs()">ВСИЧКО</button>`;
             document.getElementById('labSectionButtonsInline').innerHTML = secBtns;
 
-            // Падащо меню за категориите
             let selectOpts = `<option value="all">-- Всички категории --</option>`;
             selectOpts += catsWithData.map(c =>
                 `<option value="${c.id}" ${state.labSection===String(c.id)?'selected':''}>${c.name}</option>`
@@ -515,8 +634,8 @@
                             if (rng) {
                                 let n = '';
                                 if (rng.min_value !== null && rng.min_value !== undefined && rng.max_value !== null && rng.max_value !== undefined) n = rng.min_value + '–' + rng.max_value;
-                                else if (rng.max_value !== null && rng.max_value !== undefined) n = '≤' + rng.max_value;
-                                else if (rng.min_value !== null && rng.min_value !== undefined) n = '≥' + rng.min_value;
+                                else if (rng.max_value !== null && rng.max_value !== undefined) n = '<' + rng.max_value;
+                                else if (rng.min_value !== null && rng.min_value !== undefined) n = '>' + rng.min_value;
                                 else if (rng.text_norm) n = rng.text_norm;
                                 
                                 if (n) {
@@ -600,6 +719,9 @@
 
                 renderUI();
                 renderLabs();
+                if (document.getElementById('shoppingModule').style.display === 'block') {
+                    renderShoppingList();
+                }
             } catch (e) { console.error("Грешка при зареждане:", e); }
         }
 
@@ -1006,7 +1128,7 @@
                 </td>
                 <td style="padding:6px;"><input type="number" step="0.01" class="calc-std-price" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="0.00"></td>
                 <td style="padding:6px; font-weight:bold; color:#E74C3C;" class="calc-result-zk">-</td>
-                <td style="padding:6px; text-align:center;"><button type="button" onclick="this.closest('tr').remove()" style="background:#E74C3C; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer;" title="Премахни">❌</button></td>
+                <td style="padding:6px; text-align:center;"><button type="button" onclick="this.closest('tr').remove()" style="background:#E74C3C; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer;" title="Премахни">X</button></td>
             `;
             tbody.appendChild(tr);
         }
