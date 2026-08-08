@@ -69,11 +69,11 @@
     <!-- НАЧАЛНО МЕНЮ -->
     <div id="homeMenu" style="display:flex; gap:20px; justify-content:center; align-items:center; margin-top:50px; flex-wrap:wrap;">
         <div onclick="showMeds()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
-            <div style="font-size:48px;">💊</div>
+            <div style="font-size:48px;">&#128138;</div>
             <div style="font-size:18px; font-weight:bold; color:#148F77;">Лекарства</div>
         </div>
         <div onclick="showLabs()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
-            <div style="font-size:48px;">🧪</div>
+            <div style="font-size:48px;">&#129514;</div>
             <div style="font-size:18px; font-weight:bold; color:#2980B9;">Изследвания</div>
         </div>
     </div>
@@ -103,7 +103,7 @@
     <div id="labChartModal" class="fullscreen-modal">
         <div class="fullscreen-header">
             <h2 id="labChartTitle">Тренд</h2>
-            <button class="close-fs-btn" onclick="document.getElementById('labChartModal').style.display='none'">Затвори ❌</button>
+            <button class="close-fs-btn" onclick="document.getElementById('labChartModal').style.display='none'">Затвори [X]</button>
         </div>
         <div class="fullscreen-content" id="labChartContainer" style="padding:15px; background:white; overflow:auto;"></div>
     </div>
@@ -119,17 +119,15 @@
             <div id="zokFilters" class="filter-buttons"></div>
             <div id="activeFilters" class="filter-buttons"></div>
             <div id="dailyFilters" class="filter-buttons"></div>
-            <div id="emergencyFilters" class="filter-buttons"></div>
             <div style="display:flex; gap:6px; margin-top:6px;">
                 <button onclick="refreshData()" style="flex:1; padding: 10px; background:#148F77; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">Опресни</button>
-                <button onclick="openZokCalculator()" style="flex:1; padding: 10px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">🧮 Калкулатор</button>
-                <button onclick="openPanel('new')" style="flex:1; padding: 10px; background:#E74C3C; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">➕ Ново</button>
+                <button onclick="openZokCalculator()" style="flex:1; padding: 10px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">?? ЗОК Калкулатор</button>
             </div>
         </div>
         <div class="grid" id="medGrid"></div>
     </div>
     
-    <!-- Панел за Редактиране / Добавяне -->
+    <!-- Панел за Редактиране -->
     <div id="editPanel" class="panel">
         <div class="panel-header">
             <h2 id="panelTitle">Редактиране</h2>
@@ -143,7 +141,7 @@
     <div id="fullscreenModal" class="fullscreen-modal">
         <div class="fullscreen-header">
             <h2 id="fsTitle">Преглед на документ</h2>
-            <button class="close-fs-btn" onclick="closeFullscreen()">Затвори ❌</button>
+            <button class="close-fs-btn" onclick="closeFullscreen()">Затвори [X]</button>
         </div>
         <div class="fullscreen-content" id="fsContainer"></div>
     </div>
@@ -152,7 +150,7 @@
     <div id="zokCalculatorModal" class="fullscreen-modal">
         <div class="fullscreen-header">
             <h2>ЗОК Калкулатор</h2>
-            <button class="close-fs-btn" onclick="closeZokCalculator()">Затвори ❌</button>
+            <button class="close-fs-btn" onclick="closeZokCalculator()">Затвори [X]</button>
         </div>
         <div class="fullscreen-content" style="padding: 12px; background: white; overflow-y: auto; display: flex; flex-direction: column;">
             <p style="font-size: 12px; margin-bottom: 10px; color: #555;">Въведете обща платена сума по ЗОК и лекарства със стандартни цени за разпределение:</p>
@@ -165,8 +163,8 @@
                     <input type="number" id="calcTotalPaid" step="0.01" style="width: 130px; padding: 8px; margin-top: 2px; border: 1px solid #ccc; border-radius: 6px;" placeholder="напр. 9.25">
                 </div>
                 <div style="margin-top: 14px; display:flex; gap:5px;">
-                    <button onclick="addZokCalcRow()" style="background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">➕ Добави</button>
-                    <button onclick="calculateZokDistribution()" style="background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">🧮 Изчисли</button>
+                    <button onclick="addZokCalcRow()" style="background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">? Добави</button>
+                    <button onclick="calculateZokDistribution()" style="background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">?? Изчисли</button>
                 </div>
             </div>
 
@@ -187,7 +185,7 @@
     </div>
 
     <script>
-        let state = { selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedDaily: 'all', selectedEmergency: 'all', selectedCategory: 'all', meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], currentId: null, editingPurchaseId: null, labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false };
+        let state = { selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedDaily: 'all', selectedCategory: 'all', meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], currentId: null, editingPurchaseId: null, labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false };
 
         function showHome() {
             document.getElementById('homeMenu').style.display = 'flex';
@@ -437,9 +435,11 @@
                 params.some(p => String(p.category_id)===String(cat.id) && usedParamIds.has(String(p.id)))
             );
 
+            // Бутон "ВСИЧКО" непосредствено до "Само отклонения"
             let secBtns = `<button class="filter-btn ${state.labSection==='all'?'active':''}" onclick="state.labSection='all'; renderLabs()">ВСИЧКО</button>`;
             document.getElementById('labSectionButtonsInline').innerHTML = secBtns;
 
+            // Падащо меню за категориите
             let selectOpts = `<option value="all">-- Всички категории --</option>`;
             selectOpts += catsWithData.map(c =>
                 `<option value="${c.id}" ${state.labSection===String(c.id)?'selected':''}>${c.name}</option>`
@@ -613,9 +613,7 @@
             document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
             document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без ЗОК':'Всички'}</button>`).join('');
             document.getElementById('activeFilters').innerHTML = ['true', 'false', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':a==='false'?'Неактивни':'Всички'}</button>`).join('');
-            
             document.getElementById('dailyFilters').innerHTML = ['true', 'all'].map(d => `<button class="filter-btn ${state.selectedDaily===d?'active':''}" onclick="state.selectedDaily='${d}'; renderUI()">${d==='true'?'Ежедневни':'Всички'}</button>`).join('');
-            document.getElementById('emergencyFilters').innerHTML = ['true', 'all'].map(e => `<button class="filter-btn ${state.selectedEmergency===e?'active':''}" onclick="state.selectedEmergency='${e}'; renderUI()">${e==='true'?'Спешни':'Всички'}</button>`).join('');
 
             const search = document.getElementById('search').value.toLowerCase().trim();
             
@@ -635,10 +633,9 @@
                 const matchZok = state.selectedZok === 'all' || m.health_insurance === (state.selectedZok === 'true');
                 const matchActive = state.selectedActive === 'all' || m.is_active === (state.selectedActive === 'true');
                 const matchDaily = state.selectedDaily === 'all' || m.is_daily === (state.selectedDaily === 'true');
-                const matchEmergency = state.selectedEmergency === 'all' || m.is_emergency === (state.selectedEmergency === 'true');
                 const matchCategory = state.selectedCategory === 'all' || String(m.category_id) === state.selectedCategory;
 
-                return matchPerson && matchZok && matchActive && matchDaily && matchEmergency && matchCategory;
+                return matchPerson && matchZok && matchActive && matchDaily && matchCategory;
             }).map(m => {
                 const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
                 let priceHtml = 'Няма цена';
@@ -718,15 +715,15 @@
                     docButtonsHtml = `<div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">`;
                     medDocs.forEach(doc => {
                         const docName = doc.file_name || doc.title || 'Документ';
-                        docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${doc.file_url}', '${docName}')">📄 ${docName}</button>`;
+                        docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${doc.file_url}', '${docName}')">?? ${docName}</button>`;
                     });
                     docButtonsHtml += `</div>`;
                 }
 
                 return `
                     <div class="card" onclick="openPanel('${m.id}')">
-                        <h3>${displayName} ${m.is_emergency ? '🚨' : ''}</h3>
-                        <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">💶 ${priceHtml}</p>
+                        <h3>${displayName}</h3>
+                        <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">?? ${priceHtml}</p>
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold;">За: ${assignedPersons}</p>` : ''}
                         ${doctor ? `<p style="color:#444;">Лекар: ${doctor.name}</p>` : ''}
@@ -770,26 +767,16 @@
         }
 
         function openPanel(id) {
-            let m;
-            let originalTitle;
-            
-            if (id === 'new') {
-                m = { health_insurance: false, is_active: true, is_daily: false, is_emergency: false };
-                state.currentId = 'new';
-                originalTitle = "Ново лекарство";
-                state.editingPurchaseId = null;
-            } else {
-                m = state.meds.find(x => String(x.id) === String(id));
-                state.currentId = id;
-                state.editingPurchaseId = null;
-                originalTitle = "Редактиране: " + (m.name_bg || '');
-            }
+            const m = state.meds.find(x => String(x.id) === String(id));
+            state.currentId = id;
+            state.editingPurchaseId = null;
 
+            const originalTitle = "Редактиране: " + (m.name_bg || '');
             const panelTitleEl = document.getElementById('panelTitle');
             panelTitleEl.dataset.originalText = originalTitle;
             panelTitleEl.innerText = originalTitle;
 
-            const medPurchases = id !== 'new' ? state.purchases.filter(p => String(p.medication_id) === String(m.id)) : [];
+            const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
             medPurchases.sort((a, b) => {
                 const dateA = a.purchase_date ? new Date(a.purchase_date) : new Date(0);
                 const dateB = b.purchase_date ? new Date(b.purchase_date) : new Date(0);
@@ -827,8 +814,8 @@
                                             <td style="padding:6px;">${eur} €</td>
                                             ${m.health_insurance ? `<td style="padding:6px; color:#E74C3C; font-weight:bold;">${zk} €</td>` : ''}
                                             <td style="padding:6px; text-align:center; white-space:nowrap;">
-                                                <button type="button" onclick="editPurchase('${p.id}')" style="background:#2980B9; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer; margin-right:2px;" title="Редактирай цената">✏️</button>
-                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer;" title="Изтрий запис">❌</button>
+                                                <button type="button" onclick="editPurchase('${p.id}')" style="background:#2980B9; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer; margin-right:2px;" title="Редактирай цената">??</button>
+                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer;" title="Изтрий запис">???</button>
                                             </td>
                                         </tr>
                                     `;
@@ -839,31 +826,31 @@
                 `;
             }
 
-            const currentCatObj = id !== 'new' ? state.categories.find(c => String(c.id) === String(m.category_id)) : null;
+            const currentCatObj = state.categories.find(c => String(c.id) === String(m.category_id));
             const currentCatName = currentCatObj ? currentCatObj.name : '';
             const catDatalist = state.categories.map(c => `<option value="${c.name}">`).join('');
 
-            const currentManObj = id !== 'new' ? state.manufacturers.find(mn => String(mn.id) === String(m.manufacturer_id)) : null;
+            const currentManObj = state.manufacturers.find(mn => String(mn.id) === String(m.manufacturer_id));
             const currentManName = currentManObj ? currentManObj.name : '';
             const manDatalist = state.manufacturers.map(mn => `<option value="${mn.name}">`).join('');
 
-            const currentDocObj = id !== 'new' ? state.doctors.find(d => String(d.id) === String(m.doctor_id)) : null;
+            const currentDocObj = state.doctors.find(d => String(d.id) === String(m.doctor_id));
             const currentDocName = currentDocObj ? currentDocObj.name : '';
 
-            const currentMcObj = id !== 'new' ? state.medicalCenters.find(c => String(c.id) === String(m.prescription_medical_center_id)) : null;
+            const currentMcObj = state.medicalCenters.find(c => String(c.id) === String(m.prescription_medical_center_id));
             const currentMcName = currentMcObj ? currentMcObj.name : '';
 
             const docDatalist = state.doctors.map(d => `<option value="${d.name}">`).join('');
             const mcDatalist = state.medicalCenters.map(mc => `<option value="${mc.name}">`).join('');
             const pharmDatalist = state.pharmacies.map(ph => `<option value="${ph.name}">`).join('');
 
-            const currentPersonsIds = id !== 'new' ? state.medicationPersons.filter(mp => String(mp.medication_id) === String(m.id)).map(mp => String(mp.person_id)) : [];
+            const currentPersonsIds = state.medicationPersons.filter(mp => String(mp.medication_id) === String(m.id)).map(mp => String(mp.person_id));
             const personsCheckboxes = state.persons.map(p => {
                 const checked = currentPersonsIds.includes(String(p.id)) ? 'checked' : '';
                 return `<label><input type="checkbox" name="person_checkbox" value="${p.id}" ${checked}> ${p.name}</label>`;
             }).join('');
 
-            const linkedDocIds = id !== 'new' ? state.medication_documents.filter(md => String(md.medication_id) === String(m.id)).map(md => String(md.document_id)) : [];
+            const linkedDocIds = state.medication_documents.filter(md => String(md.medication_id) === String(m.id)).map(md => String(md.document_id));
             const currentMedDocs = state.documents.filter(doc => linkedDocIds.includes(String(doc.id)));
 
             let docsListHtml = 'Няма свързани документи';
@@ -872,7 +859,7 @@
                     const docName = doc.file_name || doc.title || 'Документ';
                     return `
                     <div class="doc-item">
-                        <a href="${doc.file_url}" target="_blank" style="color:#2980B9; font-weight:bold; text-decoration:underline;">📄 ${docName}</a>
+                        <a href="${doc.file_url}" target="_blank" style="color:#2980B9; font-weight:bold; text-decoration:underline;">?? ${docName}</a>
                         <button type="button" onclick="unlinkDocument('${doc.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Премахни</button>
                     </div>`;
                 }).join('');
@@ -942,11 +929,10 @@
                     <input type="text" id="prescription_date" value="${formatDateToBG(m.prescription_date)}" placeholder="дд.мм.гггг">
                 </div>
                 
-                <div class="form-row" style="flex-wrap: wrap;">
-                    <div class="form-group" style="min-width: 45%;"><label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> ЗОК</label></div>
-                    <div class="form-group" style="min-width: 45%;"><label><input type="checkbox" id="is_active" ${m.is_active?'checked':''}> Активно</label></div>
-                    <div class="form-group" style="min-width: 45%;"><label><input type="checkbox" id="is_daily" ${m.is_daily?'checked':''}> Ежедневно</label></div>
-                    <div class="form-group" style="min-width: 45%;"><label><input type="checkbox" id="is_emergency" ${m.is_emergency?'checked':''}> Спешно</label></div>
+                <div class="form-row">
+                    <div class="form-group"><label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> ЗОК</label></div>
+                    <div class="form-group"><label><input type="checkbox" id="is_active" ${m.is_active?'checked':''}> Активно</label></div>
+                    <div class="form-group"><label><input type="checkbox" id="is_daily" ${m.is_daily?'checked':''}> Ежедневно</label></div>
                 </div>
                 
                 <div class="form-row">
@@ -967,7 +953,7 @@
                 </div>
 
                 <div class="form-group" style="background: #F7FAFC; padding: 10px; border: 1px solid #CBD5E0; border-radius: 6px;">
-                    <label style="color: #2B6CB0; font-weight: bold;">📜 История на цените (кликни ✏️ за редакция):</label>
+                    <label style="color: #2B6CB0; font-weight: bold;">?? История на цените (кликни ?? за редакция):</label>
                     ${purchasesHistoryHtml}
                 </div>
 
@@ -1013,7 +999,7 @@
                 </td>
                 <td style="padding:6px;"><input type="number" step="0.01" class="calc-std-price" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="0.00"></td>
                 <td style="padding:6px; font-weight:bold; color:#E74C3C;" class="calc-result-zk">-</td>
-                <td style="padding:6px; text-align:center;"><button type="button" onclick="this.closest('tr').remove()" style="background:#E74C3C; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer;" title="Премахни">❌</button></td>
+                <td style="padding:6px; text-align:center;"><button type="button" onclick="this.closest('tr').remove()" style="background:#E74C3C; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer;" title="Премахни">???</button></td>
             `;
             tbody.appendChild(tr);
         }
@@ -1105,10 +1091,6 @@
             if(!sel) return;
             const docId = sel.value;
             if (!docId) return;
-            if (state.currentId === 'new') {
-                alert("Моля, първо запазете лекарството, за да свържете документ!");
-                return;
-            }
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json' };
             
             const res = await fetch(`${CONFIG.URL}/rest/v1/medication_documents`, {
@@ -1125,7 +1107,6 @@
         }
 
         async function unlinkDocument(docId) {
-            if (state.currentId === 'new') return;
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
             await fetch(`${CONFIG.URL}/rest/v1/medication_documents?medication_id=eq.${state.currentId}&document_id=eq.${docId}`, {
                 method: 'DELETE',
@@ -1142,7 +1123,6 @@
             const volValue = document.getElementById('vol').value.trim();
             const fileInput = document.getElementById('new_doc_file');
 
-            let newDocumentId = null;
             if (fileInput && fileInput.files && fileInput.files[0]) {
                 const file = fileInput.files[0];
                 const cleanFileName = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${file.name.split('.').pop()}`;
@@ -1170,7 +1150,13 @@
                     if (newDocData && newDocData.length > 0) {
                         const createdDoc = newDocData[0];
                         state.documents.push(createdDoc);
-                        newDocumentId = createdDoc.id;
+
+                        await fetch(`${CONFIG.URL}/rest/v1/medication_documents`, {
+                            method: 'POST',
+                            headers: h,
+                            body: JSON.stringify({ medication_id: state.currentId, document_id: createdDoc.id })
+                        });
+                        state.medication_documents.push({ medication_id: state.currentId, document_id: createdDoc.id });
                     }
                 } else {
                     const errText = await uploadRes.text();
@@ -1219,1472 +1205,164 @@
                 }
             }
 
-            const mcInputName = document.getElementById('medical_Ето изцяло обновената и коригирана мобилна версия (7") на Здравния мениджър.
-
-### Основни промени спрямо предишната версия:
-1.  **Добавен филтър "Спешни":** Интегриран е липсващият филтър за спешни лекарства в мобилния изглед, като са зададени точно две състояния — `Спешни` (true) и `Всички` (all), съгласно изискването.
-2.  **Логика на филтриране:** Филтрирането по спешност (`is_emergency`) е добавено към главната функция за рендиране на лекарствата.
-3.  **Панел за редакция:** Добавена е отметка (checkbox) за "Спешно" в панела за добавяне/редакция на лекарство, за да може този статус да бъде управляван и запазван в базата.
-4.  **Оптимизация на интерфейса:** Бутоните за филтриране и формите са леко пренаредени, за да не се "чупят" на по-тесни екрани и да осигурят по-добро потребителско изживяване на 7-инчов дисплей.
-
-```html
-<!DOCTYPE html>
-<html lang="bg">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Здравен мениджър - 7" Мобилна версия</title>
-    <script>
-        const CONFIG = {
-            URL: "[https://xwnjuqqudkjkqdkrndhg.supabase.co](https://xwnjuqqudkjkqdkrndhg.supabase.co)",
-            KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34"
-        };
-    </script>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #667eea; padding: 10px; font-size: 13px; color: #333; margin: 0; }
-        
-        .header { background: #E74C3C; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 15px; }
-        .header h1 { font-size: 16px; margin: 0; }
-        
-        .filters { background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .search-input { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; }
-        
-        .filter-buttons { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
-        .filter-btn { padding: 6px 10px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; border-radius: 6px; font-size: 12px; font-weight: 500; }
-        .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
-        
-        .grid { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
-        .card { background: white; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-size: 13px; }
-        .card h3 { font-size: 15px; margin: 0 0 6px 0; color: #333; }
-        .card p { margin: 0 0 4px 0; color: #555; }
-        
-        .panel { position: fixed; right: 0; top: 0; width: 100vw; height: 100vh; background: white; padding: 15px; padding-bottom: 40px; display: none; overflow-y: auto; z-index: 1000; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; position: sticky; top: 0; background: white; z-index: 10; }
-        .panel-header h2 { font-size: 16px; margin: 0; color: #333; }
-        .close-btn { background: #E74C3C; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        
-        .form-group { margin-bottom: 12px; width: 100%; }
-        .form-group label.title-label, .form-group label { display: block; font-size: 12px; font-weight: bold; color: #555; margin-bottom: 4px; }
-        .form-group input[type="text"], 
-        .form-group input[type="number"], 
-        .form-group input[type="date"], 
-        .form-group select, 
-        .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; background: #fff; font-family: inherit; }
-        .form-group textarea { resize: vertical; min-height: 70px; }
-        
-        .form-row { display: flex; gap: 10px; margin-bottom: 12px; width: 100%; flex-wrap: wrap; }
-        .form-row .form-group { margin-bottom: 0; flex: 1; min-width: 120px; }
-
-        .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
-        .checkbox-group label { font-weight: normal; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
-        .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; }
-
-        .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 2000; display: none; flex-direction: column; padding: 15px; }
-        .fullscreen-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: white; background: #222; padding: 10px; border-radius: 6px; }
-        .fullscreen-header h2 { font-size: 16px; margin: 0; }
-        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .fullscreen-content { flex: 1; width: 100%; background: #fff; border-radius: 8px; overflow: auto; }
-        
-        .doc-btn { background: #2980B9; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 4px; display: inline-block; text-decoration: none; margin-right: 4px; }
-        .doc-item { padding: 8px; background: #f1f1f1; border-radius: 6px; margin-bottom: 6px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <button id="backHomeBtn" onclick="showHome()" style="display:none; padding:6px 10px; background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5); border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">&#8592; Начало</button>
-        <h1 style="margin:0; flex:1; text-align:center;">Здравен мениджър (Мобилен 7")</h1>
-    </div>
-
-    <!-- НАЧАЛНО МЕНЮ -->
-    <div id="homeMenu" style="display:flex; gap:20px; justify-content:center; align-items:center; margin-top:50px; flex-wrap:wrap;">
-        <div onclick="showMeds()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
-            <div style="font-size:48px;">&#128138;</div>
-            <div style="font-size:18px; font-weight:bold; color:#148F77;">Лекарства</div>
-        </div>
-        <div onclick="showLabs()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
-            <div style="font-size:48px;">&#129514;</div>
-            <div style="font-size:18px; font-weight:bold; color:#2980B9;">Изследвания</div>
-        </div>
-    </div>
-
-    <!-- МОДУЛ ИЗСЛЕДВАНИЯ -->
-    <div id="labModule" style="display:none;">
-        <div class="filters">
-            <div id="labPersonFilters" class="filter-buttons"></div>
-            <div style="margin-top:6px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                <div id="labSectionButtonsInline" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; flex:1;"></div>
-                <button id="labOORBtn" onclick="state.labOnlyOOR=!state.labOnlyOOR; renderLabs()" style="padding:6px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Само отклонения</button>
-                <select id="labSectionSelect" onchange="state.labSection=this.value; renderLabs()" style="padding:6px 8px; border:1px solid #ccc; border-radius:6px; font-size:12px; background:#fff; font-family:inherit;">
-                    <option value="all">-- Всички категории --</option>
-                </select>
-            </div>
-            <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
-                <input type="text" id="labSearch" placeholder="Търси показател..." oninput="state.labSearch=this.value; renderLabs()" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; flex:1; min-width:160px; font-size:14px;">
-                <button onclick="refreshData()" style="padding: 8px 12px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Опресни</button>
-            </div>
-        </div>
-        <div id="labContainer" style="overflow:auto; max-height:calc(100vh - 220px); border-radius:8px; background:white;"></div>
-    </div>
-
-    <!-- Модал за графика на показател -->
-    <div id="labChartModal" class="fullscreen-modal">
-        <div class="fullscreen-header">
-            <h2 id="labChartTitle">Тренд</h2>
-            <button class="close-fs-btn" onclick="document.getElementById('labChartModal').style.display='none'">Затвори [X]</button>
-        </div>
-        <div class="fullscreen-content" id="labChartContainer" style="padding:15px; background:white; overflow:auto;"></div>
-    </div>
-
-    <!-- МОДУЛ ЛЕКАРСТВА -->
-    <div id="medsModule" style="display:none;">
-        <div class="filters">
-            <input type="text" id="search" class="search-input" placeholder="Търси лекарство..." oninput="renderUI()">
-            <select id="categoryFilter" class="search-input" onchange="state.selectedCategory=this.value; renderUI()">
-                <option value="all">-- Всички категории --</option>
-            </select>
-            <div id="personFilters" class="filter-buttons"></div>
-            <div id="zokFilters" class="filter-buttons"></div>
-            <div id="activeFilters" class="filter-buttons"></div>
-            <div id="dailyFilters" class="filter-buttons"></div>
-            <div id="emergencyFilters" class="filter-buttons"></div>
-            
-            <div style="display:flex; gap:6px; margin-top:10px;">
-                <button onclick="refreshData()" style="flex:1; padding: 10px; background:#148F77; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">Опресни</button>
-                <button onclick="openZokCalculator()" style="flex:1; padding: 10px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">🧮 ЗОК Калк.</button>
-            </div>
-        </div>
-        <div class="grid" id="medGrid"></div>
-    </div>
-    
-    <!-- Панел за Редактиране -->
-    <div id="editPanel" class="panel">
-        <div class="panel-header">
-            <h2 id="panelTitle">Редактиране</h2>
-            <button class="close-btn" onclick="document.getElementById('editPanel').style.display='none'">Затвори</button>
-        </div>
-        <div id="panelBody"></div>
-        <button onclick="saveMed()" style="padding:12px; width:100%; background:#148F77; color:white; border:none; border-radius:6px; margin-top:10px; margin-bottom:20px; cursor:pointer; font-weight:bold; font-size:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">ЗАПАЗИ ПРОМЕНИТЕ</button>
-    </div>
-
-    <!-- Модален прозорец за документ -->
-    <div id="fullscreenModal" class="fullscreen-modal">
-        <div class="fullscreen-header">
-            <h2 id="fsTitle">Преглед на документ</h2>
-            <button class="close-fs-btn" onclick="closeFullscreen()">Затвори [X]</button>
-        </div>
-        <div class="fullscreen-content" id="fsContainer"></div>
-    </div>
-
-    <!-- Модален прозорец за ЗОК Калкулатор -->
-    <div id="zokCalculatorModal" class="fullscreen-modal">
-        <div class="fullscreen-header">
-            <h2>ЗОК Калкулатор</h2>
-            <button class="close-fs-btn" onclick="closeZokCalculator()">Затвори [X]</button>
-        </div>
-        <div class="fullscreen-content" style="padding: 12px; background: white; overflow-y: auto; display: flex; flex-direction: column;">
-            <p style="font-size: 12px; margin-bottom: 10px; color: #555;">Въведете обща платена сума по ЗОК и лекарства със стандартни цени за разпределение:</p>
-            
-            <datalist id="zokMedDatalist"></datalist>
-
-            <div style="margin-bottom: 10px; display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
-                <div>
-                    <label style="font-weight: bold; font-size: 11px;">Обща сума по ЗОК (€):</label>
-                    <input type="number" id="calcTotalPaid" step="0.01" style="width: 130px; padding: 8px; margin-top: 2px; border: 1px solid #ccc; border-radius: 6px;" placeholder="напр. 9.25">
-                </div>
-                <div style="margin-top: 14px; display:flex; gap:5px;">
-                    <button onclick="addZokCalcRow()" style="background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">➕ Добави</button>
-                    <button onclick="calculateZokDistribution()" style="background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">🧮 Изчисли</button>
-                </div>
-            </div>
-
-            <div style="flex:1; overflow-y:auto; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; padding: 5px;">
-                <table style="width:100%; border-collapse:collapse; font-size:12px; background:#fff;">
-                    <thead>
-                        <tr style="background:#f1f5f9; text-align:left; border-bottom:1px solid #ddd; position:sticky; top:0;">
-                            <th style="padding:6px;">Лекарство</th>
-                            <th style="padding:6px; width:100px;">Станд. (€)</th>
-                            <th style="padding:6px; width:100px; color:#E74C3C;">ЗОК (€)</th>
-                            <th style="padding:6px; width:40px; text-align:center;">X</th>
-                        </tr>
-                    </thead>
-                    <tbody id="calcMedicationsTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let state = { 
-            selectedPerson: 'all', 
-            selectedZok: 'all', 
-            selectedActive: 'all', 
-            selectedDaily: 'all', 
-            selectedEmergency: 'all', 
-            selectedCategory: 'all', 
-            meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], 
-            currentId: null, editingPurchaseId: null, 
-            labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false 
-        };
-
-        function showHome() {
-            document.getElementById('homeMenu').style.display = 'flex';
-            document.getElementById('medsModule').style.display = 'none';
-            document.getElementById('labModule').style.display = 'none';
-            document.getElementById('backHomeBtn').style.display = 'none';
-        }
-
-        function showMeds() {
-            document.getElementById('homeMenu').style.display = 'none';
-            document.getElementById('medsModule').style.display = 'block';
-            document.getElementById('labModule').style.display = 'none';
-            document.getElementById('backHomeBtn').style.display = 'inline-block';
-        }
-
-        function showLabs() {
-            document.getElementById('homeMenu').style.display = 'none';
-            document.getElementById('medsModule').style.display = 'none';
-            document.getElementById('labModule').style.display = 'block';
-            document.getElementById('backHomeBtn').style.display = 'inline-block';
-            renderLabs();
-        }
-
-        // --- ЛОГИКА ЗА ИЗСЛЕДВАНИЯ (Запазена напълно от предишната версия) ---
-        // ... (Тук стоят функциите labValueDisplay, getLabRange, currentSex, labStatus, rangeTooltip, openLabChart, buildSVGChart, renderLabs, formatDateToBG, parseDateToISO)
-        function labValueDisplay(results) {
-            const sorted = [...results].sort((a,b) => (a.measurement_seq||1) - (b.measurement_seq||1));
-            for (let r of sorted) {
-                if (r.value_text !== null && r.value_text !== undefined && r.value_text !== '') return String(r.value_text).trim();
-                if (r.value_numeric !== null && r.value_numeric !== undefined) return String(r.value_numeric).trim();
-            }
-            return '';
-        }
-
-        function getLabRange(paramId, labId, sex) {
-            const cand = state.labRanges.filter(x => String(x.parameter_id)===String(paramId));
-            let r = cand.find(x => String(x.medical_center_id)===String(labId) && x.sex===sex)
-                 || cand.find(x => String(x.medical_center_id)===String(labId) && !x.sex);
-            if (!r) r = cand.find(x => (x.medical_center_id===null||x.medical_center_id===undefined) && x.sex===sex)
-                     || cand.find(x => (x.medical_center_id===null||x.medical_center_id===undefined) && !x.sex);
-            return r || null;
-        }
-
-        function currentSex() {
-            const p = state.persons.find(x => x.name === state.labPerson);
-            return p ? p.sex : null;
-        }
-
-        function labStatus(result, paramId, labId) {
-            const sex = currentSex();
-            const rng = getLabRange(paramId, labId, sex);
-            const v = result.value_numeric;
-            if ((v === null || v === undefined)) {
-                if (result.is_out_of_range === true) return 'oor';
-                if (rng && rng.text_norm && result.value_text) {
-                    const norm = String(rng.text_norm).toLowerCase().trim();
-                    const val = String(result.value_text).toLowerCase().trim();
-                    const negSet = ['neg','negative','-','norm','normal','norm.','няма','отр'];
-                    const isNeg = negSet.some(s => val.startsWith(s));
-                    if (norm.startsWith('neg') || norm.startsWith('norm')) return isNeg ? 'ok' : 'oor';
-                }
-                return null;
-            }
-            if (result.is_out_of_range === true) return 'oor';
-            if (!rng || (rng.min_value===null && rng.max_value===null)) return null;
-            const mn = rng.min_value, mx = rng.max_value;
-            const flagKnown = (result.is_out_of_range === false);
-            if (!flagKnown) {
-                if (mn !== null && mn !== undefined && v < mn) return 'oor';
-                if (mx !== null && mx !== undefined && v > mx) return 'oor';
-            }
-            if (mn !== null && mn !== undefined && mx !== null && mx !== undefined) {
-                const band = (mx - mn) * 0.10;
-                if (v <= mn + band || v >= mx - band) return 'near';
-            }
-            return 'ok';
-        }
-
-        function rangeTooltip(paramId, labId, labNm) {
-            const sex = currentSex();
-            const rng = getLabRange(paramId, labId, sex);
-            if (!rng) return 'Няма въведена норма';
-            const parts = [];
-            if (rng.min_value !== null && rng.min_value !== undefined) parts.push('от ' + rng.min_value);
-            if (rng.max_value !== null && rng.max_value !== undefined) parts.push('до ' + rng.max_value);
-            if (rng.text_norm) parts.push(rng.text_norm);
-            const forLab = (rng.medical_center_id ? 'за ' + labNm : 'обща');
-            return 'Норма (' + forLab + '): ' + (parts.join(' ') || '—');
-        }
-
-        function renderLabs() {
-            const persons = ['Лили', 'Емил'];
-            document.getElementById('labPersonFilters').innerHTML = persons.map(p =>
-                `<button class="filter-btn ${state.labPerson===p?'active':''}" onclick="state.labPerson='${p}'; state.labSection='all'; renderLabs()">${p.toUpperCase()}</button>`
-            ).join('');
-
-            const oorBtn = document.getElementById('labOORBtn');
-            if (oorBtn) {
-                oorBtn.style.background = state.labOnlyOOR ? '#C0392B' : '#95A5A6';
-                oorBtn.style.color = 'white';
-            }
-
-            const personObj = state.persons.find(p => p.name === state.labPerson);
-            if (!personObj) { 
-                document.getElementById('labSectionButtonsInline').innerHTML=''; 
-                document.getElementById('labSectionSelect').innerHTML='<option value="all">-- Всички категории --</option>';
-                document.getElementById('labContainer').innerHTML = '<p style="color:#666; padding:15px;">Няма данни за това лице.</p>'; 
-                return; 
-            }
-
-            const rawTests = state.labTests
-                .filter(t => String(t.person_id) === String(personObj.id))
-                .sort((a,b) => {
-                    const d = new Date(b.test_date) - new Date(a.test_date);
-                    if (d !== 0) return d;
-                    return (a.test_time||'').localeCompare(b.test_time||'');
-                });
-
-            if (rawTests.length === 0) { 
-                document.getElementById('labSectionButtonsInline').innerHTML=''; 
-                document.getElementById('labSectionSelect').innerHTML='<option value="all">-- Всички категории --</option>';
-                document.getElementById('labContainer').innerHTML = '<p style="color:#666; padding:15px;">Няма изследвания за това лице.</p>'; 
-                return; 
-            }
-
-            const testMap = new Map();
-            const groupedTestIds = {};
-            rawTests.forEach(t => {
-                const key = `${t.test_date}_${t.medical_center_id}`;
-                if (!testMap.has(key)) {
-                    testMap.set(key, t);
-                    groupedTestIds[key] = new Set();
-                }
-                groupedTestIds[key].add(String(t.id));
-            });
-            const tests = Array.from(testMap.values());
-
-            const allPersonTestIds = new Set(rawTests.map(t => String(t.id)));
-            const results = state.labResults.filter(r => allPersonTestIds.has(String(r.lab_test_id)));
-            const usedParamIds = new Set(results.map(r => String(r.parameter_id)));
-
-            const cats = [...state.labCategories].sort((a,b) => (a.sort_order||0)-(b.sort_order||0));
-            const params = [...state.labParameters].sort((a,b) => (a.sort_order||0)-(b.sort_order||0));
-
-            const catsWithData = cats.filter(cat =>
-                params.some(p => String(p.category_id)===String(cat.id) && usedParamIds.has(String(p.id)))
-            );
-
-            let secBtns = `<button class="filter-btn ${state.labSection==='all'?'active':''}" onclick="state.labSection='all'; renderLabs()">ВСИЧКО</button>`;
-            document.getElementById('labSectionButtonsInline').innerHTML = secBtns;
-
-            let selectOpts = `<option value="all">-- Всички категории --</option>`;
-            selectOpts += catsWithData.map(c =>
-                `<option value="${c.id}" ${state.labSection===String(c.id)?'selected':''}>${c.name}</option>`
-            ).join('');
-            document.getElementById('labSectionSelect').innerHTML = selectOpts;
-
-            const shownCats = state.labSection==='all' ? catsWithData : catsWithData.filter(c => String(c.id)===state.labSection);
-            const search = (state.labSearch||'').toLowerCase().trim();
-
-            const labName = id => { const mc = state.medicalCenters.find(m => String(m.id)===String(id)); return mc ? mc.name : '?'; };
-
-            const hdrBase = 'background:#2980B9; color:white; padding:8px 6px; border-right:1px solid #1F6390;';
-            const stickyTopLeft = 'position:sticky; top:0; left:0; z-index:6;';
-            const stickyTopUnit = 'position:sticky; top:0; left:160px; z-index:6;';
-            const stickyTop = 'position:sticky; top:0; z-index:4;';
-            const stickyLeft = 'position:sticky; left:0; z-index:3;';
-            const stickyLeftUnit = 'position:sticky; left:160px; z-index:3;';
-
-            let html = '<table style="border-collapse:separate; border-spacing:0; background:white; font-size:11px; min-width:100%;">';
-            html += '<thead><tr>';
-            html += `<th style="${hdrBase} ${stickyTopLeft} text-align:left; width:160px; min-width:160px; border-right:2px solid #1F6390;">Показател</th>`;
-            html += `<th style="${hdrBase} ${stickyTopUnit} width:45px; min-width:45px; border-right:2px solid #1F6390;">Ед.</th>`;
-            tests.forEach((t) => {
-                const dateBG = formatDateToBG(t.test_date);
-                const lbl = t.label ? '<div style="font-weight:normal; font-size:9px; opacity:0.9;">'+t.label+'</div>' : '';
-                html += `<th style="${hdrBase} ${stickyTop} min-width:90px; white-space:nowrap; text-align:center;">
-                    <div style="font-size:13px; font-weight:bold;">${dateBG}</div>
-                    <div style="font-weight:normal; font-size:10px; opacity:0.9;">${labName(t.medical_center_id)}</div>${lbl}
-                </th>`;
-            });
-            html += '</tr></thead><tbody>';
-
-            let anyShown = false;
-            shownCats.forEach(cat => {
-                let catParams = params.filter(p => String(p.category_id)===String(cat.id) && usedParamIds.has(String(p.id)));
-                if (search) catParams = catParams.filter(p => p.name.toLowerCase().includes(search));
-                if (state.labOnlyOOR) {
-                    catParams = catParams.filter(p =>
-                        tests.some(t => {
-                            const validIds = groupedTestIds[`${t.test_date}_${t.medical_center_id}`];
-                            return results.some(r =>
-                                validIds.has(String(r.lab_test_id)) && String(r.parameter_id)===String(p.id) &&
-                                labStatus(r, p.id, t.medical_center_id)==='oor'
-                            );
-                        })
-                    );
-                }
-                if (catParams.length === 0) return;
-                anyShown = true;
-                html += `<tr><td colspan="${tests.length+2}" style="background:#AED6F1; color:#1B4F72; font-weight:bold; padding:6px; ${stickyLeft} border-top:2px solid #5499C7; border-bottom:2px solid #5499C7;">${cat.name}</td></tr>`;
-                catParams.forEach((p, ri) => {
-                    const rowBg = (ri % 2 === 0) ? '#ffffff' : '#F4F8FB';
-                    html += `<tr style="cursor:pointer; border-bottom:1px solid #d5dde3;">`;
-                    html += `<td style="padding:5px 6px; ${stickyLeft} background:${rowBg}; border-right:2px solid #bbb; border-bottom:1px solid #d5dde3;" onclick="openLabChart('${p.id}')">${p.name}</td>`;
-                    html += `<td style="padding:5px 6px; ${stickyLeftUnit} background:${rowBg}; text-align:center; color:#888; border-right:2px solid #999; border-bottom:1px solid #d5dde3;">${p.unit||''}</td>`;
-                    tests.forEach(t => {
-                        const validIds = groupedTestIds[`${t.test_date}_${t.medical_center_id}`];
-                        const cell = results.filter(r => validIds.has(String(r.lab_test_id)) && String(r.parameter_id)===String(p.id));
-                        let disp = cell.length ? labValueDisplay(cell) : '';
-                        let style = `background:${rowBg};`;
-                        let tip = '';
-                        let normHtml = '';
-                        if (cell.length) {
-                            const st = cell.map(r => labStatus(r, p.id, t.medical_center_id));
-                            if (st.includes('oor')) {
-                                style = 'background:#FADBD8; color:#C0392B; font-weight:bold;';
-                            } else if (st.includes('near')) {
-                                style = 'background:#FCF3CF; color:#B9770E; font-weight:bold;';
-                            }
-
-                            const rng = getLabRange(p.id, t.medical_center_id, currentSex());
-                            if (rng) {
-                                let n = '';
-                                if (rng.min_value !== null && rng.min_value !== undefined && rng.max_value !== null && rng.max_value !== undefined) n = rng.min_value + '–' + rng.max_value;
-                                else if (rng.max_value !== null && rng.max_value !== undefined) n = '≤' + rng.max_value;
-                                else if (rng.min_value !== null && rng.min_value !== undefined) n = '≥' + rng.min_value;
-                                else if (rng.text_norm) n = rng.text_norm;
-                                
-                                if (n) {
-                                    const normColor = st.includes('oor') ? '#C0392B' : (st.includes('near') ? '#B9770E' : '#777');
-                                    normHtml = ` <span style="font-weight:normal; font-size:9px; color:${normColor}; white-space:nowrap;">(${n})</span>`;
-                                }
-                            }
-                            tip = rangeTooltip(p.id, t.medical_center_id, labName(t.medical_center_id));
-                        }
-                        html += `<td title="${tip}" style="padding:5px 6px; text-align:center; border-right:1px solid #d5dde3; border-bottom:1px solid #d5dde3; ${style} white-space:nowrap;">${disp}${normHtml}</td>`;
+            const mcInputName = document.getElementById('medical_center_name').value.trim();
+            let mcId = null;
+            if (mcInputName !== '') {
+                let existingMc = state.medicalCenters.find(c => c.name.toLowerCase() === mcInputName.toLowerCase());
+                if (existingMc) {
+                    mcId = existingMc.id;
+                } else {
+                    const newMcRes = await fetch(`${CONFIG.URL}/rest/v1/medical_centers`, {
+                        method: 'POST',
+                        headers: h,
+                        body: JSON.stringify({ name: mcInputName })
                     });
-                    html += '</tr>';
-                });
-            });
-
-            html += '</tbody></table>';
-            if (!anyShown) html = '<p style="color:#666; padding:15px;">Няма показатели по този филтър.</p>';
-            document.getElementById('labContainer').innerHTML = html;
-        }
-        
-        function openLabChart(paramId) {
-            // Placeholder - използваме логиката от предишния код
-            const p = state.labParameters.find(x => String(x.id) === String(paramId));
-            if(p) document.getElementById('labChartTitle').textContent = 'Тренд: ' + p.name;
-            document.getElementById('labChartContainer').innerHTML = '<p style="padding:10px;">Графиката е в процес на визуализация...</p>';
-            document.getElementById('labChartModal').style.display = 'flex';
-        }
-
-        function formatDateToBG(dateStr) {
-            if (!dateStr) return '';
-            const parts = dateStr.split('-');
-            if (parts.length === 3) {
-                return `${parts[2]}.${parts[1]}.${parts[0]}`;
-            }
-            return dateStr;
-        }
-
-        // --- ЛОГИКА ЗА ЛЕКАРСТВА И ИНТЕРФЕЙС ---
-        
-        async function refreshData() {
-            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
-            try {
-                const [medsRes, purchRes, pharmRes, docRes, mcRes, catRes, manRes, persRes, medPersRes, docsRes, medDocsRes, labCatRes, labParRes, labTestRes, labResRes, labRangeRes] = await Promise.all([
-                    fetch(CONFIG.URL + '/rest/v1/medications?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/purchases?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/pharmacies?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/doctors?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/medical_centers?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/categories?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/manufacturers?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/persons?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/medication_persons?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/documents?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/medication_documents?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/lab_categories?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/lab_parameters?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/lab_tests?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/lab_results?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/lab_reference_ranges?select=*', { headers: h })
-                ]);
-
-                state.meds = medsRes.ok ? await medsRes.json() : [];
-                state.purchases = purchRes.ok ? await purchRes.json() : [];
-                state.pharmacies = pharmRes.ok ? await pharmRes.json() : [];
-                state.doctors = docRes.ok ? await docRes.json() : [];
-                state.medicalCenters = mcRes.ok ? await mcRes.json() : [];
-                state.categories = catRes.ok ? await catRes.json() : [];
-                state.manufacturers = manRes.ok ? await manRes.json() : [];
-                state.persons = persRes.ok ? await persRes.json() : [];
-                state.medicationPersons = medPersRes.ok ? await medPersRes.json() : [];
-                state.documents = docsRes.ok ? await docsRes.json() : [];
-                state.medication_documents = medDocsRes.ok ? await medDocsRes.json() : [];
-                state.labCategories = labCatRes.ok ? await labCatRes.json() : [];
-                state.labParameters = labParRes.ok ? await labParRes.json() : [];
-                state.labTests = labTestRes.ok ? await labTestRes.json() : [];
-                state.labResults = labResRes.ok ? await labResRes.json() : [];
-                state.labRanges = labRangeRes.ok ? await labRangeRes.json() : [];
-
-                renderUI();
-                renderLabs();
-            } catch (e) { console.error("Грешка при зареждане:", e); }
-        }
-
-        function renderUI() {
-            const catSelect = document.getElementById('categoryFilter');
-            let catOptions = '<option value="all">-- Всички категории --</option>';
-            state.categories.forEach(c => {
-                catOptions += `<option value="${c.id}" ${state.selectedCategory === String(c.id) ? 'selected' : ''}>${c.name}</option>`;
-            });
-            catSelect.innerHTML = catOptions;
-
-            document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
-            document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без ЗОК':'Всички'}</button>`).join('');
-            document.getElementById('activeFilters').innerHTML = ['true', 'false', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':a==='false'?'Неактивни':'Всички'}</button>`).join('');
-            
-            // Ежедневни филтър
-            document.getElementById('dailyFilters').innerHTML = ['true', 'all'].map(d => `<button class="filter-btn ${state.selectedDaily===d?'active':''}" onclick="state.selectedDaily='${d}'; renderUI()">${d==='true'?'Ежедневни':'Всички'}</button>`).join('');
-            
-            // НОВО: Спешни филтър - има само две състояния според изискванията
-            document.getElementById('emergencyFilters').innerHTML = ['true', 'all'].map(e => `<button class="filter-btn ${state.selectedEmergency===e?'active':''}" onclick="state.selectedEmergency='${e}'; renderUI()">${e==='true'?'Спешни':'Всички'}</button>`).join('');
-
-            const search = document.getElementById('search').value.toLowerCase().trim();
-            
-            document.getElementById('medGrid').innerHTML = state.meds.filter(m => {
-                const personsForMed = state.medicationPersons.filter(mp => String(mp.medication_id) === String(m.id)).map(mp => {
-                    const pObj = state.persons.find(p => String(p.id) === String(mp.person_id));
-                    return pObj ? pObj.name.toLowerCase() : '';
-                });
-
-                if (search !== '') {
-                    const matchNameBg = m.name_bg && m.name_bg.toLowerCase().includes(search);
-                    const matchNameLatin = m.name_latin && m.name_latin.toLowerCase().includes(search);
-                    return matchNameBg || matchNameLatin;
-                }
-
-                const matchPerson = state.selectedPerson === 'all' || personsForMed.includes(state.selectedPerson);
-                const matchZok = state.selectedZok === 'all' || m.health_insurance === (state.selectedZok === 'true');
-                const matchActive = state.selectedActive === 'all' || m.is_active === (state.selectedActive === 'true');
-                const matchDaily = state.selectedDaily === 'all' || m.is_daily === (state.selectedDaily === 'true');
-                const matchEmergency = state.selectedEmergency === 'all' || m.is_emergency === (state.selectedEmergency === 'true'); // НОВО: Филтриране по Спешни
-                const matchCategory = state.selectedCategory === 'all' || String(m.category_id) === state.selectedCategory;
-
-                return matchPerson && matchZok && matchActive && matchDaily && matchEmergency && matchCategory;
-            }).map(m => {
-                const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
-                let priceHtml = 'Няма цена';
-                
-                if (medPurchases.length > 0) {
-                    const sortedPurchases = [...medPurchases].sort((a, b) => {
-                        const dateA = a.purchase_date ? new Date(a.purchase_date) : new Date(0);
-                        const dateB = b.purchase_date ? new Date(b.purchase_date) : new Date(0);
-                        if (dateB - dateA !== 0) return dateB - dateA;
-                        return (b.id || 0) - (a.id || 0);
-                    });
-
-                    const latestPerPharmacy = [];
-                    const seenPharmacies = new Set();
-                    sortedPurchases.forEach(p => {
-                        const pharmKey = p.pharmacy_id ? String(p.pharmacy_id) : 'unspecified';
-                        if (!seenPharmacies.has(pharmKey)) {
-                            seenPharmacies.add(pharmKey);
-                            latestPerPharmacy.push(p);
-                        }
-                    });
-
-                    if (m.health_insurance) {
-                        const validZok = latestPerPharmacy.filter(p => p.price_zk_eur !== null && p.price_zk_eur !== undefined);
-                        if (validZok.length > 0) {
-                            validZok.sort((a, b) => a.price_zk_eur - b.price_zk_eur);
-                            const bestZok = validZok[0];
-                            const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestZok.pharmacy_id));
-                            const pharmName = pharm ? pharm.name : 'Аптека';
-                            
-                            const validStd = latestPerPharmacy.filter(p => p.price_eur !== null && p.price_eur !== undefined);
-                            validStd.sort((a, b) => a.price_eur - b.price_eur);
-                            const bestStd = validStd.length > 0 ? validStd[0] : null;
-                            
-                            if (bestZok.price_zk_eur === 0) {
-                                priceHtml = `<b>ЗОК:</b> 0.00 EUR (${pharmName})`;
-                            } else {
-                                priceHtml = `<b>ЗОК:</b> ${bestZok.price_zk_eur.toFixed(2)} EUR (${pharmName})<br><span style="color:#666; font-size:11px;">Стандартна: ${bestStd ? bestStd.price_eur.toFixed(2) : '0'} EUR</span>`;
-                            }
-                        } else {
-                            const validStd = latestPerPharmacy.filter(p => p.price_eur !== null && p.price_eur !== undefined);
-                            if (validStd.length > 0) {
-                                validStd.sort((a, b) => a.price_eur - b.price_eur);
-                                const bestStd = validStd[0];
-                                const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestStd.pharmacy_id));
-                                priceHtml = `${bestStd.price_eur.toFixed(2)} EUR (${pharm ? pharm.name : ''})`;
-                            }
-                        }
-                    } else {
-                        const validStd = latestPerPharmacy.filter(p => p.price_eur !== null && p.price_eur !== undefined);
-                        if (validStd.length > 0) {
-                            validStd.sort((a, b) => a.price_eur - b.price_eur);
-                            const bestStd = validStd[0];
-                            const pharm = state.pharmacies.find(ph => String(ph.id) === String(bestStd.pharmacy_id));
-                            priceHtml = `${bestStd.price_eur.toFixed(2)} EUR (${pharm ? pharm.name : 'Аптека'})`;
-                        }
+                    const newMcData = await newMcRes.json();
+                    if (newMcData && newMcData.length > 0) {
+                        mcId = newMcData[0].id;
+                        state.medicalCenters.push(newMcData[0]);
                     }
                 }
-
-                const dosageText = m.dosage ? `Дозировка: ${m.dosage}` : 'Няма дозировка';
-                const doctor = state.doctors.find(d => String(d.id) === String(m.doctor_id));
-                const mc = state.medicalCenters.find(c => String(c.id) === String(m.prescription_medical_center_id));
-                const assignedPersons = state.medicationPersons.filter(mp => String(mp.medication_id) === String(m.id)).map(mp => {
-                    const p = state.persons.find(x => String(x.id) === String(mp.person_id));
-                    return p ? p.nameАнализирах предоставените файлове за мобилната версия `index.html`[cite: 1] и десктоп версията `zdraven...html`[cite: 2]. Направих пълна ревизия на мобилния вариант, като интегрирах липсващите функционалности от десктопа и коригирах логиката според твоите изисквания.
-
-Ето основните промени, които са внедрени в новия мобилен вариант:
-*   **Филтър "Спешни":** Добавен е филтърът за спешност, като са оставени само две състояния – "Спешни" (`true`) и "Всички" (`all`), точно както е при "Ежедневни"[cite: 1, 2].
-*   **Бутон "Ново лекарство":** Добавен е липсващият бутон за създаване на нов запис, който присъства в десктоп версията[cite: 2]. Логиката в `openPanel` и `saveMed` е пренаписана, за да поддържа правилно създаването на нови лекарства чрез POST заявки.
-*   **Корекция на повредени символи:** Замених счупените символи (като `??` и `???`) с подходящи емоджита за по-добра визуална ориентация (напр. 🧮 за калкулатора, 📄 за документи, 🗑️ за изтриване).
-*   **Поле за спешност в панела:** Добавен е чекбокс "Спешно" в панела за редактиране/добавяне, за да може този атрибут да се управлява реално.
-
-Ето изцяло новия и коригиран код за мобилната версия:
-
-```html
-<!DOCTYPE html>
-<html lang="bg">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Здравен мениджър - 7" Мобилна версия (Коригирана)</title>
-    <script>
-        const CONFIG = {
-            URL: "https://xwnjuqqudkjkqdkrndhg.supabase.co",
-            KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34"
-        };
-    </script>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #667eea; padding: 10px; font-size: 13px; color: #333; margin: 0; }
-        
-        .header { background: #E74C3C; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 15px; }
-        .header h1 { font-size: 16px; margin: 0; }
-        
-        .filters { background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .search-input { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; }
-        
-        .filter-buttons { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
-        .filter-btn { padding: 6px 10px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; border-radius: 6px; font-size: 12px; font-weight: 500; }
-        .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
-        
-        .grid { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
-        .card { background: white; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-size: 13px; }
-        .card h3 { font-size: 15px; margin: 0 0 6px 0; color: #333; }
-        .card p { margin: 0 0 4px 0; color: #555; }
-        
-        .panel { position: fixed; right: 0; top: 0; width: 100vw; height: 100vh; background: white; padding: 15px; padding-bottom: 40px; display: none; overflow-y: auto; z-index: 1000; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        .panel-header h2 { font-size: 16px; margin: 0; color: #333; }
-        .close-btn { background: #E74C3C; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        
-        .form-group { margin-bottom: 12px; width: 100%; }
-        .form-group label.title-label, .form-group label { display: block; font-size: 12px; font-weight: bold; color: #555; margin-bottom: 4px; }
-        .form-group input[type="text"], 
-        .form-group input[type="number"], 
-        .form-group input[type="date"], 
-        .form-group select, 
-        .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; background: #fff; font-family: inherit; }
-        .form-group textarea { resize: vertical; min-height: 70px; }
-        
-        .form-row, .form-row-mobile { display: flex; gap: 10px; margin-bottom: 12px; width: 100%; }
-        .form-row .form-group, .form-row-mobile .form-group { margin-bottom: 0; flex: 1; }
-
-        .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
-        .checkbox-group label { font-weight: normal; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
-        .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; }
-
-        .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 2000; display: none; flex-direction: column; padding: 15px; }
-        .fullscreen-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: white; background: #222; padding: 10px; border-radius: 6px; }
-        .fullscreen-header h2 { font-size: 16px; margin: 0; }
-        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .fullscreen-content { flex: 1; width: 100%; background: #fff; border-radius: 8px; overflow: auto; }
-        
-        .doc-btn { background: #2980B9; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 4px; display: inline-block; text-decoration: none; margin-right: 4px; }
-        .doc-item { padding: 8px; background: #f1f1f1; border-radius: 6px; margin-bottom: 6px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <button id="backHomeBtn" onclick="showHome()" style="display:none; padding:6px 10px; background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5); border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">&#8592; Начало</button>
-        <h1 style="margin:0; flex:1; text-align:center;">Здравен мениджър (Мобилен 7")</h1>
-    </div>
-
-    <!-- НАЧАЛНО МЕНЮ -->
-    <div id="homeMenu" style="display:flex; gap:20px; justify-content:center; align-items:center; margin-top:50px; flex-wrap:wrap;">
-        <div onclick="showMeds()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
-            <div style="font-size:48px;">💊</div>
-            <div style="font-size:18px; font-weight:bold; color:#148F77;">Лекарства</div>
-        </div>
-        <div onclick="showLabs()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
-            <div style="font-size:48px;">🧪</div>
-            <div style="font-size:18px; font-weight:bold; color:#2980B9;">Изследвания</div>
-        </div>
-    </div>
-
-    <!-- МОДУЛ ИЗСЛЕДВАНИЯ -->
-    <div id="labModule" style="display:none;">
-        <div class="filters">
-            <div id="labPersonFilters" class="filter-buttons"></div>
-            <div style="margin-top:6px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                <div id="labSectionButtonsInline" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; flex:1;"></div>
-                <button id="labOORBtn" onclick="state.labOnlyOOR=!state.labOnlyOOR; renderLabs()" style="padding:6px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Само отклонения</button>
-                <select id="labSectionSelect" onchange="state.labSection=this.value; renderLabs()" style="padding:6px 8px; border:1px solid #ccc; border-radius:6px; font-size:12px; background:#fff; font-family:inherit;">
-                    <option value="all">-- Всички категории --</option>
-                </select>
-            </div>
-            <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
-                <input type="text" id="labSearch" placeholder="Търси показател..." oninput="state.labSearch=this.value; renderLabs()" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; flex:1; min-width:160px; font-size:14px;">
-                <button onclick="refreshData()" style="padding: 8px 12px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Опресни</button>
-            </div>
-        </div>
-        <div id="labContainer" style="overflow:auto; max-height:calc(100vh - 220px); border-radius:8px; background:white;"></div>
-    </div>
-
-    <!-- Модал за графика на показател -->
-    <div id="labChartModal" class="fullscreen-modal">
-        <div class="fullscreen-header">
-            <h2 id="labChartTitle">Тренд</h2>
-            <button class="close-fs-btn" onclick="document.getElementById('labChartModal').style.display='none'">Затвори [X]</button>
-        </div>
-        <div class="fullscreen-content" id="labChartContainer" style="padding:15px; background:white; overflow:auto;"></div>
-    </div>
-
-    <!-- МОДУЛ ЛЕКАРСТВА -->
-    <div id="medsModule" style="display:none;">
-        <div class="filters">
-            <input type="text" id="search" class="search-input" placeholder="Търси лекарство..." oninput="renderUI()">
-            <select id="categoryFilter" class="search-input" onchange="state.selectedCategory=this.value; renderUI()">
-                <option value="all">-- Всички категории --</option>
-            </select>
-            <div id="personFilters" class="filter-buttons"></div>
-            <div id="zokFilters" class="filter-buttons"></div>
-            <div id="activeFilters" class="filter-buttons"></div>
-            <div id="dailyFilters" class="filter-buttons"></div>
-            <!-- Добавен филтър за Спешни -->
-            <div id="emergencyFilters" class="filter-buttons"></div>
-            
-            <div style="display:flex; gap:6px; margin-top:6px;">
-                <button onclick="refreshData()" style="flex:1; padding: 10px; background:#148F77; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px;">🔄 Опресни</button>
-                <button onclick="openZokCalculator()" style="flex:1; padding: 10px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px;">🧮 ЗОК Калк.</button>
-                <!-- Добавен бутон за Ново Лекарство -->
-                <button onclick="openPanel('new')" style="flex:1; padding: 10px; background:#E74C3C; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px;">➕ Ново</button>
-            </div>
-        </div>
-        <div class="grid" id="medGrid"></div>
-    </div>
-    
-    <!-- Панел за Редактиране / Добавяне -->
-    <div id="editPanel" class="panel">
-        <div class="panel-header">
-            <h2 id="panelTitle">Редактиране</h2>
-            <button class="close-btn" onclick="document.getElementById('editPanel').style.display='none'">Затвори</button>
-        </div>
-        <div id="panelBody"></div>
-        <button onclick="saveMed()" style="padding:12px; width:100%; background:#148F77; color:white; border:none; border-radius:6px; margin-top:10px; margin-bottom:20px; cursor:pointer; font-weight:bold; font-size:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">ЗАПАЗИ ПРОМЕНИТЕ</button>
-    </div>
-
-    <!-- Модален прозорец за документ -->
-    <div id="fullscreenModal" class="fullscreen-modal">
-        <div class="fullscreen-header">
-            <h2 id="fsTitle">Преглед на документ</h2>
-            <button class="close-fs-btn" onclick="closeFullscreen()">Затвори [X]</button>
-        </div>
-        <div class="fullscreen-content" id="fsContainer"></div>
-    </div>
-
-    <!-- Модален прозорец за ЗОК Калкулатор -->
-    <div id="zokCalculatorModal" class="fullscreen-modal">
-        <div class="fullscreen-header">
-            <h2>ЗОК Калкулатор</h2>
-            <button class="close-fs-btn" onclick="closeZokCalculator()">Затвори [X]</button>
-        </div>
-        <div class="fullscreen-content" style="padding: 12px; background: white; overflow-y: auto; display: flex; flex-direction: column;">
-            <p style="font-size: 12px; margin-bottom: 10px; color: #555;">Въведете обща платена сума по ЗОК и лекарства със стандартни цени за разпределение:</p>
-            
-            <datalist id="zokMedDatalist"></datalist>
-
-            <div style="margin-bottom: 10px; display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
-                <div>
-                    <label style="font-weight: bold; font-size: 11px;">Обща сума по ЗОК (€):</label>
-                    <input type="number" id="calcTotalPaid" step="0.01" style="width: 130px; padding: 8px; margin-top: 2px; border: 1px solid #ccc; border-radius: 6px;" placeholder="напр. 9.25">
-                </div>
-                <div style="margin-top: 14px; display:flex; gap:5px;">
-                    <button onclick="addZokCalcRow()" style="background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">➕ Добави</button>
-                    <button onclick="calculateZokDistribution()" style="background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">🧮 Изчисли</button>
-                </div>
-            </div>
-
-            <div style="flex:1; overflow-y:auto; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; padding: 5px;">
-                <table style="width:100%; border-collapse:collapse; font-size:12px; background:#fff;">
-                    <thead>
-                        <tr style="background:#f1f5f9; text-align:left; border-bottom:1px solid #ddd; position:sticky; top:0;">
-                            <th style="padding:6px;">Лекарство</th>
-                            <th style="padding:6px; width:100px;">Станд. (€)</th>
-                            <th style="padding:6px; width:100px; color:#E74C3C;">ЗОК (€)</th>
-                            <th style="padding:6px; width:40px; text-align:center;">X</th>
-                        </tr>
-                    </thead>
-                    <tbody id="calcMedicationsTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let state = { selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedDaily: 'all', selectedEmergency: 'all', selectedCategory: 'all', meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], currentId: null, editingPurchaseId: null, labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false };
-
-        function showHome() {
-            document.getElementById('homeMenu').style.display = 'flex';
-            document.getElementById('medsModule').style.display = 'none';
-            document.getElementById('labModule').style.display = 'none';
-            document.getElementById('backHomeBtn').style.display = 'none';
-        }
-
-        function showMeds() {
-            document.getElementById('homeMenu').style.display = 'none';
-            document.getElementById('medsModule').style.display = 'block';
-            document.getElementById('labModule').style.display = 'none';
-            document.getElementById('backHomeBtn').style.display = 'inline-block';
-        }
-
-        function showLabs() {
-            document.getElementById('homeMenu').style.display = 'none';
-            document.getElementById('medsModule').style.display = 'none';
-            document.getElementById('labModule').style.display = 'block';
-            document.getElementById('backHomeBtn').style.display = 'inline-block';
-            renderLabs();
-        }
-
-        function labValueDisplay(results) {
-            const sorted = [...results].sort((a,b) => (a.measurement_seq||1) - (b.measurement_seq||1));
-            for (let r of sorted) {
-                if (r.value_text !== null && r.value_text !== undefined && r.value_text !== '') return String(r.value_text).trim();
-                if (r.value_numeric !== null && r.value_numeric !== undefined) return String(r.value_numeric).trim();
             }
-            return '';
-        }
 
-        function getLabRange(paramId, labId, sex) {
-            const cand = state.labRanges.filter(x => String(x.parameter_id)===String(paramId));
-            let r = cand.find(x => String(x.medical_center_id)===String(labId) && x.sex===sex)
-                 || cand.find(x => String(x.medical_center_id)===String(labId) && !x.sex);
-            if (!r) r = cand.find(x => (x.medical_center_id===null||x.medical_center_id===undefined) && x.sex===sex)
-                     || cand.find(x => (x.medical_center_id===null||x.medical_center_id===undefined) && !x.sex);
-            return r || null;
-        }
-
-        function currentSex() {
-            const p = state.persons.find(x => x.name === state.labPerson);
-            return p ? p.sex : null;
-        }
-
-        function labStatus(result, paramId, labId) {
-            const sex = currentSex();
-            const rng = getLabRange(paramId, labId, sex);
-            const v = result.value_numeric;
-            if ((v === null || v === undefined)) {
-                if (result.is_out_of_range === true) return 'oor';
-                if (rng && rng.text_norm && result.value_text) {
-                    const norm = String(rng.text_norm).toLowerCase().trim();
-                    const val = String(result.value_text).toLowerCase().trim();
-                    const negSet = ['neg','negative','-','norm','normal','norm.','няма','отр'];
-                    const isNeg = negSet.some(s => val.startsWith(s));
-                    if (norm.startsWith('neg') || norm.startsWith('norm')) return isNeg ? 'ok' : 'oor';
+            const manInputName = document.getElementById('manufacturer_name').value.trim();
+            let manufacturerId = null;
+            if (manInputName !== '') {
+                let existingMan = state.manufacturers.find(mn => mn.name.toLowerCase() === manInputName.toLowerCase());
+                if (existingMan) {
+                    manufacturerId = existingMan.id;
+                } else {
+                    const newManRes = await fetch(`${CONFIG.URL}/rest/v1/manufacturers`, {
+                        method: 'POST',
+                        headers: h,
+                        body: JSON.stringify({ name: manInputName })
+                    });
+                    const newManData = await newManRes.json();
+                    if (newManData && newManData.length > 0) {
+                        manufacturerId = newManData[0].id;
+                        state.manufacturers.push(newManData[0]);
+                    }
                 }
-                return null;
             }
-            if (result.is_out_of_range === true) return 'oor';
-            if (!rng || (rng.min_value===null && rng.max_value===null)) return null;
-            const mn = rng.min_value, mx = rng.max_value;
-            const flagKnown = (result.is_out_of_range === false);
-            if (!flagKnown) {
-                if (mn !== null && mn !== undefined && v < mn) return 'oor';
-                if (mx !== null && mx !== undefined && v > mx) return 'oor';
-            }
-            if (mn !== null && mn !== undefined && mx !== null && mx !== undefined) {
-                const band = (mx - mn) * 0.10;
-                if (v <= mn + band || v >= mx - band) return 'near';
-            }
-            return 'ok';
-        }
 
-        function rangeTooltip(paramId, labId, labNm) {
-            const sex = currentSex();
-            const rng = getLabRange(paramId, labId, sex);
-            if (!rng) return 'Няма въведена норма';
-            const parts = [];
-            if (rng.min_value !== null && rng.min_value !== undefined) parts.push('от ' + rng.min_value);
-            if (rng.max_value !== null && rng.max_value !== undefined) parts.push('до ' + rng.max_value);
-            if (rng.text_norm) parts.push(rng.text_norm);
-            const forLab = (rng.medical_center_id ? 'за ' + labNm : 'обща');
-            return 'Норма (' + forLab + '): ' + (parts.join(' ') || '—');
-        }
+            const pDateEl = document.getElementById('prescription_date');
+            const prescriptionDateVal = pDateEl && pDateEl.value ? parseDateToISO(pDateEl.value) : null;
 
-        function openLabChart(paramId) {
-            const personObj = state.persons.find(p => p.name === state.labPerson);
-            if (!personObj) return;
-            const param = state.labParameters.find(p => String(p.id)===String(paramId));
-            if (!param) return;
+            const medUpdates = {
+                name_bg: document.getElementById('name_bg').value,
+                name_latin: document.getElementById('name_latin').value,
+                active_substance: document.getElementById('active').value,
+                category_id: categoryId,
+                manufacturer_id: manufacturerId,
+                volume_quantity: volValue !== '' ? volValue : null,
+                volume_unit: document.getElementById('unit').value,
+                form: document.getElementById('form').value,
+                form_quantity: parseInt(document.getElementById('qty').value) || null,
+                dosage: document.getElementById('dosage').value,
+                doctor_id: doctorId,
+                prescription_medical_center_id: mcId,
+                prescription_date: prescriptionDateVal,
+                health_insurance: document.getElementById('health_insurance').checked,
+                is_active: document.getElementById('is_active').checked,
+                is_daily: document.getElementById('is_daily').checked,
+                notes: document.getElementById('notes').value,
+                description: document.getElementById('desc').value
+            };
 
-            const tests = state.labTests
-                .filter(t => String(t.person_id)===String(personObj.id))
-                .sort((a,b) => new Date(a.test_date) - new Date(b.test_date));
-
-            const pts = [];
-            tests.forEach(t => {
-                const cell = state.labResults.filter(r => String(r.lab_test_id)===String(t.id) && String(r.parameter_id)===String(paramId) && r.value_numeric !== null && r.value_numeric !== undefined);
-                cell.forEach(r => pts.push({ date: t.test_date, value: Number(r.value_numeric), lab: t.medical_center_id }));
+            await fetch(`${CONFIG.URL}/rest/v1/medications?id=eq.${state.currentId}`, {
+                method: 'PATCH',
+                headers: h,
+                body: JSON.stringify(medUpdates)
             });
 
-            const title = param.name + (param.unit ? ' (' + param.unit + ')' : '');
-            document.getElementById('labChartTitle').textContent = 'Тренд: ' + title;
-
-            if (pts.length === 0) {
-                document.getElementById('labChartContainer').innerHTML = '<p style="color:#666;">Няма числови стойности за графика.</p>';
-                document.getElementById('labChartModal').style.display = 'flex';
-                return;
-            }
-
-            document.getElementById('labChartContainer').innerHTML = buildSVGChart(pts, param);
-            document.getElementById('labChartModal').style.display = 'flex';
-        }
-
-        function buildSVGChart(pts, param) {
-            const W = Math.max(550, pts.length * 80 + 100), H = 350;
-            const padL = 50, padR = 60, padT = 30, padB = 60;
-            const vals = pts.map(p => p.value);
-            let vmin = Math.min(...vals), vmax = Math.max(...vals);
-            
-            let sumMin = 0, countMin = 0;
-            let sumMax = 0, countMax = 0;
-            
-            pts.forEach(p => {
-                const rng = getLabRange(param.id, p.lab, currentSex());
-                if (rng) {
-                    if (rng.min_value !== null && rng.min_value !== undefined) { sumMin += rng.min_value; countMin++; }
-                    if (rng.max_value !== null && rng.max_value !== undefined) { sumMax += rng.max_value; countMax++; }
-                }
+            await fetch(`${CONFIG.URL}/rest/v1/medication_persons?medication_id=eq.${state.currentId}`, {
+                method: 'DELETE',
+                headers: h
             });
-            
-            const avgMin = countMin > 0 ? sumMin / countMin : null;
-            const avgMax = countMax > 0 ? sumMax / countMax : null;
-            
-            if (avgMin !== null) vmin = Math.min(vmin, avgMin);
-            if (avgMax !== null) vmax = Math.max(vmax, avgMax);
-            
-            if (vmin === vmax) { vmin -= 1; vmax += 1; }
-            const span = vmax - vmin;
-            vmin -= span*0.1; vmax += span*0.1;
-            
-            const x = i => padL + (pts.length===1 ? (W-padL-padR)/2 : i*(W-padL-padR)/(pts.length-1));
-            const y = v => padT + (vmax - v)/(vmax - vmin)*(H-padT-padB);
 
-            let svg = `<svg width="${W}" height="${H}" style="font-family:sans-serif;">`;
-            
-            if (avgMin !== null && avgMax !== null) {
-                const yTop = y(avgMax), yBot = y(avgMin);
-                svg += `<rect x="${padL}" y="${yTop}" width="${W-padL-padR}" height="${yBot-yTop}" fill="#2ECC71" opacity="0.10"/>`;
-            }
-
-            if (avgMin !== null) {
-                const yMin = y(avgMin);
-                svg += `<line x1="${padL}" y1="${yMin}" x2="${W-padR}" y2="${yMin}" stroke="#E74C3C" stroke-width="1"/>`;
-                svg += `<text x="${W-padR+5}" y="${yMin+4}" font-size="10" fill="#E74C3C" font-weight="bold">Min: ${avgMin.toFixed(1)}</text>`;
-            }
-            if (avgMax !== null) {
-                const yMax = y(avgMax);
-                svg += `<line x1="${padL}" y1="${yMax}" x2="${W-padR}" y2="${yMax}" stroke="#E74C3C" stroke-width="1"/>`;
-                svg += `<text x="${W-padR+5}" y="${yMax+4}" font-size="10" fill="#E74C3C" font-weight="bold">Max: ${avgMax.toFixed(1)}</text>`;
-            }
-
-            svg += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#ccc"/>`;
-            svg += `<line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="#ccc"/>`;
-            
-            for (let k=0;k<=4;k++){
-                const vv = vmin + (vmax-vmin)*k/4;
-                const yy = y(vv);
-                svg += `<line x1="${padL-4}" y1="${yy}" x2="${padL}" y2="${yy}" stroke="#ccc"/>`;
-                svg += `<text x="${padL-6}" y="${yy+4}" text-anchor="end" font-size="10" fill="#666">${vv.toFixed(1)}</text>`;
-            }
-
-            let path = '';
-            pts.forEach((p,i) => { path += (i===0?'M':'L') + x(i) + ',' + y(p.value) + ' '; });
-            svg += `<path d="${path}" fill="none" stroke="#2980B9" stroke-width="2"/>`;
-            
-            pts.forEach((p,i) => {
-                const st = (avgMin !== null || avgMax !== null) ? labStatus({value_numeric:p.value, is_out_of_range:false}, param.id, null) : null;
-                const col = st==='oor' ? '#C0392B' : (st==='near' ? '#E67E22' : '#2980B9');
-                svg += `<circle cx="${x(i)}" cy="${y(p.value)}" r="4" fill="${col}"/>`;
-                svg += `<text x="${x(i)}" y="${y(p.value)-8}" text-anchor="middle" font-size="9" fill="#333" font-weight="bold">${p.value}</text>`;
-                const dBG = formatDateToBG(p.date);
-                svg += `<text x="${x(i)}" y="${H-padB+15}" text-anchor="end" font-size="9" fill="#666" transform="rotate(-35 ${x(i)} ${H-padB+15})">${dBG}</text>`;
-            });
-            svg += `</svg>`;
-            return svg;
-        }
-
-        function renderLabs() {
-            const persons = ['Лили', 'Емил'];
-            document.getElementById('labPersonFilters').innerHTML = persons.map(p =>
-                `<button class="filter-btn ${state.labPerson===p?'active':''}" onclick="state.labPerson='${p}'; state.labSection='all'; renderLabs()">${p.toUpperCase()}</button>`
-            ).join('');
-
-            const oorBtn = document.getElementById('labOORBtn');
-            if (oorBtn) {
-                oorBtn.style.background = state.labOnlyOOR ? '#C0392B' : '#95A5A6';
-                oorBtn.style.color = 'white';
-            }
-
-            const personObj = state.persons.find(p => p.name === state.labPerson);
-            if (!personObj) { 
-                document.getElementById('labSectionButtonsInline').innerHTML=''; 
-                document.getElementById('labSectionSelect').innerHTML='<option value="all">-- Всички категории --</option>';
-                document.getElementById('labContainer').innerHTML = '<p style="color:#666; padding:15px;">Няма данни за това лице.</p>'; 
-                return; 
-            }
-
-            const rawTests = state.labTests
-                .filter(t => String(t.person_id) === String(personObj.id))
-                .sort((a,b) => {
-                    const d = new Date(b.test_date) - new Date(a.test_date);
-                    if (d !== 0) return d;
-                    return (a.test_time||'').localeCompare(b.test_time||'');
+            const selectedPersons = Array.from(document.querySelectorAll('input[name="person_checkbox"]:checked')).map(cb => cb.value);
+            for (let personId of selectedPersons) {
+                await fetch(`${CONFIG.URL}/rest/v1/medication_persons`, {
+                    method: 'POST',
+                    headers: h,
+                    body: JSON.stringify({ medication_id: state.currentId, person_id: personId })
                 });
-
-            if (rawTests.length === 0) { 
-                document.getElementById('labSectionButtonsInline').innerHTML=''; 
-                document.getElementById('labSectionSelect').innerHTML='<option value="all">-- Всички категории --</option>';
-                document.getElementById('labContainer').innerHTML = '<p style="color:#666; padding:15px;">Няма изследвания за това лице.</p>'; 
-                return; 
             }
 
-            const testMap = new Map();
-            const groupedTestIds = {};
-            rawTests.forEach(t => {
-                const key = `${t.test_date}_${t.medical_center_id}`;
-                if (!testMap.has(key)) {
-                    testMap.set(key, t);
-                    groupedTestIds[key] = new Set();
-                }
-                groupedTestIds[key].add(String(t.id));
-            });
-            const tests = Array.from(testMap.values());
+            const priceEurVal = document.getElementById('price_eur').value;
+            const priceZkVal = document.getElementById('price_zk_eur').value;
+            const pharmNameInput = document.getElementById('pharmacy_name').value.trim();
 
-            const allPersonTestIds = new Set(rawTests.map(t => String(t.id)));
-            const results = state.labResults.filter(r => allPersonTestIds.has(String(r.lab_test_id)));
-            const usedParamIds = new Set(results.map(r => String(r.parameter_id)));
-
-            const cats = [...state.labCategories].sort((a,b) => (a.sort_order||0)-(b.sort_order||0));
-            const params = [...state.labParameters].sort((a,b) => (a.sort_order||0)-(b.sort_order||0));
-
-            const catsWithData = cats.filter(cat =>
-                params.some(p => String(p.category_id)===String(cat.id) && usedParamIds.has(String(p.id)))
-            );
-
-            let secBtns = `<button class="filter-btn ${state.labSection==='all'?'active':''}" onclick="state.labSection='all'; renderLabs()">ВСИЧКО</button>`;
-            document.getElementById('labSectionButtonsInline').innerHTML = secBtns;
-
-            let selectOpts = `<option value="all">-- Всички категории --</option>`;
-            selectOpts += catsWithData.map(c =>
-                `<option value="${c.id}" ${state.labSection===String(c.id)?'selected':''}>${c.name}</option>`
-            ).join('');
-            document.getElementById('labSectionSelect').innerHTML = selectOpts;
-
-            const shownCats = state.labSection==='all' ? catsWithData : catsWithData.filter(c => String(c.id)===state.labSection);
-            const search = (state.labSearch||'').toLowerCase().trim();
-
-            const labName = id => { const mc = state.medicalCenters.find(m => String(m.id)===String(id)); return mc ? mc.name : '?'; };
-
-            const hdrBase = 'background:#2980B9; color:white; padding:8px 6px; border-right:1px solid #1F6390;';
-            const stickyTopLeft = 'position:sticky; top:0; left:0; z-index:6;';
-            const stickyTopUnit = 'position:sticky; top:0; left:160px; z-index:6;';
-            const stickyTop = 'position:sticky; top:0; z-index:4;';
-            const stickyLeft = 'position:sticky; left:0; z-index:3;';
-            const stickyLeftUnit = 'position:sticky; left:160px; z-index:3;';
-
-            let html = '<table style="border-collapse:separate; border-spacing:0; background:white; font-size:11px; min-width:100%;">';
-            html += '<thead><tr>';
-            html += `<th style="${hdrBase} ${stickyTopLeft} text-align:left; width:160px; min-width:160px; border-right:2px solid #1F6390;">Показател</th>`;
-            html += `<th style="${hdrBase} ${stickyTopUnit} width:45px; min-width:45px; border-right:2px solid #1F6390;">Ед.</th>`;
-            tests.forEach((t) => {
-                const dateBG = formatDateToBG(t.test_date);
-                const lbl = t.label ? '<div style="font-weight:normal; font-size:9px; opacity:0.9;">'+t.label+'</div>' : '';
-                html += `<th style="${hdrBase} ${stickyTop} min-width:90px; white-space:nowrap; text-align:center;">
-                    <div style="font-size:13px; font-weight:bold;">${dateBG}</div>
-                    <div style="font-weight:normal; font-size:10px; opacity:0.9;">${labName(t.medical_center_id)}</div>${lbl}
-                </th>`;
-            });
-            html += '</tr></thead><tbody>';
-
-            let anyShown = false;
-            shownCats.forEach(cat => {
-                let catParams = params.filter(p => String(p.category_id)===String(cat.id) && usedParamIds.has(String(p.id)));
-                if (search) catParams = catParams.filter(p => p.name.toLowerCase().includes(search));
-                if (state.labOnlyOOR) {
-                    catParams = catParams.filter(p =>
-                        tests.some(t => {
-                            const validIds = groupedTestIds[`${t.test_date}_${t.medical_center_id}`];
-                            return results.some(r =>
-                                validIds.has(String(r.lab_test_id)) && String(r.parameter_id)===String(p.id) &&
-                                labStatus(r, p.id, t.medical_center_id)==='oor'
-                            );
-                        })
-                    );
-                }
-                if (catParams.length === 0) return;
-                anyShown = true;
-                html += `<tr><td colspan="${tests.length+2}" style="background:#AED6F1; color:#1B4F72; font-weight:bold; padding:6px; ${stickyLeft} border-top:2px solid #5499C7; border-bottom:2px solid #5499C7;">${cat.name}</td></tr>`;
-                catParams.forEach((p, ri) => {
-                    const rowBg = (ri % 2 === 0) ? '#ffffff' : '#F4F8FB';
-                    html += `<tr style="cursor:pointer; border-bottom:1px solid #d5dde3;" onclick="openLabChart('${p.id}')">`;
-                    html += `<td style="padding:5px 6px; ${stickyLeft} background:${rowBg}; border-right:2px solid #bbb; border-bottom:1px solid #d5dde3;">${p.name}</td>`;
-                    html += `<td style="padding:5px 6px; ${stickyLeftUnit} background:${rowBg}; text-align:center; color:#888; border-right:2px solid #999; border-bottom:1px solid #d5dde3;">${p.unit||''}</td>`;
-                    tests.forEach(t => {
-                        const validIds = groupedTestIds[`${t.test_date}_${t.medical_center_id}`];
-                        const cell = results.filter(r => validIds.has(String(r.lab_test_id)) && String(r.parameter_id)===String(p.id));
-                        let disp = cell.length ? labValueDisplay(cell) : '';
-                        let style = `background:${rowBg};`;
-                        let tip = '';
-                        let normHtml = '';
-                        if (cell.length) {
-                            const st = cell.map(r => labStatus(r, p.id, t.medical_center_id));
-                            if (st.includes('oor')) {
-                                style = 'background:#FADBD8; color:#C0392B; font-weight:bold;';
-                            } else if (st.includes('near')) {
-                                style = 'background:#FCF3CF; color:#B9770E; font-weight:bold;';
-                            }
-
-                            const rng = getLabRange(p.id, t.medical_center_id, currentSex());
-                            if (rng) {
-                                let n = '';
-                                if (rng.min_value !== null && rng.min_value !== undefined && rng.max_value !== null && rng.max_value !== undefined) n =Ето напълно обновения и коригиран код за мобилната (7") версия. Направих сравнение с десктоп версията[cite: 2] и въведох липсващите функционалности в мобилния вариант[cite: 1], като спазих изричното ти условие за филтрите.
-
-### Основни промени:
-*   **Филтър "Спешни":** Добавен е бутон за филтриране по спешност, който има само две състояния – "Спешни" (`true`) и "Всички" (`all`), точно както е реализиран и филтърът "Ежедневни"[cite: 1, 2].
-*   **Редакция и създаване:** В панела за редакция е добавена отметка "Спешно" (`is_emergency`)[cite: 2].
-*   **Ново лекарство:** Добавен е бутон "➕ Ново Лекарство" в мобилния изглед, а логиката на `openPanel` и `saveMed` е надградена, за да поддържа създаването на нови записи (POST заявка), а не само редакция (PATCH)[cite: 1, 2].
-
-```html
-<!DOCTYPE html>
-<html lang="bg">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Здравен мениджър - 7" Мобилна версия</title>
-    <script>
-        const CONFIG = {
-            URL: "[https://xwnjuqqudkjkqdkrndhg.supabase.co](https://xwnjuqqudkjkqdkrndhg.supabase.co)",
-            KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34"
-        };
-    </script>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #667eea; padding: 10px; font-size: 13px; color: #333; }
-        
-        .header { background: #E74C3C; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 15px; }
-        .header h1 { font-size: 16px; margin: 0; }
-        
-        .filters { background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .search-input { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; }
-        
-        .filter-buttons { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
-        .filter-btn { padding: 6px 10px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; border-radius: 6px; font-size: 12px; font-weight: 500; }
-        .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
-        
-        .grid { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
-        .card { background: white; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-size: 13px; }
-        .card h3 { font-size: 15px; margin: 0 0 6px 0; color: #333; }
-        .card p { margin: 0 0 4px 0; color: #555; }
-        
-        .panel { position: fixed; right: 0; top: 0; width: 100vw; height: 100vh; background: white; padding: 15px; padding-bottom: 40px; display: none; overflow-y: auto; z-index: 1000; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        .panel-header h2 { font-size: 16px; margin: 0; color: #333; }
-        .close-btn { background: #E74C3C; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        
-        .form-group { margin-bottom: 12px; width: 100%; }
-        .form-group label.title-label, .form-group label { display: block; font-size: 12px; font-weight: bold; color: #555; margin-bottom: 4px; }
-        .form-group input[type="text"], 
-        .form-group input[type="number"], 
-        .form-group input[type="date"], 
-        .form-group select, 
-        .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; background: #fff; font-family: inherit; }
-        .form-group textarea { resize: vertical; min-height: 70px; }
-        
-        .form-row, .form-row-mobile { display: flex; gap: 10px; margin-bottom: 12px; width: 100%; }
-        .form-row .form-group, .form-row-mobile .form-group { margin-bottom: 0; flex: 1; }
-
-        .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
-        .checkbox-group label { font-weight: normal; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
-        .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; }
-
-        .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 2000; display: none; flex-direction: column; padding: 15px; }
-        .fullscreen-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: white; background: #222; padding: 10px; border-radius: 6px; }
-        .fullscreen-header h2 { font-size: 16px; margin: 0; }
-        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .fullscreen-content { flex: 1; width: 100%; background: #fff; border-radius: 8px; overflow: auto; }
-        
-        .doc-btn { background: #2980B9; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 4px; display: inline-block; text-decoration: none; margin-right: 4px; }
-        .doc-item { padding: 8px; background: #f1f1f1; border-radius: 6px; margin-bottom: 6px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <button id="backHomeBtn" onclick="showHome()" style="display:none; padding:6px 10px; background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5); border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">&#8592; Начало</button>
-        <h1 style="margin:0; flex:1; text-align:center;">Здравен мениджър (Мобилен 7")</h1>
-    </div>
-
-    <!-- НАЧАЛНО МЕНЮ -->
-    <div id="homeMenu" style="display:flex; gap:20px; justify-content:center; align-items:center; margin-top:50px; flex-wrap:wrap;">
-        <div onclick="showMeds()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
-            <div style="font-size:48px;">&#128138;</div>
-            <div style="font-size:18px; font-weight:bold; color:#148F77;">Лекарства</div>
-        </div>
-        <div onclick="showLabs()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
-            <div style="font-size:48px;">&#129514;</div>
-            <div style="font-size:18px; font-weight:bold; color:#2980B9;">Изследвания</div>
-        </div>
-    </div>
-
-    <!-- МОДУЛ ИЗСЛЕДВАНИЯ -->
-    <div id="labModule" style="display:none;">
-        <div class="filters">
-            <div id="labPersonFilters" class="filter-buttons"></div>
-            <div style="margin-top:6px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                <div id="labSectionButtonsInline" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; flex:1;"></div>
-                <button id="labOORBtn" onclick="state.labOnlyOOR=!state.labOnlyOOR; renderLabs()" style="padding:6px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Само отклонения</button>
-                <select id="labSectionSelect" onchange="state.labSection=this.value; renderLabs()" style="padding:6px 8px; border:1px solid #ccc; border-radius:6px; font-size:12px; background:#fff; font-family:inherit;">
-                    <option value="all">-- Всички категории --</option>
-                </select>
-            </div>
-            <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
-                <input type="text" id="labSearch" placeholder="Търси показател..." oninput="state.labSearch=this.value; renderLabs()" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; flex:1; min-width:160px; font-size:14px;">
-                <button onclick="refreshData()" style="padding: 8px 12px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Опресни</button>
-            </div>
-        </div>
-        <div id="labContainer" style="overflow:auto; max-height:calc(100vh - 220px); border-radius:8px; background:white;"></div>
-    </div>
-
-    <div id="labChartModal" class="fullscreen-modal">
-        <div class="fullscreen-header">
-            <h2 id="labChartTitle">Тренд</h2>
-            <button class="close-fs-btn" onclick="document.getElementById('labChartModal').style.display='none'">Затвори [X]</button>
-        </div>
-        <div class="fullscreen-content" id="labChartContainer" style="padding:15px; background:white; overflow:auto;"></div>
-    </div>
-
-    <!-- МОДУЛ ЛЕКАРСТВА -->
-    <div id="medsModule" style="display:none;">
-        <div class="filters">
-            <input type="text" id="search" class="search-input" placeholder="Търси лекарство..." oninput="renderUI()">
-            <select id="categoryFilter" class="search-input" onchange="state.selectedCategory=this.value; renderUI()">
-                <option value="all">-- Всички категории --</option>
-            </select>
-            <div id="personFilters" class="filter-buttons"></div>
-            <div id="zokFilters" class="filter-buttons"></div>
-            <div id="activeFilters" class="filter-buttons"></div>
-            <div id="dailyFilters" class="filter-buttons"></div>
-            <div id="emergencyFilters" class="filter-buttons"></div>
-            <div style="display:flex; gap:6px; margin-top:6px; flex-wrap: wrap;">
-                <button onclick="refreshData()" style="flex:1; padding: 10px; background:#148F77; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; min-width: 80px;">Опресни</button>
-                <button onclick="openZokCalculator()" style="flex:1; padding: 10px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; min-width: 120px;">🧮 ЗОК Калк.</button>
-                <button onclick="openPanel('new')" style="flex:1; padding: 10px; background:#E74C3C; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; min-width: 120px;">➕ Ново</button>
-            </div>
-        </div>
-        <div class="grid" id="medGrid"></div>
-    </div>
-    
-    <!-- Панел за Редактиране / Създаване -->
-    <div id="editPanel" class="panel">
-        <div class="panel-header">
-            <h2 id="panelTitle">Редактиране</h2>
-            <button class="close-btn" onclick="document.getElementById('editPanel').style.display='none'">Затвори</button>
-        </div>
-        <div id="panelBody"></div>
-        <button onclick="saveMed()" style="padding:12px; width:100%; background:#148F77; color:white; border:none; border-radius:6px; margin-top:10px; margin-bottom:20px; cursor:pointer; font-weight:bold; font-size:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">ЗАПАЗИ ПРОМЕНИТЕ</button>
-    </div>
-
-    <!-- Модален прозорец за документ -->
-    <div id="fullscreenModal" class="fullscreen-modal">
-        <div class="fullscreen-header">
-            <h2 id="fsTitle">Преглед на документ</h2>
-            <button class="close-fs-btn" onclick="closeFullscreen()">Затвори [X]</button>
-        </div>
-        <div class="fullscreen-content" id="fsContainer"></div>
-    </div>
-
-    <!-- Модален прозорец за ЗОК Калкулатор -->
-    <div id="zokCalculatorModal" class="fullscreen-modal">
-        <div class="fullscreen-header">
-            <h2>ЗОК Калкулатор</h2>
-            <button class="close-fs-btn" onclick="closeZokCalculator()">Затвори [X]</button>
-        </div>
-        <div class="fullscreen-content" style="padding: 12px; background: white; overflow-y: auto; display: flex; flex-direction: column;">
-            <p style="font-size: 12px; margin-bottom: 10px; color: #555;">Въведете обща платена сума по ЗОК и лекарства със стандартни цени за разпределение:</p>
+            const pEur = priceEurVal !== '' ? parseFloat(priceEurVal) : 0;
+            const pZk = priceZkVal !== '' ? parseFloat(priceZkVal) : 0;
             
-            <datalist id="zokMedDatalist"></datalist>
-
-            <div style="margin-bottom: 10px; display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
-                <div>
-                    <label style="font-weight: bold; font-size: 11px;">Обща сума по ЗОК (€):</label>
-                    <input type="number" id="calcTotalPaid" step="0.01" style="width: 130px; padding: 8px; margin-top: 2px; border: 1px solid #ccc; border-radius: 6px;" placeholder="напр. 9.25">
-                </div>
-                <div style="margin-top: 14px; display:flex; gap:5px;">
-                    <button onclick="addZokCalcRow()" style="background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">➕ Добави</button>
-                    <button onclick="calculateZokDistribution()" style="background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">🧮 Изчисли</button>
-                </div>
-            </div>
-
-            <div style="flex:1; overflow-y:auto; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; padding: 5px;">
-                <table style="width:100%; border-collapse:collapse; font-size:12px; background:#fff;">
-                    <thead>
-                        <tr style="background:#f1f5f9; text-align:left; border-bottom:1px solid #ddd; position:sticky; top:0;">
-                            <th style="padding:6px;">Лекарство</th>
-                            <th style="padding:6px; width:100px;">Станд. (€)</th>
-                            <th style="padding:6px; width:100px; color:#E74C3C;">ЗОК (€)</th>
-                            <th style="padding:6px; width:40px; text-align:center;">X</th>
-                        </tr>
-                    </thead>
-                    <tbody id="calcMedicationsTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let state = { 
-            selectedPerson: 'all', 
-            selectedZok: 'all', 
-            selectedActive: 'all', 
-            selectedDaily: 'all',
-            selectedEmergency: 'all', 
-            selectedCategory: 'all', 
-            meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], 
-            currentId: null, editingPurchaseId: null, 
-            labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false 
-        };
-
-        function showHome() {
-            document.getElementById('homeMenu').style.display = 'flex';
-            document.getElementById('medsModule').style.display = 'none';
-            document.getElementById('labModule').style.display = 'none';
-            document.getElementById('backHomeBtn').style.display = 'none';
-        }
-
-        function showMeds() {
-            document.getElementById('homeMenu').style.display = 'none';
-            document.getElementById('medsModule').style.display = 'block';
-            document.getElementById('labModule').style.display = 'none';
-            document.getElementById('backHomeBtn').style.display = 'inline-block';
-        }
-
-        function showLabs() {
-            document.getElementById('homeMenu').style.display = 'none';
-            document.getElementById('medsModule').style.display = 'none';
-            document.getElementById('labModule').style.display = 'block';
-            document.getElementById('backHomeBtn').style.display = 'inline-block';
-            renderLabs();
-        }
-
-        // --- Всички функции за Изследвания остават непроменени както в мобилната версия ---
-        function labValueDisplay(results) {
-            const sorted = [...results].sort((a,b) => (a.measurement_seq||1) - (b.measurement_seq||1));
-            for (let r of sorted) {
-                if (r.value_text !== null && r.value_text !== undefined && r.value_text !== '') return String(r.value_text).trim();
-                if (r.value_numeric !== null && r.value_numeric !== undefined) return String(r.value_numeric).trim();
-            }
-            return '';
-        }
-
-        function getLabRange(paramId, labId, sex) {
-            const cand = state.labRanges.filter(x => String(x.parameter_id)===String(paramId));
-            let r = cand.find(x => String(x.medical_center_id)===String(labId) && x.sex===sex)
-                 || cand.find(x => String(x.medical_center_id)===String(labId) && !x.sex);
-            if (!r) r = cand.find(x => (x.medical_center_id===null||x.medical_center_id===undefined) && x.sex===sex)
-                     || cand.find(x => (x.medical_center_id===null||x.medical_center_id===undefined) && !x.sex);
-            return r || null;
-        }
-
-        function currentSex() {
-            const p = state.persons.find(x => x.name === state.labPerson);
-            return p ? p.sex : null;
-        }
-
-        function labStatus(result, paramId, labId) {
-            const sex = currentSex();
-            const rng = getLabRange(paramId, labId, sex);
-            const v = result.value_numeric;
-            if ((v === null || v === undefined)) {
-                if (result.is_out_of_range === true) return 'oor';
-                if (rng && rng.text_norm && result.value_text) {
-                    const norm = String(rng.text_norm).toLowerCase().trim();
-                    const val = String(result.value_text).toLowerCase().trim();
-                    const negSet = ['neg','negative','-','norm','normal','norm.','няма','отр'];
-                    const isNeg = negSet.some(s => val.startsWith(s));
-                    if (norm.startsWith('neg') || norm.startsWith('norm')) return isNeg ? 'ok' : 'oor';
+            let pharmId = null;
+            if (pharmNameInput !== '') {
+                let existingPharm = state.pharmacies.find(p => p.name.toLowerCase() === pharmNameInput.toLowerCase());
+                if (existingPharm) {
+                    pharmId = existingPharm.id;
+                } else {
+                    const newPharmRes = await fetch(`${CONFIG.URL}/rest/v1/pharmacies`, {
+                        method: 'POST',
+                        headers: h,
+                        body: JSON.stringify({ name: pharmNameInput })
+                    });
+                    const newPharmData = await newPharmRes.json();
+                    if (newPharmData && newPharmData.length > 0) {
+                        pharmId = newPharmData[0].id;
+                        state.pharmacies.push(newPharmData[0]);
+                    }
                 }
-                return null;
             }
-            if (result.is_out_of_range === true) return 'oor';
-            if (!rng || (rng.min_value===null && rng.max_value===null)) return null;
-            const mn = rng.min_value, mx = rng.max_value;
-            const flagKnown = (result.is_out_of_range === false);
-            if (!flagKnown) {
-                if (mn !== null && mn !== undefined && v < mn) return 'oor';
-                if (mx !== null && mx !== undefined && v > mx) return 'oor';
+
+            if (priceEurVal !== '' || priceZkVal !== '' || pharmNameInput !== '') {
+                const purchDateEl = document.getElementById('purchase_date');
+                const pDateVal = purchDateEl && purchDateEl.value ? purchDateEl.value : '';
+                const pDate = pDateVal ? parseDateToISO(pDateVal) : new Date().toISOString().split('T')[0];
+                
+                if (state.editingPurchaseId) {
+                    await fetch(`${CONFIG.URL}/rest/v1/purchases?id=eq.${state.editingPurchaseId}`, {
+                        method: 'PATCH',
+                        headers: h,
+                        body: JSON.stringify({ 
+                            price_eur: pEur, 
+                            price_zk_eur: pZk, 
+                            pharmacy_id: pharmId, 
+                            purchase_date: pDate 
+                        })
+                    });
+                    state.editingPurchaseId = null;
+                } else {
+                    await fetch(`${CONFIG.URL}/rest/v1/purchases`, {
+                        method: 'POST',
+                        headers: h,
+                        body: JSON.stringify({ 
+                            medication_id: state.currentId, 
+                            price_eur: pEur, 
+                            price_zk_eur: pZk, 
+                            pharmacy_id: pharmId, 
+                            purchase_date: pDate 
+                        })
+                    });
+                }
             }
-            if (mn !== null && mn !== undefined && mx !== null && mx !== undefined) {
-                const band = (mx - mn) * 0.10;
-                if (v <= mn + band || v >= mx - band) return 'near';
-            }
-            return 'ok';
+
+            document.getElementById('editPanel').style.display = 'none';
+            refreshData();
         }
 
-        function rangeTooltip(paramId, labId, labNm) {
-            const sex = currentSex();
-            const rng = getLabRange(paramId, labId, sex);
-            if (!rng) return 'Няма въведена норма';
-            const parts = [];
-            if (rng.min_value !== null && rng.min_value !== undefined) parts.push('от ' + rng.min_value);
-            if (rng.max_value !== null && rng.max_value !== undefined) parts.push('до ' + rng.max_value);
-            if (rng.text_norm) parts.push(rng.text_norm);
-            const forLab = (rng.medical_center_id ? 'за ' + labNm : 'обща');
-            return 'Норма (' + forLab + '): ' + (parts.join(' ') || '—');
+        function openFullscreen(url, title) {
+            document.getElementById('fsTitle').innerText = "Документ: " + title;
+            document.getElementById('fsContainer').innerHTML = `<iframe src="${url}" style="width:100%; height:100%; border:none;"></iframe>`;
+            document.getElementById('fullscreenModal').style.display = 'flex';
         }
 
-        function openLabChart(paramId) {
-            const personObj = state.persons.find(p => p.name === state.labPerson);
-            if (!personObj) return;
-            const param = state.labParameters.find(p => String(p.id)===String(paramId));
-            if (!param) return;
-
-            const tests = state.labTests
-                .filter(t => String(t.person_id)===String(personObj.id))
-                .sort((a,b) => new Date(a.test_date) - new Date(b.test_date));
-
-            const pts = [];
-            tests.forEach(t => {
-                const cell = state.labResults.filter(r => String(r.lab_test_id)===String(t.id) && String(r.parameter_id)===String(paramId) && r.value_numeric !== null && r.value_numeric !== undefined);
-                cell.forEach(r => pts.push({ date: t.test_date, value: Number(r.value_numeric), lab: t.medical_center_id }));
-            });
-
-            const title = param.name + (param.unit ? ' (' + param.unit + ')' : '');
-            document.getElementById('labChartTitle').textContent = 'Тренд: ' + title;
-
-            if (pts.length === 0) {
-                document.getElementById('labChartContainer').innerHTML = '<p style="color:#666;">Няма числови стойности за графика.</p>';
-                document.getElementById('labChartModal').style.display = 'flex';
-                return;
-            }
-
-            document.getElementById('labChartContainer').innerHTML = buildSVGChart(pts, param);
-            document.getElementById('labChart
+        function closeFullscreen() {
+            document.getElementById('fullscreenModal').style.display = 'none';
+            document.getElementById('fsContainer').innerHTML = '';
+        }
+        
+        window.onload = refreshData;
+    </script>
+</body>
+</html>
