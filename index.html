@@ -2384,4 +2384,307 @@
     <script>
         const CONFIG = {
             URL: "[https://xwnjuqqudkjkqdkrndhg.supabase.co](https://xwnjuqqudkjkqdkrndhg.supabase.co)",
-            KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwic
+            KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34"
+        };
+    </script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #667eea; padding: 10px; font-size: 13px; color: #333; }
+        
+        .header { background: #E74C3C; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 15px; }
+        .header h1 { font-size: 16px; margin: 0; }
+        
+        .filters { background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .search-input { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; }
+        
+        .filter-buttons { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
+        .filter-btn { padding: 6px 10px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; border-radius: 6px; font-size: 12px; font-weight: 500; }
+        .filter-btn.active { background: #148F77; color: white; border-color: #148F77; }
+        
+        .grid { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+        .card { background: white; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-size: 13px; }
+        .card h3 { font-size: 15px; margin: 0 0 6px 0; color: #333; }
+        .card p { margin: 0 0 4px 0; color: #555; }
+        
+        .panel { position: fixed; right: 0; top: 0; width: 100vw; height: 100vh; background: white; padding: 15px; padding-bottom: 40px; display: none; overflow-y: auto; z-index: 1000; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .panel-header h2 { font-size: 16px; margin: 0; color: #333; }
+        .close-btn { background: #E74C3C; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        
+        .form-group { margin-bottom: 12px; width: 100%; }
+        .form-group label.title-label, .form-group label { display: block; font-size: 12px; font-weight: bold; color: #555; margin-bottom: 4px; }
+        .form-group input[type="text"], 
+        .form-group input[type="number"], 
+        .form-group input[type="date"], 
+        .form-group select, 
+        .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; background: #fff; font-family: inherit; }
+        .form-group textarea { resize: vertical; min-height: 70px; }
+        
+        .form-row, .form-row-mobile { display: flex; gap: 10px; margin-bottom: 12px; width: 100%; }
+        .form-row .form-group, .form-row-mobile .form-group { margin-bottom: 0; flex: 1; }
+
+        .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+        .checkbox-group label { font-weight: normal; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+        .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; }
+
+        .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 2000; display: none; flex-direction: column; padding: 15px; }
+        .fullscreen-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: white; background: #222; padding: 10px; border-radius: 6px; }
+        .fullscreen-header h2 { font-size: 16px; margin: 0; }
+        .close-fs-btn { background: #E74C3C; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .fullscreen-content { flex: 1; width: 100%; background: #fff; border-radius: 8px; overflow: auto; }
+        
+        .doc-btn { background: #2980B9; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 4px; display: inline-block; text-decoration: none; margin-right: 4px; }
+        .doc-item { padding: 8px; background: #f1f1f1; border-radius: 6px; margin-bottom: 6px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button id="backHomeBtn" onclick="showHome()" style="display:none; padding:6px 10px; background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5); border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">&#8592; Начало</button>
+        <h1 style="margin:0; flex:1; text-align:center;">Здравен мениджър (Мобилен 7")</h1>
+    </div>
+
+    <!-- НАЧАЛНО МЕНЮ -->
+    <div id="homeMenu" style="display:flex; gap:20px; justify-content:center; align-items:center; margin-top:50px; flex-wrap:wrap;">
+        <div onclick="showMeds()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
+            <div style="font-size:48px;">&#128138;</div>
+            <div style="font-size:18px; font-weight:bold; color:#148F77;">Лекарства</div>
+        </div>
+        <div onclick="showLabs()" style="background:white; width:240px; height:160px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; transition:transform 0.2s;">
+            <div style="font-size:48px;">&#129514;</div>
+            <div style="font-size:18px; font-weight:bold; color:#2980B9;">Изследвания</div>
+        </div>
+    </div>
+
+    <!-- МОДУЛ ИЗСЛЕДВАНИЯ -->
+    <div id="labModule" style="display:none;">
+        <div class="filters">
+            <div id="labPersonFilters" class="filter-buttons"></div>
+            <div style="margin-top:6px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                <div id="labSectionButtonsInline" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; flex:1;"></div>
+                <button id="labOORBtn" onclick="state.labOnlyOOR=!state.labOnlyOOR; renderLabs()" style="padding:6px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Само отклонения</button>
+                <select id="labSectionSelect" onchange="state.labSection=this.value; renderLabs()" style="padding:6px 8px; border:1px solid #ccc; border-radius:6px; font-size:12px; background:#fff; font-family:inherit;">
+                    <option value="all">-- Всички категории --</option>
+                </select>
+            </div>
+            <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
+                <input type="text" id="labSearch" placeholder="Търси показател..." oninput="state.labSearch=this.value; renderLabs()" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; flex:1; min-width:160px; font-size:14px;">
+                <button onclick="refreshData()" style="padding: 8px 12px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Опресни</button>
+            </div>
+        </div>
+        <div id="labContainer" style="overflow:auto; max-height:calc(100vh - 220px); border-radius:8px; background:white;"></div>
+    </div>
+
+    <div id="labChartModal" class="fullscreen-modal">
+        <div class="fullscreen-header">
+            <h2 id="labChartTitle">Тренд</h2>
+            <button class="close-fs-btn" onclick="document.getElementById('labChartModal').style.display='none'">Затвори [X]</button>
+        </div>
+        <div class="fullscreen-content" id="labChartContainer" style="padding:15px; background:white; overflow:auto;"></div>
+    </div>
+
+    <!-- МОДУЛ ЛЕКАРСТВА -->
+    <div id="medsModule" style="display:none;">
+        <div class="filters">
+            <input type="text" id="search" class="search-input" placeholder="Търси лекарство..." oninput="renderUI()">
+            <select id="categoryFilter" class="search-input" onchange="state.selectedCategory=this.value; renderUI()">
+                <option value="all">-- Всички категории --</option>
+            </select>
+            <div id="personFilters" class="filter-buttons"></div>
+            <div id="zokFilters" class="filter-buttons"></div>
+            <div id="activeFilters" class="filter-buttons"></div>
+            <div id="dailyFilters" class="filter-buttons"></div>
+            <div id="emergencyFilters" class="filter-buttons"></div>
+            <div style="display:flex; gap:6px; margin-top:6px; flex-wrap: wrap;">
+                <button onclick="refreshData()" style="flex:1; padding: 10px; background:#148F77; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; min-width: 80px;">Опресни</button>
+                <button onclick="openZokCalculator()" style="flex:1; padding: 10px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; min-width: 120px;">🧮 ЗОК Калк.</button>
+                <button onclick="openPanel('new')" style="flex:1; padding: 10px; background:#E74C3C; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; min-width: 120px;">➕ Ново</button>
+            </div>
+        </div>
+        <div class="grid" id="medGrid"></div>
+    </div>
+    
+    <!-- Панел за Редактиране / Създаване -->
+    <div id="editPanel" class="panel">
+        <div class="panel-header">
+            <h2 id="panelTitle">Редактиране</h2>
+            <button class="close-btn" onclick="document.getElementById('editPanel').style.display='none'">Затвори</button>
+        </div>
+        <div id="panelBody"></div>
+        <button onclick="saveMed()" style="padding:12px; width:100%; background:#148F77; color:white; border:none; border-radius:6px; margin-top:10px; margin-bottom:20px; cursor:pointer; font-weight:bold; font-size:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">ЗАПАЗИ ПРОМЕНИТЕ</button>
+    </div>
+
+    <!-- Модален прозорец за документ -->
+    <div id="fullscreenModal" class="fullscreen-modal">
+        <div class="fullscreen-header">
+            <h2 id="fsTitle">Преглед на документ</h2>
+            <button class="close-fs-btn" onclick="closeFullscreen()">Затвори [X]</button>
+        </div>
+        <div class="fullscreen-content" id="fsContainer"></div>
+    </div>
+
+    <!-- Модален прозорец за ЗОК Калкулатор -->
+    <div id="zokCalculatorModal" class="fullscreen-modal">
+        <div class="fullscreen-header">
+            <h2>ЗОК Калкулатор</h2>
+            <button class="close-fs-btn" onclick="closeZokCalculator()">Затвори [X]</button>
+        </div>
+        <div class="fullscreen-content" style="padding: 12px; background: white; overflow-y: auto; display: flex; flex-direction: column;">
+            <p style="font-size: 12px; margin-bottom: 10px; color: #555;">Въведете обща платена сума по ЗОК и лекарства със стандартни цени за разпределение:</p>
+            
+            <datalist id="zokMedDatalist"></datalist>
+
+            <div style="margin-bottom: 10px; display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
+                <div>
+                    <label style="font-weight: bold; font-size: 11px;">Обща сума по ЗОК (€):</label>
+                    <input type="number" id="calcTotalPaid" step="0.01" style="width: 130px; padding: 8px; margin-top: 2px; border: 1px solid #ccc; border-radius: 6px;" placeholder="напр. 9.25">
+                </div>
+                <div style="margin-top: 14px; display:flex; gap:5px;">
+                    <button onclick="addZokCalcRow()" style="background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">➕ Добави</button>
+                    <button onclick="calculateZokDistribution()" style="background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">🧮 Изчисли</button>
+                </div>
+            </div>
+
+            <div style="flex:1; overflow-y:auto; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; padding: 5px;">
+                <table style="width:100%; border-collapse:collapse; font-size:12px; background:#fff;">
+                    <thead>
+                        <tr style="background:#f1f5f9; text-align:left; border-bottom:1px solid #ddd; position:sticky; top:0;">
+                            <th style="padding:6px;">Лекарство</th>
+                            <th style="padding:6px; width:100px;">Станд. (€)</th>
+                            <th style="padding:6px; width:100px; color:#E74C3C;">ЗОК (€)</th>
+                            <th style="padding:6px; width:40px; text-align:center;">X</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calcMedicationsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let state = { 
+            selectedPerson: 'all', 
+            selectedZok: 'all', 
+            selectedActive: 'all', 
+            selectedDaily: 'all',
+            selectedEmergency: 'all', 
+            selectedCategory: 'all', 
+            meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], 
+            currentId: null, editingPurchaseId: null, 
+            labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false 
+        };
+
+        function showHome() {
+            document.getElementById('homeMenu').style.display = 'flex';
+            document.getElementById('medsModule').style.display = 'none';
+            document.getElementById('labModule').style.display = 'none';
+            document.getElementById('backHomeBtn').style.display = 'none';
+        }
+
+        function showMeds() {
+            document.getElementById('homeMenu').style.display = 'none';
+            document.getElementById('medsModule').style.display = 'block';
+            document.getElementById('labModule').style.display = 'none';
+            document.getElementById('backHomeBtn').style.display = 'inline-block';
+        }
+
+        function showLabs() {
+            document.getElementById('homeMenu').style.display = 'none';
+            document.getElementById('medsModule').style.display = 'none';
+            document.getElementById('labModule').style.display = 'block';
+            document.getElementById('backHomeBtn').style.display = 'inline-block';
+            renderLabs();
+        }
+
+        // --- Всички функции за Изследвания остават непроменени както в мобилната версия ---
+        function labValueDisplay(results) {
+            const sorted = [...results].sort((a,b) => (a.measurement_seq||1) - (b.measurement_seq||1));
+            for (let r of sorted) {
+                if (r.value_text !== null && r.value_text !== undefined && r.value_text !== '') return String(r.value_text).trim();
+                if (r.value_numeric !== null && r.value_numeric !== undefined) return String(r.value_numeric).trim();
+            }
+            return '';
+        }
+
+        function getLabRange(paramId, labId, sex) {
+            const cand = state.labRanges.filter(x => String(x.parameter_id)===String(paramId));
+            let r = cand.find(x => String(x.medical_center_id)===String(labId) && x.sex===sex)
+                 || cand.find(x => String(x.medical_center_id)===String(labId) && !x.sex);
+            if (!r) r = cand.find(x => (x.medical_center_id===null||x.medical_center_id===undefined) && x.sex===sex)
+                     || cand.find(x => (x.medical_center_id===null||x.medical_center_id===undefined) && !x.sex);
+            return r || null;
+        }
+
+        function currentSex() {
+            const p = state.persons.find(x => x.name === state.labPerson);
+            return p ? p.sex : null;
+        }
+
+        function labStatus(result, paramId, labId) {
+            const sex = currentSex();
+            const rng = getLabRange(paramId, labId, sex);
+            const v = result.value_numeric;
+            if ((v === null || v === undefined)) {
+                if (result.is_out_of_range === true) return 'oor';
+                if (rng && rng.text_norm && result.value_text) {
+                    const norm = String(rng.text_norm).toLowerCase().trim();
+                    const val = String(result.value_text).toLowerCase().trim();
+                    const negSet = ['neg','negative','-','norm','normal','norm.','няма','отр'];
+                    const isNeg = negSet.some(s => val.startsWith(s));
+                    if (norm.startsWith('neg') || norm.startsWith('norm')) return isNeg ? 'ok' : 'oor';
+                }
+                return null;
+            }
+            if (result.is_out_of_range === true) return 'oor';
+            if (!rng || (rng.min_value===null && rng.max_value===null)) return null;
+            const mn = rng.min_value, mx = rng.max_value;
+            const flagKnown = (result.is_out_of_range === false);
+            if (!flagKnown) {
+                if (mn !== null && mn !== undefined && v < mn) return 'oor';
+                if (mx !== null && mx !== undefined && v > mx) return 'oor';
+            }
+            if (mn !== null && mn !== undefined && mx !== null && mx !== undefined) {
+                const band = (mx - mn) * 0.10;
+                if (v <= mn + band || v >= mx - band) return 'near';
+            }
+            return 'ok';
+        }
+
+        function rangeTooltip(paramId, labId, labNm) {
+            const sex = currentSex();
+            const rng = getLabRange(paramId, labId, sex);
+            if (!rng) return 'Няма въведена норма';
+            const parts = [];
+            if (rng.min_value !== null && rng.min_value !== undefined) parts.push('от ' + rng.min_value);
+            if (rng.max_value !== null && rng.max_value !== undefined) parts.push('до ' + rng.max_value);
+            if (rng.text_norm) parts.push(rng.text_norm);
+            const forLab = (rng.medical_center_id ? 'за ' + labNm : 'обща');
+            return 'Норма (' + forLab + '): ' + (parts.join(' ') || '—');
+        }
+
+        function openLabChart(paramId) {
+            const personObj = state.persons.find(p => p.name === state.labPerson);
+            if (!personObj) return;
+            const param = state.labParameters.find(p => String(p.id)===String(paramId));
+            if (!param) return;
+
+            const tests = state.labTests
+                .filter(t => String(t.person_id)===String(personObj.id))
+                .sort((a,b) => new Date(a.test_date) - new Date(b.test_date));
+
+            const pts = [];
+            tests.forEach(t => {
+                const cell = state.labResults.filter(r => String(r.lab_test_id)===String(t.id) && String(r.parameter_id)===String(paramId) && r.value_numeric !== null && r.value_numeric !== undefined);
+                cell.forEach(r => pts.push({ date: t.test_date, value: Number(r.value_numeric), lab: t.medical_center_id }));
+            });
+
+            const title = param.name + (param.unit ? ' (' + param.unit + ')' : '');
+            document.getElementById('labChartTitle').textContent = 'Тренд: ' + title;
+
+            if (pts.length === 0) {
+                document.getElementById('labChartContainer').innerHTML = '<p style="color:#666;">Няма числови стойности за графика.</p>';
+                document.getElementById('labChartModal').style.display = 'flex';
+                return;
+            }
+
+            document.getElementById('labChartContainer').innerHTML = buildSVGChart(pts, param);
+            document.getElementById('labChart
