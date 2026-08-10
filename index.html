@@ -92,7 +92,7 @@
         <div class="filters" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
             <h2 style="color:#333; font-size:15px; margin:0;">🛒 Списък за закупуване</h2>
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                <button onclick="addShoppingItem()" style="padding: 6px 12px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">➕ Ново поле</button>
+                <button onclick="addShoppingItem()" style="padding: 6px 12px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">+ Ново поле</button>
                 <button onclick="clearShoppingList()" style="padding: 6px 12px; background:#7F8C8D; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Изчисти</button>
             </div>
         </div>
@@ -212,7 +212,7 @@
             meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], 
             currentId: null, editingPurchaseId: null, 
             labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false,
-            shoppingList: [] // Състояние за мобилния списък за закупуване
+            shoppingList: [] // Зарежда се и се синхронизира с таблицата shopping_list в базата данни
         };
 
         function showHome() {
@@ -247,47 +247,85 @@
             document.getElementById('shoppingModule').style.display = 'block';
             document.getElementById('backHomeBtn').style.display = 'inline-block';
             
-            if (state.shoppingList.length === 0) {
-                addShoppingItem();
-            } else {
+            renderShoppingList();
+        }
+
+        async function addShoppingItem() {
+            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+            try {
+                const res = await fetch(`${CONFIG.URL}/rest/v1/shopping_list`, {
+                    method: 'POST',
+                    headers: h,
+                    body: JSON.stringify({ med_name: '', qty: 1 })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.length > 0) {
+                        state.shoppingList.push(data[0]);
+                        renderShoppingList();
+                    }
+                } else {
+                    // Ако таблицата липсва в базата, добавяме локално за удобство
+                    state.shoppingList.push({ id: Date.now(), med_name: '', qty: 1 });
+                    renderShoppingList();
+                }
+            } catch (e) {
+                state.shoppingList.push({ id: Date.now(), med_name: '', qty: 1 });
                 renderShoppingList();
             }
         }
 
-        function addShoppingItem() {
-            state.shoppingList.push({ id: Date.now(), medName: '', qty: 1 });
+        async function removeShoppingItem(id) {
+            if(!confirm("Сигурни ли сте, че искате да изтриете този запис?")) return;
+            const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
+            try {
+                await fetch(`${CONFIG.URL}/rest/v1/shopping_list?id=eq.${id}`, { method: 'DELETE', headers: h });
+            } catch (e) { console.error(e); }
+
+            state.shoppingList = state.shoppingList.filter(item => String(item.id) !== String(id));
             renderShoppingList();
         }
 
-        function removeShoppingItem(id) {
-            state.shoppingList = state.shoppingList.filter(item => item.id !== id);
-            renderShoppingList();
-        }
+        async function clearShoppingList() {
+            if(confirm("Сигурни ли сте, че искате да изчистите целия списък за закупуване?")) {
+                const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
+                try {
+                    await fetch(`${CONFIG.URL}/rest/v1/shopping_list`, { method: 'DELETE', headers: h });
+                } catch (e) { console.error(e); }
 
-        function clearShoppingList() {
-            if(confirm("Сигурни ли сте, че искате да изчистите списъка?")) {
                 state.shoppingList = [];
                 renderShoppingList();
             }
         }
 
-        function updateShoppingItem(id, field, value) {
-            const item = state.shoppingList.find(i => i.id === id);
-            if (item) item[field] = value;
+        async function updateShoppingItemDB(id, field, value) {
+            const item = state.shoppingList.find(i => String(i.id) === String(id));
+            if (item) {
+                item[field] = value;
+                const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json' };
+                try {
+                    await fetch(`${CONFIG.URL}/rest/v1/shopping_list?id=eq.${id}`, {
+                        method: 'PATCH',
+                        headers: h,
+                        body: JSON.stringify({ [field]: value })
+                    });
+                } catch (e) { console.error(e); }
+            }
         }
 
         function changeShoppingQty(id, delta) {
-            const item = state.shoppingList.find(i => i.id === id);
+            const item = state.shoppingList.find(i => String(i.id) === String(id));
             if (item) {
-                item.qty = Math.max(1, item.qty + delta);
+                item.qty = Math.max(1, (parseInt(item.qty) || 1) + delta);
                 renderShoppingList();
+                updateShoppingItemDB(id, 'qty', item.qty);
             }
         }
 
         function renderShoppingList() {
             let container = document.getElementById('shoppingContainer');
             if (state.shoppingList.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:#777; margin-top:20px;">Списъкът е празен. Натиснете "➕ Ново поле".</p>';
+                container.innerHTML = '<p style="text-align:center; color:#777; margin-top:20px;">Списъкът е празен. Натиснете "+ Ново поле".</p>';
                 return;
             }
 
@@ -303,14 +341,14 @@
             let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
 
             state.shoppingList.forEach(item => {
-                let safeItemVal = (item.medName || '').replace(/"/g, '&quot;');
+                let safeItemVal = (item.med_name || '').replace(/"/g, '&quot;');
                 let currentOptions = baseMedOptions.replace(`value="${safeItemVal}"`, `value="${safeItemVal}" selected`);
 
                 html += `
                     <div style="background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #ddd; display:flex; flex-direction:column; gap:8px;">
                         <div>
                             <label style="font-size:11px; font-weight:bold; color:#555; margin-bottom:2px; display:block;">Лекарство:</label>
-                            <select onchange="updateShoppingItem(${item.id}, 'medName', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:white;">
+                            <select onchange="updateShoppingItemDB(${item.id}, 'med_name', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:white;">
                                 ${currentOptions}
                             </select>
                         </div>
@@ -318,9 +356,9 @@
                             <label style="font-size:11px; font-weight:bold; color:#555;">Количество:</label>
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <button class="qty-btn minus" onclick="changeShoppingQty(${item.id}, -1)">-</button>
-                                <span style="font-weight:bold; font-size:15px; min-width:20px; text-align:center;">${item.qty}</span>
+                                <span style="font-weight:bold; font-size:15px; min-width:20px; text-align:center;">${item.qty || 1}</span>
                                 <button class="qty-btn" onclick="changeShoppingQty(${item.id}, 1)">+</button>
-                                <button onclick="removeShoppingItem(${item.id})" style="background:#E74C3C; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:10px;" title="Премахни">❌</button>
+                                <button onclick="removeShoppingItem(${item.id})" style="background:#E74C3C; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:10px;" title="Премахни">🗑️</button>
                             </div>
                         </div>
                     </div>
@@ -681,7 +719,7 @@
         async function refreshData() {
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
             try {
-                const [medsRes, purchRes, pharmRes, docRes, mcRes, catRes, manRes, persRes, medPersRes, docsRes, medDocsRes, labCatRes, labParRes, labTestRes, labResRes, labRangeRes] = await Promise.all([
+                const [medsRes, purchRes, pharmRes, docRes, mcRes, catRes, manRes, persRes, medPersRes, docsRes, medDocsRes, labCatRes, labParRes, labTestRes, labResRes, labRangeRes, shopRes] = await Promise.all([
                     fetch(CONFIG.URL + '/rest/v1/medications?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/purchases?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/pharmacies?select=*', { headers: h }),
@@ -697,7 +735,8 @@
                     fetch(CONFIG.URL + '/rest/v1/lab_parameters?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/lab_tests?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/lab_results?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/lab_reference_ranges?select=*', { headers: h })
+                    fetch(CONFIG.URL + '/rest/v1/lab_reference_ranges?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/shopping_list?select=*', { headers: h })
                 ]);
 
                 state.meds = medsRes.ok ? await medsRes.json() : [];
@@ -716,6 +755,7 @@
                 state.labTests = labTestRes.ok ? await labTestRes.json() : [];
                 state.labResults = labResRes.ok ? await labResRes.json() : [];
                 state.labRanges = labRangeRes.ok ? await labRangeRes.json() : [];
+                state.shoppingList = shopRes.ok ? await shopRes.json() : [];
 
                 renderUI();
                 renderLabs();
@@ -851,7 +891,7 @@
                     <div class="card" onclick="openPanel('${m.id}')">
                         ${emergencyBadge}
                         <h3>${displayName}</h3>
-                        <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">💶 ${priceHtml}</p>
+                        <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">💰 ${priceHtml}</p>
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold;">За: ${assignedPersons}</p>` : ''}
                         ${doctor ? `<p style="color:#444;">Лекар: ${doctor.name}</p>` : ''}
