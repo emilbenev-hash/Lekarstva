@@ -405,17 +405,17 @@
                     <div style="background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #ddd; display:flex; flex-direction:column; gap:8px;">
                         <div>
                             <label style="font-size:11px; font-weight:bold; color:#555; margin-bottom:2px; display:block;">Лекарство:</label>
-                            <select onchange="updateLocalShoppingItem(${JSON.stringify(item.id)}, 'med_name', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:white;">
+                            <select onchange="updateLocalShoppingItem('${item.id}', 'med_name', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:white;">
                                 ${currentOptions}
                             </select>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <label style="font-size:11px; font-weight:bold; color:#555;">Количество:</label>
                             <div style="display:flex; align-items:center; gap:6px;">
-                                <button type="button" class="qty-btn minus" onclick="changeShoppingQty(${JSON.stringify(item.id)}, -1)">-</button>
-                                <input type="number" min="1" value="${item.qty !== undefined && item.qty !== null ? item.qty : 1}" oninput="updateLocalShoppingItem(${JSON.stringify(item.id)}, 'qty', this.value)" onblur="ensureValidQty(${JSON.stringify(item.id)})" style="width:65px; padding:6px; text-align:center; border:1px solid #ccc; border-radius:4px; font-size:14px; font-weight:bold; background:white;">
-                                <button type="button" class="qty-btn" onclick="changeShoppingQty(${JSON.stringify(item.id)}, 1)">+</button>
-                                <button type="button" onclick="removeShoppingItem(${JSON.stringify(item.id)})" style="background:#E74C3C; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:6px;" title="Премахни">🗑️</button>
+                                <button type="button" class="qty-btn minus" onclick="changeShoppingQty('${item.id}', -1)">-</button>
+                                <input type="number" min="1" value="${item.qty !== undefined && item.qty !== null ? item.qty : 1}" oninput="updateLocalShoppingItem('${item.id}', 'qty', this.value)" onblur="ensureValidQty('${item.id}')" style="width:65px; padding:6px; text-align:center; border:1px solid #ccc; border-radius:4px; font-size:14px; font-weight:bold; background:white;">
+                                <button type="button" class="qty-btn" onclick="changeShoppingQty('${item.id}', 1)">+</button>
+                                <button type="button" onclick="removeShoppingItem('${item.id}')" style="background:#E74C3C; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:6px;" title="Премахни">🗑️</button>
                             </div>
                         </div>
                     </div>
