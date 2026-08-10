@@ -59,7 +59,7 @@
         .doc-btn { background: #2980B9; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 4px; display: inline-block; text-decoration: none; margin-right: 4px; }
         .doc-item { padding: 8px; background: #f1f1f1; border-radius: 6px; margin-bottom: 6px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
 
-        .qty-btn { background: #2980B9; color: white; border: none; padding: 6px 12px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; }
+        .qty-btn { background: #2980B9; color: white; border: none; padding: 6px 10px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 6px; }
         .qty-btn:hover { background: #1F618D; }
         .qty-btn.minus { background: #E74C3C; }
         .qty-btn.minus:hover { background: #C0392B; }
@@ -380,11 +380,11 @@
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <label style="font-size:11px; font-weight:bold; color:#555;">Количество:</label>
-                            <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="display:flex; align-items:center; gap:6px;">
                                 <button type="button" class="qty-btn minus" onclick="changeShoppingQty(${JSON.stringify(item.id)}, -1)">-</button>
-                                <span style="font-weight:bold; font-size:15px; min-width:20px; text-align:center;">${item.qty || 1}</span>
+                                <input type="number" min="1" value="${item.qty || 1}" oninput="updateLocalShoppingItem(${JSON.stringify(item.id)}, 'qty', parseInt(this.value) || 1)" style="width:65px; padding:6px; text-align:center; border:1px solid #ccc; border-radius:4px; font-size:14px; font-weight:bold; background:white;">
                                 <button type="button" class="qty-btn" onclick="changeShoppingQty(${JSON.stringify(item.id)}, 1)">+</button>
-                                <button type="button" onclick="removeShoppingItem(${JSON.stringify(item.id)})" style="background:#E74C3C; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:10px;" title="Премахни">🗑️</button>
+                                <button type="button" onclick="removeShoppingItem(${JSON.stringify(item.id)})" style="background:#E74C3C; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:6px;" title="Премахни">🗑️</button>
                             </div>
                         </div>
                     </div>
