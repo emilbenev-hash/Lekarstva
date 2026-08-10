@@ -187,7 +187,7 @@
                 </div>
                 <div style="margin-top: 14px; display:flex; gap:5px;">
                     <button onclick="addZokCalcRow()" style="background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">➕ Добави</button>
-                    <button onclick="calculateZokDistribution()" style="background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">🧮 Изчисли</button>
+                    <button onclick="calculateZokDistribution()" style="background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">📊 Изчисли</button>
                 </div>
             </div>
 
@@ -334,20 +334,13 @@
                         if (res.ok) {
                             const data = await res.json();
                             if (data && data.length > 0) item.id = data[0].id;
-                        } else {
-                            const errTxt = await res.text();
-                            showMobileError("Save POST error: " + errTxt);
                         }
                     } else {
-                        const res = await fetch(`${CONFIG.URL}/rest/v1/shopping_list?id=eq.${item.id}`, {
+                        await fetch(`${CONFIG.URL}/rest/v1/shopping_list?id=eq.${item.id}`, {
                             method: 'PATCH',
                             headers: h,
                             body: JSON.stringify({ med_name: item.med_name || '', qty: finalQty })
                         });
-                        if (!res.ok) {
-                            const errTxt = await res.text();
-                            showMobileError("Save PATCH error: " + errTxt);
-                        }
                     }
                 }
                 alert("Списъкът е запазен успешно!");
@@ -390,25 +383,30 @@
                 return;
             }
 
+            let baseMedOptions = '<option value="">-- Изберете лекарство --</option>';
+            state.meds.forEach(m => {
+                let displayName = m.name_bg || m.name_latin || 'Без име';
+                if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
+                if (m.volume_unit) displayName += ` ${m.volume_unit}`;
+                let safeVal = displayName.replace(/"/g, '&quot;');
+                baseMedOptions += `<option value="${safeVal}">${displayName}</option>`;
+            });
+
             let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
 
             state.shoppingList.forEach(item => {
-                let medOptionsHtml = '<option value="">-- Изберете лекарство --</option>';
-                state.meds.forEach(m => {
-                    let displayName = m.name_bg || m.name_latin || 'Без име';
-                    if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
-                    if (m.volume_unit) displayName += ` ${m.volume_unit}`;
-                    let safeVal = displayName.replace(/"/g, '&quot;');
-                    let isSelected = (item.med_name === displayName) ? 'selected' : '';
-                    medOptionsHtml += `<option value="${safeVal}" ${isSelected}>${displayName}</option>`;
-                });
+                let safeItemVal = (item.med_name || '').replace(/"/g, '&quot;');
+                let currentOptions = baseMedOptions;
+                if (safeItemVal) {
+                    currentOptions = baseMedOptions.replace(`value="${safeItemVal}"`, `value="${safeItemVal}" selected`);
+                }
 
                 html += `
                     <div style="background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #ddd; display:flex; flex-direction:column; gap:8px;">
                         <div>
                             <label style="font-size:11px; font-weight:bold; color:#555; margin-bottom:2px; display:block;">Лекарство:</label>
                             <select onchange="updateLocalShoppingItem('${item.id}', 'med_name', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:white;">
-                                ${medOptionsHtml}
+                                ${currentOptions}
                             </select>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -950,7 +948,7 @@
                     <div class="card" onclick="openPanel('${m.id}')">
                         ${emergencyBadge}
                         <h3>${displayName}</h3>
-                        <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">💰 ${priceHtml}</p>
+                        <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">💶 ${priceHtml}</p>
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold;">За: ${assignedPersons}</p>` : ''}
                         ${doctor ? `<p style="color:#444;">Лекар: ${doctor.name}</p>` : ''}
