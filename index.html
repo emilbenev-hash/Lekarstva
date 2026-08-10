@@ -74,11 +74,11 @@
     <!-- НАЧАЛНО МЕНЮ -->
     <div id="homeMenu" style="display:flex; gap:15px; justify-content:center; align-items:center; margin-top:40px; flex-wrap:wrap;">
         <div onclick="showMeds()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
-            <div style="font-size:38px;">&#128138;</div>
+            <div style="font-size:38px;">💊</div>
             <div style="font-size:15px; font-weight:bold; color:#148F77;">Лекарства</div>
         </div>
         <div onclick="showLabs()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
-            <div style="font-size:38px;">&#129514;</div>
+            <div style="font-size:38px;">🧪</div>
             <div style="font-size:15px; font-weight:bold; color:#2980B9;">Изследвания</div>
         </div>
         <div onclick="showShopping()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
@@ -212,7 +212,7 @@
             meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], 
             currentId: null, editingPurchaseId: null, 
             labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false,
-            shoppingList: [] // Зарежда се и се синхронизира с таблицата shopping_list в базата данни
+            shoppingList: [] 
         };
 
         function showHome() {
@@ -265,7 +265,6 @@
                         renderShoppingList();
                     }
                 } else {
-                    // Ако таблицата липсва в базата, добавяме локално за удобство
                     state.shoppingList.push({ id: Date.now(), med_name: '', qty: 1 });
                     renderShoppingList();
                 }
@@ -342,7 +341,10 @@
 
             state.shoppingList.forEach(item => {
                 let safeItemVal = (item.med_name || '').replace(/"/g, '&quot;');
-                let currentOptions = baseMedOptions.replace(`value="${safeItemVal}"`, `value="${safeItemVal}" selected`);
+                let currentOptions = baseMedOptions;
+                if (safeItemVal) {
+                    currentOptions = baseMedOptions.replace(`value="${safeItemVal}"`, `value="${safeItemVal}" selected`);
+                }
 
                 html += `
                     <div style="background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #ddd; display:flex; flex-direction:column; gap:8px;">
