@@ -207,7 +207,26 @@
         </div>
     </div>
 
+    <!-- ВИЗУУАЛЕН ЛОГ ЗА ГРЕШКИ (ЗА МОБИЛЕН ТЕЛЕФОН) -->
+    <div id="errorLogBox" style="display:none; background:#2c3e50; color:#e74c3c; padding:10px; margin-top:15px; border-radius:6px; font-size:11px; max-height:150px; overflow-y:auto; word-break:break-all;">
+        <strong>⚠️ Мобилен лог на грешките:</strong>
+        <div id="errorLogContent"></div>
+    </div>
+
     <script>
+        // Автоматично хващане на грешки на мобилен екран
+        window.addEventListener('error', function(e) {
+            showMobileError(e.message + ' (ред: ' + e.lineno + ')');
+        });
+        function showMobileError(msg) {
+            const box = document.getElementById('errorLogBox');
+            const content = document.getElementById('errorLogContent');
+            if (box && content) {
+                box.style.display = 'block';
+                content.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            }
+        }
+
         let state = { 
             selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedDaily: 'all', selectedEmergency: 'all', selectedCategory: 'all', 
             meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], 
@@ -270,6 +289,7 @@
                     renderShoppingList();
                 }
             } catch (e) {
+                showMobileError("addShoppingItem error: " + e.message);
                 state.shoppingList.push({ id: 'temp_' + Date.now(), med_name: '', qty: 1 });
                 renderShoppingList();
             }
@@ -282,10 +302,20 @@
             }
         }
 
+        function ensureValidQty(id) {
+            const item = state.shoppingList.find(i => String(i.id) === String(id));
+            if (item) {
+                let val = parseInt(item.qty);
+                item.qty = (isNaN(val) || val < 1) ? 1 : val;
+                renderShoppingList();
+            }
+        }
+
         function changeShoppingQty(id, delta) {
             const item = state.shoppingList.find(i => String(i.id) === String(id));
             if (item) {
-                item.qty = Math.max(1, (parseInt(item.qty) || 1) + delta);
+                let current = parseInt(item.qty) || 1;
+                item.qty = Math.max(1, current + delta);
                 renderShoppingList();
             }
         }
@@ -294,11 +324,12 @@
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json' };
             try {
                 for (let item of state.shoppingList) {
+                    let finalQty = parseInt(item.qty) || 1;
                     if (String(item.id).startsWith('temp_')) {
                         const res = await fetch(`${CONFIG.URL}/rest/v1/shopping_list`, {
                             method: 'POST',
                             headers: { ...h, 'Prefer': 'return=representation' },
-                            body: JSON.stringify({ med_name: item.med_name || '', qty: item.qty || 1 })
+                            body: JSON.stringify({ med_name: item.med_name || '', qty: finalQty })
                         });
                         if (res.ok) {
                             const data = await res.json();
@@ -308,14 +339,14 @@
                         await fetch(`${CONFIG.URL}/rest/v1/shopping_list?id=eq.${item.id}`, {
                             method: 'PATCH',
                             headers: h,
-                            body: JSON.stringify({ med_name: item.med_name || '', qty: item.qty || 1 })
+                            body: JSON.stringify({ med_name: item.med_name || '', qty: finalQty })
                         });
                     }
                 }
                 alert("Списъкът е запазен успешно!");
                 refreshData();
             } catch (e) {
-                console.error("Грешка при запис:", e);
+                showMobileError("saveShoppingList error: " + e.message);
                 alert("Възникна грешка при запис на списъка.");
             }
         }
@@ -327,7 +358,7 @@
                 if (!String(id).startsWith('temp_')) {
                     await fetch(`${CONFIG.URL}/rest/v1/shopping_list?id=eq.${id}`, { method: 'DELETE', headers: h });
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { showMobileError("removeShoppingItem error: " + e.message); }
 
             state.shoppingList = state.shoppingList.filter(item => String(item.id) !== String(id));
             renderShoppingList();
@@ -338,7 +369,7 @@
                 const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
                 try {
                     await fetch(`${CONFIG.URL}/rest/v1/shopping_list`, { method: 'DELETE', headers: h });
-                } catch (e) { console.error(e); }
+                } catch (e) { showMobileError("clearShoppingList error: " + e.message); }
 
                 state.shoppingList = [];
                 renderShoppingList();
@@ -382,7 +413,7 @@
                             <label style="font-size:11px; font-weight:bold; color:#555;">Количество:</label>
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <button type="button" class="qty-btn minus" onclick="changeShoppingQty(${JSON.stringify(item.id)}, -1)">-</button>
-                                <input type="number" min="1" value="${item.qty || 1}" oninput="updateLocalShoppingItem(${JSON.stringify(item.id)}, 'qty', parseInt(this.value) || 1)" style="width:65px; padding:6px; text-align:center; border:1px solid #ccc; border-radius:4px; font-size:14px; font-weight:bold; background:white;">
+                                <input type="number" min="1" value="${item.qty !== undefined && item.qty !== null ? item.qty : 1}" oninput="updateLocalShoppingItem(${JSON.stringify(item.id)}, 'qty', this.value)" onblur="ensureValidQty(${JSON.stringify(item.id)})" style="width:65px; padding:6px; text-align:center; border:1px solid #ccc; border-radius:4px; font-size:14px; font-weight:bold; background:white;">
                                 <button type="button" class="qty-btn" onclick="changeShoppingQty(${JSON.stringify(item.id)}, 1)">+</button>
                                 <button type="button" onclick="removeShoppingItem(${JSON.stringify(item.id)})" style="background:#E74C3C; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:6px;" title="Премахни">🗑️</button>
                             </div>
@@ -788,7 +819,7 @@
                 if (document.getElementById('shoppingModule').style.display === 'block') {
                     renderShoppingList();
                 }
-            } catch (e) { console.error("Грешка при зареждане:", e); }
+            } catch (e) { showMobileError("refreshData error: " + e.message); }
         }
 
         function renderUI() {
