@@ -334,13 +334,20 @@
                         if (res.ok) {
                             const data = await res.json();
                             if (data && data.length > 0) item.id = data[0].id;
+                        } else {
+                            const errTxt = await res.text();
+                            showMobileError("Save POST error: " + errTxt);
                         }
                     } else {
-                        await fetch(`${CONFIG.URL}/rest/v1/shopping_list?id=eq.${item.id}`, {
+                        const res = await fetch(`${CONFIG.URL}/rest/v1/shopping_list?id=eq.${item.id}`, {
                             method: 'PATCH',
                             headers: h,
                             body: JSON.stringify({ med_name: item.med_name || '', qty: finalQty })
                         });
+                        if (!res.ok) {
+                            const errTxt = await res.text();
+                            showMobileError("Save PATCH error: " + errTxt);
+                        }
                     }
                 }
                 alert("Списъкът е запазен успешно!");
@@ -383,30 +390,25 @@
                 return;
             }
 
-            let baseMedOptions = '<option value="">-- Изберете лекарство --</option>';
-            state.meds.forEach(m => {
-                let displayName = m.name_bg || m.name_latin || 'Без име';
-                if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
-                if (m.volume_unit) displayName += ` ${m.volume_unit}`;
-                let safeVal = displayName.replace(/"/g, '&quot;');
-                baseMedOptions += `<option value="${safeVal}">${displayName}</option>`;
-            });
-
             let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
 
             state.shoppingList.forEach(item => {
-                let safeItemVal = (item.med_name || '').replace(/"/g, '&quot;');
-                let currentOptions = baseMedOptions;
-                if (safeItemVal) {
-                    currentOptions = baseMedOptions.replace(`value="${safeItemVal}"`, `value="${safeItemVal}" selected`);
-                }
+                let medOptionsHtml = '<option value="">-- Изберете лекарство --</option>';
+                state.meds.forEach(m => {
+                    let displayName = m.name_bg || m.name_latin || 'Без име';
+                    if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
+                    if (m.volume_unit) displayName += ` ${m.volume_unit}`;
+                    let safeVal = displayName.replace(/"/g, '&quot;');
+                    let isSelected = (item.med_name === displayName) ? 'selected' : '';
+                    medOptionsHtml += `<option value="${safeVal}" ${isSelected}>${displayName}</option>`;
+                });
 
                 html += `
                     <div style="background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #ddd; display:flex; flex-direction:column; gap:8px;">
                         <div>
                             <label style="font-size:11px; font-weight:bold; color:#555; margin-bottom:2px; display:block;">Лекарство:</label>
                             <select onchange="updateLocalShoppingItem('${item.id}', 'med_name', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:white;">
-                                ${currentOptions}
+                                ${medOptionsHtml}
                             </select>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
