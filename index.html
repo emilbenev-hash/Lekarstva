@@ -7,7 +7,7 @@
     <script>
         const CONFIG = {
             URL: "https://xwnjuqqudkjkqdkrndhg.supabase.co",
-            KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34"
+            KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuDhgIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34"
         };
     </script>
     <style>
@@ -74,15 +74,15 @@
     <!-- НАЧАЛНО МЕНЮ -->
     <div id="homeMenu" style="display:flex; gap:15px; justify-content:center; align-items:center; margin-top:40px; flex-wrap:wrap;">
         <div onclick="showMeds()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
-            <div style="font-size:38px;">💊</div>
+            <div style="font-size:38px;">??</div>
             <div style="font-size:15px; font-weight:bold; color:#148F77;">Лекарства</div>
         </div>
         <div onclick="showLabs()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
-            <div style="font-size:38px;">🧪</div>
+            <div style="font-size:38px;">??</div>
             <div style="font-size:15px; font-weight:bold; color:#2980B9;">Изследвания</div>
         </div>
         <div onclick="showShopping()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
-            <div style="font-size:38px;">🛒</div>
+            <div style="font-size:38px;">??</div>
             <div style="font-size:15px; font-weight:bold; color:#E67E22;">Закупуване</div>
         </div>
     </div>
@@ -90,16 +90,17 @@
     <!-- МОДУЛ СПИСЪК ЗА ЗАКУПУВАНЕ -->
     <div id="shoppingModule" style="display:none;">
         <div class="filters" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-            <h2 style="color:#333; font-size:15px; margin:0;">🛒 Списък за закупуване</h2>
+            <h2 style="color:#333; font-size:15px; margin:0;">?? Списък за закупуване</h2>
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
                 <button onclick="addShoppingItem()" style="padding: 6px 10px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">+ Ново поле</button>
-                <button onclick="saveShoppingList()" style="padding: 6px 10px; background:#148F77; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">💾 Запази списъка</button>
-                <button onclick="clearShoppingList()" style="padding: 6px 10px; background:#E74C3C; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">🗑️ Изтрий всички</button>
+                <button onclick="saveShoppingList()" style="padding: 6px 10px; background:#148F77; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">?? Запази списъка</button>
+                <button onclick="clearShoppingList()" style="padding: 6px 10px; background:#E74C3C; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">??? Изтрий всички</button>
             </div>
         </div>
         <div id="shoppingContainer" style="background:white; padding:10px; border-radius:8px; min-height:350px; overflow-y:auto;">
             <!-- Съдържанието на списъка се генерира динамично -->
         </div>
+        <datalist id="shoppingMedsDatalist"></datalist>
     </div>
 
     <!-- МОДУЛ ИЗСЛЕДВАНИЯ -->
@@ -144,7 +145,7 @@
             <div id="emergencyFilters" class="filter-buttons"></div>
             <div style="display:flex; gap:6px; margin-top:6px;">
                 <button onclick="refreshData()" style="flex:1; padding: 10px; background:#148F77; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">Опресни</button>
-                <button onclick="openZokCalculator()" style="flex:1; padding: 10px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">🧮 ЗОК Калкулатор</button>
+                <button onclick="openZokCalculator()" style="flex:1; padding: 10px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">?? ЗОК Калкулатор</button>
             </div>
         </div>
         <div class="grid" id="medGrid"></div>
@@ -186,8 +187,8 @@
                     <input type="number" id="calcTotalPaid" step="0.01" style="width: 130px; padding: 8px; margin-top: 2px; border: 1px solid #ccc; border-radius: 6px;" placeholder="напр. 9.25">
                 </div>
                 <div style="margin-top: 14px; display:flex; gap:5px;">
-                    <button onclick="addZokCalcRow()" style="background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">➕ Добави</button>
-                    <button onclick="calculateZokDistribution()" style="background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">📊 Изчисли</button>
+                    <button onclick="addZokCalcRow()" style="background: #2980B9; color: white; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">? Добави</button>
+                    <button onclick="calculateZokDistribution()" style="background: #148F77; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">?? Изчисли</button>
                 </div>
             </div>
 
@@ -209,7 +210,7 @@
 
     <!-- ВИЗУУАЛЕН ЛОГ ЗА ГРЕШКИ (ЗА МОБИЛЕН ТЕЛЕФОН) -->
     <div id="errorLogBox" style="display:none; background:#2c3e50; color:#e74c3c; padding:10px; margin-top:15px; border-radius:6px; font-size:11px; max-height:150px; overflow-y:auto; word-break:break-all;">
-        <strong>⚠️ Мобилен лог на грешките:</strong>
+        <strong>?? Мобилен лог на грешките:</strong>
         <div id="errorLogContent"></div>
     </div>
 
@@ -383,31 +384,53 @@
                 return;
             }
 
-            let baseMedOptions = '<option value="">-- Изберете лекарство --</option>';
+            // Генериране на предложения за datalist с поддръжка за БГ и Латиница
+            let datalistEl = document.getElementById('shoppingMedsDatalist');
+            if (!datalistEl) {
+                datalistEl = document.createElement('datalist');
+                datalistEl.id = 'shoppingMedsDatalist';
+                document.getElementById('shoppingModule').appendChild(datalistEl);
+            }
+
+            let datalistOptions = '';
+            let addedValues = new Set();
+
             state.meds.forEach(m => {
-                let displayName = m.name_bg || m.name_latin || 'Без име';
-                if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
-                if (m.volume_unit) displayName += ` ${m.volume_unit}`;
-                let safeVal = displayName.replace(/"/g, '&quot;');
-                baseMedOptions += `<option value="${safeVal}">${displayName}</option>`;
+                let vol = '';
+                if (m.volume_quantity) vol += ` ${m.volume_quantity}`;
+                if (m.volume_unit) vol += ` ${m.volume_unit}`;
+
+                let nameBg = m.name_bg ? (m.name_bg + vol) : '';
+                let nameLatin = m.name_latin ? (m.name_latin + vol) : '';
+
+                if (nameBg && nameLatin && nameBg.toLowerCase() !== nameLatin.toLowerCase()) {
+                    let combined = `${nameBg} / ${nameLatin}`;
+                    if (!addedValues.has(combined)) {
+                        addedValues.add(combined);
+                        datalistOptions += `<option value="${combined.replace(/"/g, '&quot;')}"></option>`;
+                    }
+                }
+                if (nameBg && !addedValues.has(nameBg)) {
+                    addedValues.add(nameBg);
+                    datalistOptions += `<option value="${nameBg.replace(/"/g, '&quot;')}"></option>`;
+                }
+                if (nameLatin && !addedValues.has(nameLatin)) {
+                    addedValues.add(nameLatin);
+                    datalistOptions += `<option value="${nameLatin.replace(/"/g, '&quot;')}"></option>`;
+                }
             });
+            datalistEl.innerHTML = datalistOptions;
 
             let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
 
             state.shoppingList.forEach(item => {
                 let safeItemVal = (item.med_name || '').replace(/"/g, '&quot;');
-                let currentOptions = baseMedOptions;
-                if (safeItemVal) {
-                    currentOptions = baseMedOptions.replace(`value="${safeItemVal}"`, `value="${safeItemVal}" selected`);
-                }
 
                 html += `
                     <div style="background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #ddd; display:flex; flex-direction:column; gap:8px;">
                         <div>
                             <label style="font-size:11px; font-weight:bold; color:#555; margin-bottom:2px; display:block;">Лекарство:</label>
-                            <select onchange="updateLocalShoppingItem('${item.id}', 'med_name', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:white;">
-                                ${currentOptions}
-                            </select>
+                            <input type="text" list="shoppingMedsDatalist" value="${safeItemVal}" oninput="updateLocalShoppingItem('${item.id}', 'med_name', this.value)" placeholder="Търси на кирилица / латиница..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:white;">
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <label style="font-size:11px; font-weight:bold; color:#555;">Количество:</label>
@@ -415,7 +438,7 @@
                                 <button type="button" class="qty-btn minus" onclick="changeShoppingQty('${item.id}', -1)">-</button>
                                 <input type="number" min="1" value="${item.qty !== undefined && item.qty !== null ? item.qty : 1}" oninput="updateLocalShoppingItem('${item.id}', 'qty', this.value)" onblur="ensureValidQty('${item.id}')" style="width:65px; padding:6px; text-align:center; border:1px solid #ccc; border-radius:4px; font-size:14px; font-weight:bold; background:white;">
                                 <button type="button" class="qty-btn" onclick="changeShoppingQty('${item.id}', 1)">+</button>
-                                <button type="button" onclick="removeShoppingItem('${item.id}')" style="background:#E74C3C; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:6px;" title="Премахни">🗑️</button>
+                                <button type="button" onclick="removeShoppingItem('${item.id}')" style="background:#E74C3C; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:6px;" title="Премахни">???</button>
                             </div>
                         </div>
                     </div>
@@ -937,7 +960,7 @@
                     docButtonsHtml = `<div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">`;
                     medDocs.forEach(doc => {
                         const docName = doc.file_name || doc.title || 'Документ';
-                        docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${doc.file_url}', '${docName}')">📄 ${docName}</button>`;
+                        docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${doc.file_url}', '${docName}')">?? ${docName}</button>`;
                     });
                     docButtonsHtml += `</div>`;
                 }
@@ -948,7 +971,7 @@
                     <div class="card" onclick="openPanel('${m.id}')">
                         ${emergencyBadge}
                         <h3>${displayName}</h3>
-                        <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">💶 ${priceHtml}</p>
+                        <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">?? ${priceHtml}</p>
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold;">За: ${assignedPersons}</p>` : ''}
                         ${doctor ? `<p style="color:#444;">Лекар: ${doctor.name}</p>` : ''}
@@ -1039,8 +1062,8 @@
                                             <td style="padding:6px;">${eur} €</td>
                                             ${m.health_insurance ? `<td style="padding:6px; color:#E74C3C; font-weight:bold;">${zk} €</td>` : ''}
                                             <td style="padding:6px; text-align:center; white-space:nowrap;">
-                                                <button type="button" onclick="editPurchase('${p.id}')" style="background:#2980B9; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer; margin-right:2px;" title="Редактирай цената">✏️</button>
-                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer;" title="Изтрий запис">🗑️</button>
+                                                <button type="button" onclick="editPurchase('${p.id}')" style="background:#2980B9; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer; margin-right:2px;" title="Редактирай цената">??</button>
+                                                <button type="button" onclick="deletePurchase('${p.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer;" title="Изтрий запис">???</button>
                                             </td>
                                         </tr>
                                     `;
@@ -1084,7 +1107,7 @@
                     const docName = doc.file_name || doc.title || 'Документ';
                     return `
                     <div class="doc-item">
-                        <a href="${doc.file_url}" target="_blank" style="color:#2980B9; font-weight:bold; text-decoration:underline;">📄 ${docName}</a>
+                        <a href="${doc.file_url}" target="_blank" style="color:#2980B9; font-weight:bold; text-decoration:underline;">?? ${docName}</a>
                         <button type="button" onclick="unlinkDocument('${doc.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Премахни</button>
                     </div>`;
                 }).join('');
@@ -1179,7 +1202,7 @@
                 </div>
 
                 <div class="form-group" style="background: #F7FAFC; padding: 10px; border: 1px solid #CBD5E0; border-radius: 6px;">
-                    <label style="color: #2B6CB0; font-weight: bold;">📊 История на цените (кликни ✏️ за редакция):</label>
+                    <label style="color: #2B6CB0; font-weight: bold;">?? История на цените (кликни ?? за редакция):</label>
                     ${purchasesHistoryHtml}
                 </div>
 
