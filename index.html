@@ -7,7 +7,7 @@
     <script>
         const CONFIG = {
             URL: "https://xwnjuqqudkjkqdkrndhg.supabase.co",
-            KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuDhgIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34"
+            KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34"
         };
     </script>
     <style>
@@ -100,7 +100,6 @@
         <div id="shoppingContainer" style="background:white; padding:10px; border-radius:8px; min-height:350px; overflow-y:auto;">
             <!-- Съдържанието на списъка се генерира динамично -->
         </div>
-        <datalist id="shoppingMedsDatalist"></datalist>
     </div>
 
     <!-- МОДУЛ ИЗСЛЕДВАНИЯ -->
@@ -384,53 +383,31 @@
                 return;
             }
 
-            // Генериране на предложения за datalist с поддръжка за БГ и Латиница
-            let datalistEl = document.getElementById('shoppingMedsDatalist');
-            if (!datalistEl) {
-                datalistEl = document.createElement('datalist');
-                datalistEl.id = 'shoppingMedsDatalist';
-                document.getElementById('shoppingModule').appendChild(datalistEl);
-            }
-
-            let datalistOptions = '';
-            let addedValues = new Set();
-
+            let baseMedOptions = '<option value="">-- Изберете лекарство --</option>';
             state.meds.forEach(m => {
-                let vol = '';
-                if (m.volume_quantity) vol += ` ${m.volume_quantity}`;
-                if (m.volume_unit) vol += ` ${m.volume_unit}`;
-
-                let nameBg = m.name_bg ? (m.name_bg + vol) : '';
-                let nameLatin = m.name_latin ? (m.name_latin + vol) : '';
-
-                if (nameBg && nameLatin && nameBg.toLowerCase() !== nameLatin.toLowerCase()) {
-                    let combined = `${nameBg} / ${nameLatin}`;
-                    if (!addedValues.has(combined)) {
-                        addedValues.add(combined);
-                        datalistOptions += `<option value="${combined.replace(/"/g, '&quot;')}"></option>`;
-                    }
-                }
-                if (nameBg && !addedValues.has(nameBg)) {
-                    addedValues.add(nameBg);
-                    datalistOptions += `<option value="${nameBg.replace(/"/g, '&quot;')}"></option>`;
-                }
-                if (nameLatin && !addedValues.has(nameLatin)) {
-                    addedValues.add(nameLatin);
-                    datalistOptions += `<option value="${nameLatin.replace(/"/g, '&quot;')}"></option>`;
-                }
+                let displayName = m.name_bg || m.name_latin || 'Без име';
+                if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
+                if (m.volume_unit) displayName += ` ${m.volume_unit}`;
+                let safeVal = displayName.replace(/"/g, '&quot;');
+                baseMedOptions += `<option value="${safeVal}">${displayName}</option>`;
             });
-            datalistEl.innerHTML = datalistOptions;
 
             let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
 
             state.shoppingList.forEach(item => {
                 let safeItemVal = (item.med_name || '').replace(/"/g, '&quot;');
+                let currentOptions = baseMedOptions;
+                if (safeItemVal) {
+                    currentOptions = baseMedOptions.replace(`value="${safeItemVal}"`, `value="${safeItemVal}" selected`);
+                }
 
                 html += `
                     <div style="background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #ddd; display:flex; flex-direction:column; gap:8px;">
                         <div>
                             <label style="font-size:11px; font-weight:bold; color:#555; margin-bottom:2px; display:block;">Лекарство:</label>
-                            <input type="text" list="shoppingMedsDatalist" value="${safeItemVal}" oninput="updateLocalShoppingItem('${item.id}', 'med_name', this.value)" placeholder="Търси на кирилица / латиница..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:white;">
+                            <select onchange="updateLocalShoppingItem('${item.id}', 'med_name', this.value)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:13px; background:white;">
+                                ${currentOptions}
+                            </select>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <label style="font-size:11px; font-weight:bold; color:#555;">Количество:</label>
