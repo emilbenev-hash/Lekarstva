@@ -85,6 +85,20 @@
         .med-suggest-item:hover .med-suggest-sub, .med-suggest-item.active .med-suggest-sub { color: #dff3ee; }
         .med-suggest-empty { padding: 8px 10px; font-size: 12px; color: #999; }
         .med-search-hint { font-size: 10px; color: #999; margin-top: 2px; }
+        .med-pick-btn { background: #2980B9; color: white; border: none; border-radius: 6px; padding: 8px 10px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .med-pick-btn:hover { background: #1F618D; }
+
+        /* --- Цял екран избор на лекарство (надежден на тъч) --- */
+        #medPickerModal .picker-search { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; font-family: inherit; }
+        .picker-row { padding: 14px 12px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+        .picker-row:active { background: #148F77; color: white; }
+        .picker-row:last-child { border-bottom: none; }
+        .picker-main { font-size: 16px; font-weight: 600; }
+        .picker-sub { font-size: 12px; color: #777; }
+        .picker-row:active .picker-sub { color: #dff3ee; }
+        .picker-free { background: #FEF9E7; border-bottom: 2px solid #F1C40F; }
+        .picker-empty { padding: 16px 12px; color: #999; font-size: 14px; }
+        .picker-count { font-size: 12px; color: #666; padding: 8px 12px; background: #f6f6f6; }
 
         /* --- Начално меню --- */
         .home-card { background: white; width: 160px; height: 130px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; }
@@ -275,6 +289,19 @@
             <button class="close-fs-btn" onclick="closeFullscreen()">Затвори [X]</button>
         </div>
         <div class="fullscreen-content" id="fsContainer"></div>
+    </div>
+
+    <!-- Цял екран избор на лекарство за Списък за закупуване -->
+    <div id="medPickerModal" class="fullscreen-modal">
+        <div class="fullscreen-header">
+            <h2>Избери лекарство</h2>
+            <button class="close-fs-btn" onclick="closeMedPicker()">Затвори [X]</button>
+        </div>
+        <div style="background:white; padding:10px; border-radius:8px 8px 0 0;">
+            <input type="text" id="medPickerSearch" class="picker-search" placeholder="Търси на кирилица или латиница..."
+                   autocomplete="off" spellcheck="false" enterkeyhint="search" oninput="renderMedPickerList()">
+        </div>
+        <div class="fullscreen-content" id="medPickerList" style="border-radius:0 0 8px 8px; background:white; overflow-y:auto; -webkit-overflow-scrolling:touch;"></div>
     </div>
 
     <!-- Модален прозорец за ЗОК Калкулатор -->
@@ -636,7 +663,7 @@
                 let second = (o.lat && o.bg && o.lat.toLowerCase() !== o.bg.toLowerCase()) ? o.lat : '';
                 h += '<div class="med-suggest-item' + (idx === 0 ? ' active' : '') + '"'
                    + ' data-item-id="' + escHtmlShop(itemId) + '" data-idx="' + idx + '"'
-                   + ' onmousedown="pickShoppingMedByIndex(this)">'
+                   + ' onpointerdown="pickShoppingMedByIndex(this)">'
                    + '<span class="med-suggest-main">' + escHtmlShop(o.display) + '</span>'
                    + (second ? '<span class="med-suggest-sub">' + escHtmlShop(second) + '</span>' : '')
                    + '</div>';
@@ -648,30 +675,116 @@
             box.style.display = 'block';
         }
 
+        /* ---------- Цял екран избор на лекарство ----------
+           На телефон падащото меню под полето е ненадеждно: софтуерната
+           клавиатура предизвиква blur и изяжда тапа по предложението.
+           Затова на тесен екран избираме от цял екран списък. */
+
+        let _medPickerTarget = null;
+
+        function openMedPickerFromBtn(btn) {
+            openMedPicker(btn.getAttribute('data-item-id'));
+        }
+
+        function openMedPicker(itemId) {
+            _medPickerTarget = String(itemId);
+            const input = document.getElementById('medSearch_' + _medPickerTarget);
+            const search = document.getElementById('medPickerSearch');
+            hideShoppingSuggestions(_medPickerTarget);
+            if (search) search.value = input ? (input.value || '') : '';
+            document.getElementById('medPickerModal').style.display = 'flex';
+            renderMedPickerList();
+        }
+
+        function closeMedPicker() {
+            document.getElementById('medPickerModal').style.display = 'none';
+            document.getElementById('medPickerList').innerHTML = '';
+            _medPickerTarget = null;
+        }
+
+        function renderMedPickerList() {
+            const box = document.getElementById('medPickerList');
+            if (!box) return;
+            const q = (document.getElementById('medPickerSearch').value || '').trim();
+            const matches = filterShoppingMeds(q);
+
+            let h = '';
+            if (q) {
+                h += '<div class="picker-row picker-free" onpointerdown="useMedPickerFreeText()" onclick="useMedPickerFreeText()">'
+                   + '<span class="picker-main">&#10003; Използвай „' + escHtmlShop(q) + '"</span>'
+                   + '<span class="picker-sub">запазва се както е въведено</span>'
+                   + '</div>';
+            }
+
+            h += '<div class="picker-count">' + matches.length + ' от ' + buildShoppingMedList().length + ' лекарства</div>';
+
+            if (matches.length === 0) {
+                h += '<div class="picker-empty">Няма съвпадение в базата.</div>';
+            } else {
+                matches.forEach((o, idx) => {
+                    const second = (o.lat && o.bg && o.lat.toLowerCase() !== o.bg.toLowerCase()) ? o.lat : '';
+                    h += '<div class="picker-row" data-idx="' + idx + '"'
+                       + ' onpointerdown="medPickerPick(this)" onclick="medPickerPick(this)">'
+                       + '<span class="picker-main">' + escHtmlShop(o.display) + '</span>'
+                       + (second ? '<span class="picker-sub">' + escHtmlShop(second) + '</span>' : '')
+                       + '</div>';
+                });
+            }
+            box.innerHTML = h;
+            box.scrollTop = 0;
+            _medPickerMatches = matches;
+        }
+
+        let _medPickerMatches = [];
+
+        function applyMedPickerValue(val) {
+            if (!_medPickerTarget) return;
+            const itemId = _medPickerTarget;
+            const input = document.getElementById('medSearch_' + itemId);
+            if (input) input.value = val;
+            updateLocalShoppingItem(itemId, 'med_name', val);
+            closeMedPicker();
+        }
+
+        function medPickerPick(el) {
+            const idx = parseInt(el.getAttribute('data-idx'), 10);
+            if (isNaN(idx) || !_medPickerMatches[idx]) return;
+            applyMedPickerValue(_medPickerMatches[idx].display);
+        }
+
+        function useMedPickerFreeText() {
+            const q = (document.getElementById('medPickerSearch').value || '').trim();
+            if (q) applyMedPickerValue(q);
+        }
+
         function hideShoppingSuggestions(itemId) {
             let box = document.getElementById('medSuggest_' + itemId);
             if (box) { box.innerHTML = ''; box.style.display = 'none'; }
         }
 
         function openShoppingMedList(input) {
-            renderShoppingSuggestions(input.getAttribute('data-item-id'), input.value);
-            // На телефон вдигаме полето нагоре, за да не го покрива клавиатурата
-            if (isNarrowView() && input.scrollIntoView) {
-                setTimeout(function () {
-                    try { input.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { input.scrollIntoView(); }
-                }, 250);
+            // На тесен екран падащото меню не се ползва — изборът минава през
+            // цял екран picker-а, който не се бие с клавиатурата.
+            if (isNarrowView()) {
+                if (input.scrollIntoView) {
+                    setTimeout(function () {
+                        try { input.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { input.scrollIntoView(); }
+                    }, 250);
+                }
+                return;
             }
+            renderShoppingSuggestions(input.getAttribute('data-item-id'), input.value);
         }
 
         function onShoppingMedInput(input) {
             let itemId = input.getAttribute('data-item-id');
             updateLocalShoppingItem(itemId, 'med_name', input.value);
-            renderShoppingSuggestions(itemId, input.value);
+            if (!isNarrowView()) renderShoppingSuggestions(itemId, input.value);
         }
 
         function closeShoppingMedList(input) {
             let itemId = input.getAttribute('data-item-id');
-            setTimeout(function () { hideShoppingSuggestions(itemId); }, 150);
+            setTimeout(function () { hideShoppingSuggestions(itemId); }, 250);
         }
 
         function pickShoppingMedByIndex(el) {
@@ -735,6 +848,7 @@
         function renderShoppingList() {
             let container = document.getElementById('shoppingContainer');
             state.shoppingSuggest = {};
+            const narrowView = isNarrowView();
 
             if (state.shoppingList.length === 0) {
                 container.innerHTML = '<p style="text-align:center; color:#777; margin-top:20px;">Списъкът е празен. Натиснете "+ Ново поле".</p>';
@@ -748,10 +862,15 @@
                 let curVal = escHtmlShop(item.med_name || '');
                 let qtyVal = (item.qty !== undefined && item.qty !== null) ? item.qty : 1;
 
+                let hint = narrowView
+                    ? 'Пишете свободно или натиснете „Избери" за списъка с лекарства.'
+                    : '&#8595;&#8593; за избор, Enter за потвърждение, Esc за затваряне';
+
                 html += '<div style="background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #ddd; display:flex; flex-direction:column; gap:8px;">'
                       + '<div>'
-                      + '<label style="font-size:11px; font-weight:bold; color:#555; margin-bottom:2px; display:block;">Лекарство (пишете на кирилица или латиница):</label>'
-                      + '<div class="med-search-wrap">'
+                      + '<label style="font-size:11px; font-weight:bold; color:#555; margin-bottom:2px; display:block;">Лекарство (кирилица или латиница):</label>'
+                      + '<div style="display:flex; gap:6px; align-items:flex-start;">'
+                      + '<div class="med-search-wrap" style="flex:1;">'
                       + '<input type="text" class="med-search-input" id="medSearch_' + itemId + '"'
                       + ' data-item-id="' + itemId + '" value="' + curVal + '"'
                       + ' placeholder="напр. Аспирин / Aspirin" autocomplete="off" spellcheck="false"'
@@ -761,7 +880,10 @@
                       + ' onkeydown="shoppingMedKeydown(event, this)">'
                       + '<div class="med-suggest" id="medSuggest_' + itemId + '"></div>'
                       + '</div>'
-                      + '<div class="med-search-hint">&#8595;&#8593; за избор, Enter за потвърждение, Esc за затваряне</div>'
+                      + '<button type="button" class="med-pick-btn" data-item-id="' + itemId + '"'
+                      + ' onclick="openMedPickerFromBtn(this)">&#128269; Избери</button>'
+                      + '</div>'
+                      + '<div class="med-search-hint">' + hint + '</div>'
                       + '</div>'
                       + '<div style="display:flex; justify-content:space-between; align-items:center;">'
                       + '<label style="font-size:11px; font-weight:bold; color:#555;">Количество:</label>'
