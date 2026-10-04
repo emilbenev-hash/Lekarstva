@@ -195,8 +195,8 @@
 
         .header h1 .subtitle { display: block; font-size: 16px !important; font-weight: normal; opacity: 0.95; margin-top: 4px; }
         select[style], textarea[style] { font-size: 17px !important; }
-        #labContainer td:first-child:not([colspan]) { max-width: 132px; overflow-wrap: anywhere; }
-        #labContainer td div[style*="font-size:12px"] { font-size: 13px !important; }
+        #labContainer td:first-child:not([colspan]) { max-width: 112px; overflow-wrap: anywhere; }
+        #labContainer td div[style*="font-size:12px"] { font-size: 12px !important; }
         #labContainer th span[style*="font-weight:normal"] { font-size: 13px !important; }
 
         /* Мобилен лог за грешки */
@@ -218,12 +218,48 @@
         #labContainer th [style*="font-size:13px"] { font-size: 17px !important; }
         #labContainer th [style*="font-size:10px"] { font-size: 13px !important; }
         h2[style*="font-size:15px"] { font-size: 20px !important; }
+
+        /* =====================================================================
+           ИЗСЛЕДВАНИЯ — компактен изглед (повече място за таблицата)
+           ===================================================================== */
+        .h1-labs { display: none; }
+        body.in-labs .h1-main { display: none; }
+        body.in-labs .h1-labs { display: inline; }
+        body.in-labs .header h1 .subtitle { display: none !important; }
+        body.in-labs { padding: 8px !important; padding-bottom: 12px !important; }
+        body.in-labs .header { padding: 8px 10px !important; margin-bottom: 6px !important; border-radius: 10px !important; }
+        body.in-labs .header h1 { font-size: 19px !important; }
+        body.in-labs #backHomeBtn { padding: 6px 12px !important; min-height: 40px !important; }
+
+        #labFilters { padding: 8px 10px !important; margin-bottom: 6px !important; border-radius: 10px !important; }
+        #labFilters.collapsed { padding: 2px 10px !important; }
+        #labFilters .lab-row { display: flex; gap: 8px; align-items: center; }
+        #labFilters .lab-row + .lab-row { margin-top: 8px; }
+        #labFilters .filter-buttons { margin: 0 !important; gap: 8px !important; flex-wrap: nowrap; }
+        #labFilters button, #labFilters .filter-btn { min-height: 42px !important; padding: 6px 12px !important; border-radius: 10px !important; }
+        #labFilters .lab-icon-btn { min-width: 44px; padding: 6px 0 !important; font-size: 20px !important; border: none; cursor: pointer; font-weight: bold; }
+        #labFilters input#labSearch { flex: 1 1 0; min-width: 0 !important; min-height: 42px !important; padding: 6px 10px !important; font-size: 16px !important; border: 1px solid #ccc; border-radius: 10px !important; }
+        #labFilters select { flex: 0 0 42%; max-width: 42%; min-height: 42px !important; padding: 6px 8px !important; font-size: 15px !important; border: 1px solid #ccc; background: #fff; font-family: inherit; }
+        #labMiniBar { display: none; align-items: center; gap: 8px; min-height: 40px; cursor: pointer; color: #1B4F72; font-weight: bold; }
+        #labMiniBar .lab-mini-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
+        #labMiniBar .lab-mini-arrow { font-size: 16px; color: #148F77; }
+        #labFilters.collapsed #labFullBar { display: none; }
+        #labFilters.collapsed #labMiniBar { display: flex; }
+
+        #labContainer table[style] { font-size: 14px !important; }
+        #labContainer td { padding: 6px 5px !important; }
+        #labContainer th { padding: 5px 3px !important; }
+        #labContainer th.lab-th-name { width: 112px; min-width: 112px; font-size: 14px !important; text-align: left; padding-left: 6px !important; }
+        #labContainer th.lab-th-test { min-width: 78px; line-height: 1.2; }
+        #labContainer .lab-th-date { font-size: 15px !important; font-weight: bold; }
+        #labContainer .lab-th-lab { font-size: 12px !important; font-weight: normal; opacity: 0.92; max-width: 88px; margin: 0 auto; overflow: hidden; text-overflow: ellipsis; }
+        #labContainer td span[style*="font-size:9px"] { font-size: 11px !important; }
     </style>
 </head>
 <body>
     <div class="header">
         <button id="backHomeBtn" onclick="showHome()" style="display:none; padding:6px 10px; background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5); border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">&#8592; Начало</button>
-        <h1 style="margin:0; flex:1; text-align:center;">Здравен мениджър<span class="subtitle">📱 Версия за 7″ мобилен телефон</span></h1>
+        <h1 style="margin:0; flex:1; text-align:center;"><span class="h1-main">Здравен мениджър</span><span class="h1-labs">Изследвания</span><span class="subtitle">📱 Версия за 7″ мобилен телефон</span></h1>
     </div>
 
     <!-- НАЧАЛНО МЕНЮ -->
@@ -259,21 +295,27 @@
 
     <!-- МОДУЛ ИЗСЛЕДВАНИЯ -->
     <div id="labModule" style="display:none;">
-        <div class="filters">
-            <div id="labPersonFilters" class="filter-buttons"></div>
-            <div style="margin-top:6px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                <div id="labSectionButtonsInline" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; flex:1;"></div>
-                <button id="labOORBtn" onclick="state.labOnlyOOR=!state.labOnlyOOR; renderLabs()" style="padding:6px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px; white-space:nowrap;">Само отклонения</button>
-                <select id="labSectionSelect" onchange="state.labSection=this.value; renderLabs()" style="padding:6px 8px; border:1px solid #ccc; border-radius:6px; font-size:12px; background:#fff; font-family:inherit;">
-                    <option value="all">-- Всички категории --</option>
-                </select>
+        <div class="filters" id="labFilters">
+            <div id="labFullBar">
+                <div class="lab-row">
+                    <div id="labPersonFilters" class="filter-buttons"></div>
+                    <div style="flex:1;"></div>
+                    <button id="labOORBtn" class="lab-icon-btn" onclick="state.labOnlyOOR=!state.labOnlyOOR; renderLabs()" title="Само отклонения">⚠</button>
+                    <button class="lab-icon-btn" onclick="refreshData()" title="Опресни" style="background:#2980B9; color:white;">↻</button>
+                </div>
+                <div class="lab-row">
+                    <input type="text" id="labSearch" placeholder="Търси показател..." oninput="state.labSearch=this.value; renderLabs()">
+                    <select id="labSectionSelect" onchange="state.labSection=this.value; renderLabs()">
+                        <option value="all">Всички</option>
+                    </select>
+                </div>
             </div>
-            <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
-                <input type="text" id="labSearch" placeholder="Търси показател..." oninput="state.labSearch=this.value; renderLabs()" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; flex:1; min-width:160px; font-size:14px;">
-                <button onclick="refreshData()" style="padding: 8px 12px; background:#2980B9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Опресни</button>
+            <div id="labMiniBar" onclick="setLabBarCollapsed(false)">
+                <span class="lab-mini-text" id="labMiniText"></span><span class="lab-mini-arrow">▼</span>
             </div>
+            <div id="labSectionButtonsInline" style="display:none;"></div>
         </div>
-        <div id="labContainer" style="overflow:auto; max-height:78vh; border-radius:8px; background:white;"></div>
+        <div id="labContainer" style="overflow:auto; max-height:70vh; border-radius:8px; background:white; -webkit-overflow-scrolling:touch;"></div>
     </div>
 
     <!-- Модал за графика на показател -->
@@ -294,7 +336,7 @@
         <div class="filters">
             <input type="text" id="search" class="search-input" placeholder="Търси лекарство..." oninput="renderUI()">
             <select id="categoryFilter" class="search-input" onchange="state.selectedCategory=this.value; renderUI()">
-                <option value="all">-- Всички категории --</option>
+                <option value="all">Всички</option>
             </select>
             <div id="personFilters" class="filter-buttons"></div>
             <div id="zokFilters" class="filter-buttons"></div>
@@ -399,6 +441,7 @@
         };
 
         function showHome() {
+            document.body.classList.remove('in-labs');
             document.getElementById('homeMenu').style.display = 'flex';
             document.getElementById('medsModule').style.display = 'none';
             document.getElementById('labModule').style.display = 'none';
@@ -407,6 +450,7 @@
         }
 
         function showMeds() {
+            document.body.classList.remove('in-labs');
             document.getElementById('homeMenu').style.display = 'none';
             document.getElementById('medsModule').style.display = 'block';
             document.getElementById('labModule').style.display = 'none';
@@ -420,10 +464,14 @@
             document.getElementById('labModule').style.display = 'block';
             document.getElementById('shoppingModule').style.display = 'none';
             document.getElementById('backHomeBtn').style.display = 'inline-block';
+            document.body.classList.add('in-labs');
+            window.scrollTo(0, 0);
+            setLabBarCollapsed(false);
             renderLabs();
         }
 
         function showShopping() {
+            document.body.classList.remove('in-labs');
             document.getElementById('homeMenu').style.display = 'none';
             document.getElementById('medsModule').style.display = 'none';
             document.getElementById('labModule').style.display = 'none';
@@ -1110,6 +1158,61 @@
             } catch (e) { showMobileError("deleteLabRangeRow error: " + e.message); }
         }
 
+        // ---- Изследвания: компактна лента с филтри + височина на таблицата ----
+        let labBarCollapsed = false, labBarLockUntil = 0, labScrollLast = 0, labScrollPeak = 0;
+
+        function fitLabContainer() {
+            const c = document.getElementById('labContainer');
+            if (!c || c.offsetParent === null) return;
+            const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+            const docTop = c.getBoundingClientRect().top + window.scrollY;
+            c.style.maxHeight = Math.max(200, Math.floor(vh - docTop - 22)) + 'px';
+        }
+
+        function updateLabMiniBar() {
+            const el = document.getElementById('labMiniText');
+            if (!el) return;
+            let catName = 'Всички';
+            if (state.labSection !== 'all') {
+                const c = state.labCategories.find(x => String(x.id) === String(state.labSection));
+                if (c) catName = c.name;
+            }
+            let t = (state.labPerson || '').toUpperCase() + ' · ' + catName;
+            const q = (state.labSearch || '').trim();
+            if (q) t += ' · 🔍 ' + q;
+            if (state.labOnlyOOR) t += ' · ⚠';
+            el.textContent = t;
+        }
+
+        function setLabBarCollapsed(v) {
+            labBarCollapsed = !!v;
+            const f = document.getElementById('labFilters');
+            if (f) f.classList.toggle('collapsed', labBarCollapsed);
+            labBarLockUntil = Date.now() + 350;
+            fitLabContainer();
+            const c = document.getElementById('labContainer');
+            labScrollLast = c ? c.scrollTop : 0;
+            labScrollPeak = labScrollLast;
+        }
+
+        (function () {
+            const c = document.getElementById('labContainer');
+            if (!c) return;
+            c.addEventListener('scroll', function () {
+                const st = c.scrollTop;
+                if (Date.now() < labBarLockUntil) { labScrollLast = st; labScrollPeak = st; return; }
+                if (!labBarCollapsed) {
+                    if (st > labScrollLast && st > 70 && (c.scrollHeight - c.clientHeight) > 180) setLabBarCollapsed(true);
+                    labScrollLast = st;
+                } else {
+                    labScrollPeak = Math.max(labScrollPeak, st);
+                    if (st <= 0 || labScrollPeak - st > 60) setLabBarCollapsed(false);
+                }
+            }, { passive: true });
+            window.addEventListener('resize', fitLabContainer);
+            if (window.visualViewport) window.visualViewport.addEventListener('resize', fitLabContainer);
+        })();
+
         function renderLabs() {
             const persons = ['Лили', 'Емил'];
             document.getElementById('labPersonFilters').innerHTML = persons.map(p =>
@@ -1125,7 +1228,7 @@
             const personObj = state.persons.find(p => p.name === state.labPerson);
             if (!personObj) { 
                 document.getElementById('labSectionButtonsInline').innerHTML=''; 
-                document.getElementById('labSectionSelect').innerHTML='<option value="all">-- Всички категории --</option>';
+                document.getElementById('labSectionSelect').innerHTML='<option value="all">Всички</option>';
                 document.getElementById('labContainer').innerHTML = '<p style="color:#666; padding:15px;">Няма данни за това лице.</p>'; 
                 return; 
             }
@@ -1140,7 +1243,7 @@
 
             if (rawTests.length === 0) { 
                 document.getElementById('labSectionButtonsInline').innerHTML=''; 
-                document.getElementById('labSectionSelect').innerHTML='<option value="all">-- Всички категории --</option>';
+                document.getElementById('labSectionSelect').innerHTML='<option value="all">Всички</option>';
                 document.getElementById('labContainer').innerHTML = '<p style="color:#666; padding:15px;">Няма изследвания за това лице.</p>'; 
                 return; 
             }
@@ -1171,7 +1274,7 @@
             let secBtns = `<button class="filter-btn ${state.labSection==='all'?'active':''}" onclick="state.labSection='all'; renderLabs()">ВСИЧКО</button>`;
             document.getElementById('labSectionButtonsInline').innerHTML = secBtns;
 
-            let selectOpts = `<option value="all">-- Всички категории --</option>`;
+            let selectOpts = `<option value="all">Всички</option>`;
             selectOpts += catsWithData.map(c =>
                 `<option value="${c.id}" ${state.labSection===String(c.id)?'selected':''}>${c.name}</option>`
             ).join('');
@@ -1191,13 +1294,15 @@
 
             let html = '<table style="border-collapse:separate; border-spacing:0; background:white; font-size:11px; min-width:100%;">';
             html += '<thead><tr>';
-            html += `<th style="${hdrBase} ${stickyTopLeft} text-align:left; width:132px; min-width:132px; border-right:2px solid #1F6390;">Показател <span style="font-weight:normal;">/ ед.</span></th>`;
+            html += `<th class="lab-th-name" style="${hdrBase} ${stickyTopLeft} border-right:2px solid #1F6390;">Показател</th>`;
             tests.forEach((t) => {
                 const dateBG = formatDateToBG(t.test_date);
-                const lbl = t.label ? '<div style="font-weight:normal; font-size:9px; opacity:0.9;">'+t.label+'</div>' : '';
-                html += `<th style="${hdrBase} ${stickyTop} min-width:108px; white-space:nowrap; text-align:center;">
-                    <div style="font-size:13px; font-weight:bold;">${dateBG}</div>
-                    <div style="font-weight:normal; font-size:10px; opacity:0.9;">${labName(t.medical_center_id)}</div>${lbl}
+                const dateShort = dateBG.length === 10 ? dateBG.slice(0, 6) + dateBG.slice(8) : dateBG;
+                const labNm = labName(t.medical_center_id);
+                const tipTxt = escHtmlShop(dateBG + ' · ' + labNm + (t.label ? ' · ' + t.label : ''));
+                html += `<th class="lab-th-test" title="${tipTxt}" style="${hdrBase} ${stickyTop} min-width:78px; white-space:nowrap; text-align:center;">
+                    <div class="lab-th-date">${dateShort}</div>
+                    <div class="lab-th-lab">${escHtmlShop(labNm)}</div>
                 </th>`;
             });
             html += '</tr></thead><tbody>';
@@ -1263,6 +1368,10 @@
             html += '</tbody></table>';
             if (!anyShown) html = '<p style="color:#666; padding:15px;">Няма показатели по този филтър.</p>';
             document.getElementById('labContainer').innerHTML = html;
+            labBarLockUntil = Date.now() + 350;
+            updateLabMiniBar();
+            fitLabContainer();
+            if (labBarCollapsed && document.getElementById('labContainer').scrollTop <= 0) setLabBarCollapsed(false);
         }
 
         function formatDateToBG(dateStr) {
@@ -1338,7 +1447,7 @@
 
         function renderUI() {
             const catSelect = document.getElementById('categoryFilter');
-            let catOptions = '<option value="all">-- Всички категории --</option>';
+            let catOptions = '<option value="all">Всички</option>';
             state.categories.forEach(c => {
                 catOptions += `<option value="${c.id}" ${state.selectedCategory === String(c.id) ? 'selected' : ''}>${c.name}</option>`;
             });
