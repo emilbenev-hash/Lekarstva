@@ -1574,6 +1574,7 @@
                         <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">💰 ${priceHtml}</p>
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold;">За: ${assignedPersons}</p>` : ''}
+                        ${medDatesLineHtml(m)}
                         ${doctor ? `<p style="color:#444;">Лекар: ${doctor.name}</p>` : ''}
                         ${mc ? `<p style="color:#444;">Център: ${mc.name}</p>` : ''}
                         ${docButtonsHtml}
@@ -1614,6 +1615,43 @@
             titleEl.innerText = titleEl.dataset.originalText + " (Редактиране на цена)";
         }
 
+        function stopMedToday() {
+            const t = new Date();
+            const iso = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+            document.getElementById('end_date').value = formatDateToBG(iso);
+            const act = document.getElementById('is_active');
+            if (act) act.checked = false;
+        }
+
+        function readMedDateField(id, label) {
+            const el = document.getElementById(id);
+            const raw = el ? el.value.trim() : '';
+            if (raw === '') return { ok: true, iso: null };
+            if (!/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(raw)) {
+                alert(label + ': въведете дата във формат дд.мм.гггг');
+                return { ok: false };
+            }
+            const iso = parseDateToISO(raw);
+            const d = new Date(iso + 'T00:00:00');
+            if (isNaN(d.getTime()) || d.toISOString().slice(0,10) !== iso) {
+                alert(label + ': невалидна дата');
+                return { ok: false };
+            }
+            return { ok: true, iso };
+        }
+
+        function medDatesLineHtml(m) {
+            const t = new Date();
+            const todayIso = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+            const dash = '<span style="color:#aaa;">—</span>';
+            const ended = m.end_date && m.end_date < todayIso;
+            const endHtml = m.end_date
+                ? (ended ? `<span style="color:#922B21;">${formatDateToBG(m.end_date)} (приключен)</span>` : formatDateToBG(m.end_date))
+                : dash;
+            const startHtml = m.start_date ? formatDateToBG(m.start_date) : dash;
+            return `<p style="color:#444; display:flex; flex-wrap:wrap; gap:2px 16px;"><span>📅 Начало: ${startHtml}</span><span>Край: ${endHtml}</span></p>`;
+        }
+
         function openNewMed() {
             openPanel(null);
         }
@@ -1623,7 +1661,7 @@
             const m = isNew ? {
                 id: null, name_bg: '', name_latin: '', active_substance: '', category_id: null, manufacturer_id: null,
                 volume_quantity: null, volume_unit: '', form: '', form_quantity: null, dosage: '',
-                doctor_id: null, prescription_medical_center_id: null, prescription_date: null,
+                doctor_id: null, prescription_medical_center_id: null, prescription_date: null, start_date: null, end_date: null,
                 health_insurance: false, is_active: true, is_daily: true, is_emergency: false,
                 notes: '', description: ''
             } : state.meds.find(x => String(x.id) === String(id));
@@ -1795,6 +1833,18 @@
                 <div class="form-group">
                     <label>Дата на рецепта</label>
                     <input type="text" id="prescription_date" value="${formatDateToBG(m.prescription_date)}" placeholder="дд.мм.гггг">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Начало на прием</label>
+                        <input type="text" id="start_date" value="${formatDateToBG(m.start_date)}" placeholder="дд.мм.гггг">
+                    </div>
+                    <div class="form-group">
+                        <label>Край на прием</label>
+                        <input type="text" id="end_date" value="${formatDateToBG(m.end_date)}" placeholder="дд.мм.гггг">
+                        <div style="font-size:13px; color:#777; margin-top:4px;">празно = приемът продължава</div>
+                        <button type="button" onclick="stopMedToday()" style="margin-top:8px; width:100%; min-height:50px; background:#922B21; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:bold;">Прекрати днес</button>
+                    </div>
                 </div>
                 
                 <div class="form-row">
@@ -2058,6 +2108,15 @@
                 return;
             }
 
+            const startRes = readMedDateField('start_date', 'Начало на прием');
+            if (!startRes.ok) return;
+            const endRes = readMedDateField('end_date', 'Край на прием');
+            if (!endRes.ok) return;
+            if (startRes.iso && endRes.iso && endRes.iso < startRes.iso) {
+                alert('Краят на приема е преди началото. Моля, проверете датите.');
+                return;
+            }
+
             const volValue = document.getElementById('vol').value.trim();
 
             const catInputName = document.getElementById('category_name').value.trim();
@@ -2157,6 +2216,8 @@
                 doctor_id: doctorId,
                 prescription_medical_center_id: mcId,
                 prescription_date: prescriptionDateVal,
+                start_date: startRes.iso,
+                end_date: endRes.iso,
                 health_insurance: document.getElementById('health_insurance').checked,
                 is_active: document.getElementById('is_active').checked,
                 is_daily: document.getElementById('is_daily').checked,
