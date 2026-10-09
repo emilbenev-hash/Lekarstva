@@ -1429,7 +1429,7 @@
                     fetch(CONFIG.URL + '/rest/v1/lab_categories?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/lab_parameters?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/lab_tests?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/lab_results?select=*', { headers: h }),
+                    (async () => { const all = []; const step = 1000; for (let from = 0; ; from += step) { const r = await fetch(CONFIG.URL + '/rest/v1/lab_results?select=*&order=id', { headers: { ...h, 'Range-Unit': 'items', 'Range': from + '-' + (from + step - 1) } }); if (!r.ok) return r; const part = await r.json(); all.push(...part); if (part.length < step) break; } return { ok: true, json: async () => all }; })(),
                     fetch(CONFIG.URL + '/rest/v1/lab_reference_ranges?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/shopping_list?select=*', { headers: h })
                 ]);
