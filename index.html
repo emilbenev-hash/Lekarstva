@@ -643,6 +643,7 @@
 
         function shoppingMedDisplay(m) {
             let display = (m.name_bg || '').trim() || (m.name_latin || '').trim() || 'Без име';
+            if (m.concentration) display += ' ' + m.concentration + (m.concentration_unit ? ' ' + m.concentration_unit : '');
             if (m.volume_quantity) display += ' ' + m.volume_quantity;
             if (m.volume_unit) display += ' ' + m.volume_unit;
             return display;
@@ -872,7 +873,9 @@
 
         function labStatus(result, paramId, labId) {
             const sex = currentSex();
-            const rng = getLabRange(paramId, labId, sex);
+            let rng = getLabRange(paramId, labId, sex);
+            /* 09.10.2026: норма към самото измерване има предимство */
+            if ((result.ref_min !== null && result.ref_min !== undefined) || (result.ref_max !== null && result.ref_max !== undefined)) rng = { min_value: result.ref_min ?? null, max_value: result.ref_max ?? null, text_norm: null };
             const v = result.value_numeric;
             if ((v === null || v === undefined)) {
                 if (result.is_out_of_range === true) return 'oor';
@@ -926,7 +929,7 @@
             const pts = [];
             tests.forEach(t => {
                 const cell = state.labResults.filter(r => String(r.lab_test_id)===String(t.id) && String(r.parameter_id)===String(paramId) && r.value_numeric !== null && r.value_numeric !== undefined);
-                cell.forEach(r => pts.push({ date: t.test_date, value: Number(r.value_numeric), lab: t.medical_center_id }));
+                cell.forEach(r => pts.push({ date: t.test_date, value: Number(r.value_numeric), lab: t.medical_center_id, ref_min: r.ref_min, ref_max: r.ref_max }));
             });
 
             const title = param.name + (param.unit ? ' (' + param.unit + ')' : '');
@@ -952,7 +955,8 @@
             let sumMax = 0, countMax = 0;
             
             pts.forEach(p => {
-                const rng = getLabRange(param.id, p.lab, currentSex());
+                /* 09.10.2026: в графиката – първо нормата на самото измерване */
+                const rng = ((p.ref_min ?? null) !== null || (p.ref_max ?? null) !== null) ? { min_value: p.ref_min ?? null, max_value: p.ref_max ?? null } : getLabRange(param.id, p.lab, currentSex());
                 if (rng) {
                     if (rng.min_value !== null && rng.min_value !== undefined) { sumMin += rng.min_value; countMin++; }
                     if (rng.max_value !== null && rng.max_value !== undefined) { sumMax += rng.max_value; countMax++; }
@@ -1310,7 +1314,7 @@
             let anyShown = false;
             shownCats.forEach(cat => {
                 let catParams = params.filter(p => String(p.category_id)===String(cat.id) && usedParamIds.has(String(p.id)));
-                if (search) catParams = catParams.filter(p => p.name.toLowerCase().includes(search));
+                if (search) catParams = catParams.filter(p => [p.name, p.display_name_old, ...(Array.isArray(p.aliases) ? p.aliases : (p.aliases ? String(p.aliases).split(',') : []))].some(n => n && String(n).toLowerCase().includes(search)));
                 if (state.labOnlyOOR) {
                     catParams = catParams.filter(p =>
                         tests.some(t => {
@@ -1344,7 +1348,10 @@
                                 style = 'background:#FCF3CF; color:#B9770E; font-weight:bold;';
                             }
 
-                            const rng = getLabRange(p.id, t.medical_center_id, currentSex());
+                            let rng = getLabRange(p.id, t.medical_center_id, currentSex());
+                            /* 09.10.2026: норма към самото измерване (от неговия PDF) има предимство */
+                            const own = cell.find(r => (r.ref_min !== null && r.ref_min !== undefined) || (r.ref_max !== null && r.ref_max !== undefined));
+                            if (own) rng = { min_value: own.ref_min ?? null, max_value: own.ref_max ?? null, text_norm: null };
                             if (rng) {
                                 let n = '';
                                 if (rng.min_value !== null && rng.min_value !== undefined && rng.max_value !== null && rng.max_value !== undefined) n = rng.min_value + '–' + rng.max_value;
@@ -1352,12 +1359,20 @@
                                 else if (rng.min_value !== null && rng.min_value !== undefined) n = '>' + rng.min_value;
                                 else if (rng.text_norm) n = rng.text_norm;
                                 
-                                if (n) {
+                                /* 08.10.2026: границите се показват само при „извън норма“ (червено) или „близо до граница“ (жълто) */
+                                if (n && (st.includes('oor') || st.includes('near'))) {
                                     const normColor = st.includes('oor') ? '#C0392B' : (st.includes('near') ? '#B9770E' : '#777');
                                     normHtml = `<br><span style="font-weight:normal; font-size:9px; color:${normColor}; white-space:nowrap;">(${n})</span>`;
                                 }
                             }
                             tip = rangeTooltip(p.id, t.medical_center_id, labName(t.medical_center_id));
+                        }
+                        /* 08.10.2026: текстови заключения/бележки – кратко в клетката, с клик целият текст */
+                        if (disp && String(disp).length > 25) {
+                            const full = String(disp).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                            disp = `<span style="cursor:help; text-decoration:underline dotted;" data-full="${full}" onclick="event.stopPropagation(); alert(this.dataset.full)">${full.slice(0,22)}…</span>`;
+                            normHtml = '';
+                            tip = 'Клик – целият текст';
                         }
                         html += `<td title="${tip}" style="padding:5px 6px; text-align:center; border-right:1px solid #d5dde3; border-bottom:1px solid #d5dde3; ${style} white-space:nowrap;">${disp}${normHtml}</td>`;
                     });
@@ -1549,6 +1564,7 @@
                 }).filter(Boolean).join(', ');
 
                 let displayName = m.name_bg || '';
+                if (m.concentration) displayName += ` ${m.concentration}${m.concentration_unit ? ' ' + m.concentration_unit : ''}`;
                 if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
                 if (m.volume_unit) displayName += ` ${m.volume_unit}`;
 
@@ -1632,8 +1648,9 @@
                 return { ok: false };
             }
             const iso = parseDateToISO(raw);
-            const d = new Date(iso + 'T00:00:00');
-            if (isNaN(d.getTime()) || d.toISOString().slice(0,10) !== iso) {
+            const [yy, mm, dd] = (iso || '').split('-').map(Number);
+            const d = new Date(yy, (mm || 0) - 1, dd || 0);
+            if (!yy || isNaN(d.getTime()) || d.getFullYear() !== yy || d.getMonth() !== mm - 1 || d.getDate() !== dd) {
                 alert(label + ': невалидна дата');
                 return { ok: false };
             }
@@ -1660,7 +1677,7 @@
             const isNew = !id;
             const m = isNew ? {
                 id: null, name_bg: '', name_latin: '', active_substance: '', category_id: null, manufacturer_id: null,
-                volume_quantity: null, volume_unit: '', form: '', form_quantity: null, dosage: '',
+                concentration: '', concentration_unit: '', volume_quantity: null, volume_unit: '', form: '', form_quantity: null, dosage: '',
                 doctor_id: null, prescription_medical_center_id: null, prescription_date: null, start_date: null, end_date: null,
                 health_insurance: false, is_active: true, is_daily: true, is_emergency: false,
                 notes: '', description: ''
@@ -1780,7 +1797,10 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Категория</label>
-                        <input type="text" id="category_name" list="category_list" value="${currentCatName}" placeholder="Категория...">
+                        <div style="display:flex; gap:8px; align-items:stretch;">
+                        <input type="text" id="category_name" list="category_list" value="${currentCatName}" placeholder="Категория..." style="flex:1; min-width:0;">
+                        <button type="button" onclick="addMedCategory()" title="Добави нова категория" style="background:#148F77; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; white-space:nowrap;">➕ Нова</button>
+                        </div>
                         <datalist id="category_list">${catDatalist}</datalist>
                     </div>
                     <div class="form-group">
@@ -1795,6 +1815,7 @@
                     <div class="checkbox-group">${personsCheckboxes || 'Няма лица'}</div>
                 </div>
 
+                <div class="form-row"><div class="form-group"><label>Концентрация</label><input type="text" id="concentration" value="${m.concentration||''}" placeholder="напр. 500 или 875/125"></div><div class="form-group"><label>Мерна единица</label><input type="text" id="concentration_unit" value="${m.concentration_unit||''}" placeholder="напр. mg, mg/ml, %"></div></div>
                 <div class="form-row"><div class="form-group"><label>Количество</label><input type="text" id="vol" value="${m.volume_quantity !== null && m.volume_quantity !== undefined ? m.volume_quantity : ''}"></div><div class="form-group"><label>Единица</label><input type="text" id="unit" value="${m.volume_unit||''}"></div></div>
                 <div class="form-row"><div class="form-group"><label>Форма</label><input type="text" id="form" value="${m.form||''}"></div><div class="form-group"><label>Брой</label><input type="number" id="qty" value="${m.form_quantity||''}"></div></div>
                 <div class="form-group"><label>Дозировка</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
@@ -1956,6 +1977,7 @@
             let medOptions = '';
             state.meds.forEach(m => {
                 let displayName = m.name_bg || m.name_latin || 'Без име';
+                if (m.concentration) displayName += ` ${m.concentration}${m.concentration_unit ? ' ' + m.concentration_unit : ''}`;
                 if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
                 if (m.volume_unit) displayName += ` ${m.volume_unit}`;
                 medOptions += `<option value="${displayName}">`;
@@ -1997,6 +2019,7 @@
 
             const matchedMed = state.meds.find(m => {
                 let displayName = m.name_bg || m.name_latin || '';
+                if (m.concentration) displayName += ` ${m.concentration}${m.concentration_unit ? ' ' + m.concentration_unit : ''}`;
                 if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
                 if (m.volume_unit) displayName += ` ${m.volume_unit}`;
                 return displayName.toLowerCase() === val || (m.name_bg && m.name_bg.toLowerCase() === val);
@@ -2208,6 +2231,8 @@
                 active_substance: document.getElementById('active').value,
                 category_id: categoryId,
                 manufacturer_id: manufacturerId,
+                concentration: document.getElementById('concentration').value.trim() || null,
+                concentration_unit: document.getElementById('concentration_unit').value.trim() || null,
                 volume_quantity: volValue !== '' ? volValue : null,
                 volume_unit: document.getElementById('unit').value,
                 form: document.getElementById('form').value,
@@ -2415,5 +2440,61 @@
         
         window.onload = refreshData;
     </script>
+<script>
+/* 2026.10.08: всички падащи списъци по азбучен ред (bg); редовете "-- Всички …" / "— …" / празна стойност остават най-горе */
+(function(){
+  const isHead = o => !o.value || o.value==='all' || /^\s*(--|—)/.test(o.textContent||'');
+  const coll = new Intl.Collator('bg', {sensitivity:'base', numeric:true});
+  function sortList(el){
+    const opts=[...el.querySelectorAll(':scope > option')];
+    if(opts.length<3) return;
+    const head=opts.filter(isHead), rest=opts.filter(o=>!isHead(o));
+    const sorted=[...rest].sort((a,b)=>coll.compare((a.textContent||a.value).trim(),(b.textContent||b.value).trim()));
+    if(sorted.every((o,i)=>o===rest[i])) return;
+    const sel=el.value;
+    head.concat(sorted).forEach(o=>el.appendChild(o));
+    if(el.tagName==='SELECT') el.value=sel;
+  }
+  function sortAll(){ document.querySelectorAll('select, datalist').forEach(sortList); }
+  let t=null;
+  new MutationObserver(()=>{ clearTimeout(t); t=setTimeout(sortAll,0); })
+    .observe(document.documentElement,{childList:true,subtree:true});
+  document.addEventListener('DOMContentLoaded', sortAll);
+})();
+</script>
+
+<script>
+// ---- Добавяне на нова категория лекарства (09.10.2026) ----
+async function addMedCategory() {
+    const inp = document.getElementById('category_name');
+    let name = prompt('Име на новата категория:', (inp && inp.value.trim()) || '');
+    if (name === null) return;
+    name = name.trim().replace(/\s+/g, ' ');
+    if (!name) { alert('Името е празно.'); return; }
+    const ex = state.categories.find(c => (c.name||'').trim().toLowerCase() === name.toLowerCase());
+    if (ex) { if (inp) inp.value = ex.name; alert('Категорията „' + ex.name + '“ вече съществува – избрана е.'); return; }
+    if (!confirm('Да създам ли категория „' + name + '“?')) return;
+    try {
+        const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+        const r = await fetch(CONFIG.URL + '/rest/v1/categories', { method: 'POST', headers: h, body: JSON.stringify({ name: name }) });
+        if (!r.ok) { alert('Грешка при запис: ' + r.status + ' ' + (await r.text())); return; }
+        const d = await r.json();
+        const c = Array.isArray(d) ? d[0] : d;
+        if (!c) { alert('Сървърът не върна новата категория.'); return; }
+        state.categories.push(c);
+        state.categories.sort((a, b) => (a.name||'').localeCompare(b.name||'', 'bg'));
+        const dl = document.getElementById('category_list');
+        if (dl) dl.innerHTML = state.categories.map(x => `<option value="${x.name}">`).join('');
+        if (inp) inp.value = c.name;
+        const sel = document.getElementById('categoryFilter');
+        if (sel) {
+            const cur = sel.value;
+            sel.innerHTML = sel.options[0].outerHTML + state.categories.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+            sel.value = cur;
+        }
+        alert('Категорията „' + c.name + '“ е добавена.');
+    } catch (e) { alert('Грешка: ' + e.message); }
+}
+</script>
 </body>
 </html>
