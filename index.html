@@ -257,6 +257,79 @@
     </style>
 </head>
 <body>
+    <!-- ZDRAVE Device Gate (Път 1: device token) -->
+    <div id="zdraveGateOverlay" style="position:fixed; inset:0; z-index:99999; background:#667eea;
+         display:none; align-items:center; justify-content:center; padding:20px;">
+      <div style="background:#fff; border-radius:14px; padding:28px 22px; max-width:420px; width:100%;
+           box-shadow:0 10px 40px rgba(0,0,0,0.3); text-align:center;">
+        <div style="font-size:46px; margin-bottom:8px;">🔒</div>
+        <h2 style="margin:0 0 6px; font-size:20px; color:#333;">Това устройство няма достъп</h2>
+        <p style="margin:0 0 16px; font-size:14px; color:#666;">
+          Въведи ключа за това устройство, за да продължиш.</p>
+        <input id="zdraveGateInput" type="text" autocomplete="off" autocapitalize="off"
+          spellcheck="false" placeholder="Ключ за устройството"
+          style="width:100%; padding:12px; font-size:15px; border:1px solid #ccc; border-radius:8px;
+                 margin-bottom:12px; text-align:center;">
+        <button id="zdraveGateBtn" style="width:100%; padding:13px; font-size:16px; font-weight:bold;
+          background:#148F77; color:#fff; border:none; border-radius:8px; cursor:pointer;">
+          Отключи</button>
+        <p id="zdraveGateErr" style="display:none; color:#E74C3C; font-size:13px; margin:12px 0 0;"></p>
+      </div>
+    </div>
+
+    <script>
+    /* ZDRAVE Device Gate — проверява ключ срещу allowed_devices преди зареждане на данните */
+    (function(){
+      const LS_KEY = 'zdrave_device_token';
+      async function sha256hex(str){
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+        return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+      }
+      async function tokenValid(token){
+        try {
+          const hash = await sha256hex(token.trim());
+          const url = `${CONFIG.URL}/rest/v1/allowed_devices?token_hash=eq.${hash}&active=eq.true&select=device_id`;
+          const res = await fetch(url, { headers: { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY } });
+          if (!res.ok) return false;
+          const rows = await res.json();
+          return Array.isArray(rows) && rows.length > 0;
+        } catch(e){ return false; }
+      }
+      function showGate(){
+        const ov = document.getElementById('zdraveGateOverlay');
+        ov.style.display = 'flex';
+        const inp = document.getElementById('zdraveGateInput');
+        const btn = document.getElementById('zdraveGateBtn');
+        const err = document.getElementById('zdraveGateErr');
+        async function tryUnlock(){
+          btn.disabled = true; err.style.display='none';
+          const ok = await tokenValid(inp.value);
+          if (ok){
+            localStorage.setItem(LS_KEY, inp.value.trim());
+            ov.style.display='none';
+            refreshData();
+          } else {
+            err.textContent = 'Невалиден ключ за това устройство.';
+            err.style.display='block';
+            btn.disabled = false;
+          }
+        }
+        btn.onclick = tryUnlock;
+        inp.addEventListener('keydown', e => { if(e.key==='Enter') tryUnlock(); });
+        inp.focus();
+      }
+      window.zdraveGate = async function(){
+        const saved = localStorage.getItem(LS_KEY);
+        if (saved && await tokenValid(saved)){
+          refreshData();
+        } else {
+          if (saved) localStorage.removeItem(LS_KEY);
+          showGate();
+        }
+      };
+    })();
+    </script>
+
     <div class="header">
         <button id="backHomeBtn" onclick="showHome()" style="display:none; padding:6px 10px; background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5); border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">&#8592; Начало</button>
         <h1 style="margin:0; flex:1; text-align:center;"><span class="h1-main">Здравен мениджър</span><span class="h1-labs">Изследвания</span><span class="subtitle">📱 Версия за 7″ мобилен телефон</span></h1>
@@ -2438,7 +2511,7 @@
             document.getElementById('fsContainer').innerHTML = '';
         }
         
-        window.onload = refreshData;
+        window.onload = zdraveGate;
     </script>
 <script>
 /* 2026.10.08: всички падащи списъци по азбучен ред (bg); редовете "-- Всички …" / "— …" / празна стойност остават най-горе */
