@@ -11,6 +11,22 @@
             URL: "https://xwnjuqqudkjkqdkrndhg.supabase.co",
             KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bmp1cXF1ZGtqa3Fka3JuZGhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5ODIzMTUsImV4cCI6MjA5ODU1ODMxNX0.CjTGOpfbETipi2HRegcGyvN9cGzSeQePFO0Sgc9Gt34"
         };
+        /* ZDRAVE Етап 2: автоматично добавя x-device-token към всяка заявка към Supabase.
+           Една централна точка — покрива всички fetch заявки (четене, запис, качване). */
+        (function(){
+          const _fetch = window.fetch;
+          window.fetch = function(url, opts){
+            opts = opts || {};
+            const u = (typeof url === 'string') ? url : (url && url.url) || '';
+            if (u.indexOf(CONFIG.URL) === 0 || u.indexOf('supabase.co') !== -1) {
+              try {
+                const tok = localStorage.getItem('zdrave_device_token');
+                if (tok) opts.headers = Object.assign({}, opts.headers, { 'x-device-token': tok });
+              } catch(e){}
+            }
+            return _fetch.call(this, url, opts);
+          };
+        })();
     </script>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
