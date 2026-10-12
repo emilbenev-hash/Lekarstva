@@ -2041,7 +2041,7 @@
                     <button type="button" onclick="checkInteractions()" style="background:#B7791F; color:white; border:none; border-radius:8px; padding:10px 16px; cursor:pointer; font-weight:bold;">⚠️ Провери за съвместимост</button>
                     <div id="interactionResult" style="margin-top:8px;"></div>
                 </div>
-                <div class="form-group"><label>Бележка за взаимодействия</label><textarea id="interaction_note" placeholder="Бележка за лекарствени взаимодействия...">${m.interaction_note||''}</textarea></div>
+                <div class="form-group"><label>Съвместимост (моята оценка — можеш да редактираш)</label><textarea id="interaction_note" placeholder="Оценка за съвместимост с другите активни лекарства — натисни „Провери за съвместимост“, после „Приложи в полето“; можеш да редактираш свободно.">${m.interaction_note||''}</textarea></div>
                 <div class="form-group"><label>Бележки</label><textarea id="notes">${m.notes||''}</textarea></div>`;
             
             if(availableDocs.length > 0) {
@@ -2714,144 +2714,117 @@ function checkInteractions() {
     const myId = state.currentId || null;
     const subEl = document.getElementById('active');
     const noteEl = document.getElementById('interaction_note');
-    const manualNote = noteEl ? (noteEl.value||'').trim() : '';
     const mySub = (subEl ? subEl.value : '').trim();
     const norm = s => (s||'').toLowerCase();
     const my = norm(mySub);
 
-    // ---- Вграден списък с чести лекарствени взаимодействия (по вещества/класове) ----
-    // Всяка група има ключови думи (вкл. бг/лат). Правилата описват рискови комбинации между групи.
     const CLASSES = {
-        anticoagulant:   ['apixaban','еликуис','rivaroxaban','ривароксабан','dabigatran','warfarin','синтром','acenocoumarol','аценокумарол','едоксабан','edoxaban','антикоагулант'],
-        antiplatelet:    ['clopidogrel','клопидогрел','плавикс','ticagrelor','тикагрелор','prasugrel','aspirin','ацетилсалицил','аспирин','дипиридамол'],
-        salicylate:      ['salicin','салицин','salicyl','салицил','ацетилсалицил','aspirin','аспирин','върбова кора','salix'],
-        nsaid:           ['ibuprofen','ибупрофен','diclofenac','диклофенак','naproxen','напроксен','ketoprofen','кетопрофен','dexketoprofen','дескетопрофен','nimesulide','нимезулид','meloxicam','мелоксикам','piroxicam','tenoxicam','теноксикам','целекоксиб','etoricoxib','еторикоксиб','нспвс'],
-        statin:          ['atorvastatin','аторвастатин','simvastatin','симвастатин','rosuvastatin','розувастатин','pravastatin','ловастатин','статин'],
-        amiodarone:      ['amiodarone','амиодарон','кордарон'],
-        betablocker:     ['bisoprolol','бисопролол','metoprolol','метопролол','carvedilol','карведилол','nebivolol','небиволол','atenolol','пропранолол','propranolol','бета-блокер'],
-        ccb_nondihydro:  ['verapamil','верапамил','diltiazem','дилтиазем'],
-        ace_arb:         ['perindopril','периндоприл','enalapril','еналаприл','ramipril','рамиприл','lisinopril','лизиноприл','лосартан','losartan','valsartan','валсартан','кандесартан','телмисартан','иАПФ'],
-        potassium_spar:  ['spironolactone','спиронолактон','eplerenone','finerenone','финеренон','керендиа','amiloride','triamterene','калий-съхраняващ'],
-        potassium:       ['калий','potassium','kcl'],
-        diuretic_loop_thiazide: ['furosemide','фуроземид','indapamide','индапамид','hydrochlorothiazide','хидрохлоротиазид','chlortalidone','хлорталидон','торасемид'],
-        ssri_snri:       ['sertraline','сертралин','fluoxetine','флуоксетин','paroxetine','пароксетин','escitalopram','есциталопрам','citalopram','venlafaxine','венлафаксин','дулоксетин','тразодон','trazodone'],
-        maoi:            ['moclobemide','моклобемид','селегилин','разагилин'],
-        serotonergic:    ['tryptophan','триптофан','5-htp','griffonia','грифония','sumatriptan','триптан','трамадол','tramadol','ондансетрон'],
-        metformin:       ['metformin','метформин','сиофор','глюкофаж'],
-        qt_prolong:      ['amiodarone','амиодарон','соталол','sotalol','citalopram','есциталопрам','ондансетрон','домперидон','кларитромицин','азитромицин','левофлоксацин','ципрофлоксацин','хидроксизин'],
-        clonidine:       ['clonidine','клонидин','хлофадон'],
-        digoxin:         ['digoxin','дигоксин']
+        anticoagulant:['apixaban','еликуис','rivaroxaban','ривароксабан','dabigatran','warfarin','синтром','acenocoumarol','аценокумарол','едоксабан','edoxaban'],
+        antiplatelet:['clopidogrel','клопидогрел','плавикс','ticagrelor','тикагрелор','prasugrel','aspirin','ацетилсалицил','аспирин','дипиридамол'],
+        salicylate:['salicin','салицин','salicyl','салицил','ацетилсалицил','aspirin','аспирин','върбова кора','salix'],
+        nsaid:['ibuprofen','ибупрофен','diclofenac','диклофенак','naproxen','напроксен','ketoprofen','кетопрофен','dexketoprofen','дескетопрофен','nimesulide','нимезулид','meloxicam','мелоксикам','piroxicam','tenoxicam','теноксикам','целекоксиб','etoricoxib','еторикоксиб'],
+        statin:['atorvastatin','аторвастатин','simvastatin','симвастатин','rosuvastatin','розувастатин','pravastatin','ловастатин','статин'],
+        amiodarone:['amiodarone','амиодарон','кордарон'],
+        betablocker:['bisoprolol','бисопролол','metoprolol','метопролол','carvedilol','карведилол','nebivolol','небиволол','atenolol','пропранолол','propranolol'],
+        ccb_nondihydro:['verapamil','верапамил','diltiazem','дилтиазем'],
+        ace_arb:['perindopril','периндоприл','enalapril','еналаприл','ramipril','рамиприл','lisinopril','лизиноприл','лосартан','losartan','valsartan','валсартан','кандесартан','телмисартан'],
+        potassium_spar:['spironolactone','спиронолактон','eplerenone','finerenone','финеренон','керендиа','amiloride','triamterene'],
+        diuretic:['furosemide','фуроземид','indapamide','индапамид','hydrochlorothiazide','хидрохлоротиазид','chlortalidone','хлорталидон','торасемид'],
+        ssri_snri:['sertraline','сертралин','fluoxetine','флуоксетин','paroxetine','пароксетин','escitalopram','есциталопрам','citalopram','venlafaxine','венлафаксин','дулоксетин','тразодон','trazodone'],
+        serotonergic:['tryptophan','триптофан','5-htp','griffonia','грифония','sumatriptan','триптан','трамадол','tramadol'],
+        clonidine:['clonidine','клонидин','хлофадон'],
+        digoxin:['digoxin','дигоксин']
     };
     const inClass = (sub, cls) => CLASSES[cls].some(k => sub.includes(k));
     const classesOf = (sub) => Object.keys(CLASSES).filter(c => inClass(sub, c));
-
-    // Правила: [класА, класБ, тежест, кратка препоръка]
     const RULES = [
-        ['anticoagulant','antiplatelet','висок','повишен риск от кървене — съчетанието изисква лекарска преценка.'],
-        ['anticoagulant','salicylate','висок','салицилат + антикоагулант повишава риска от кървене.'],
-        ['anticoagulant','nsaid','висок','НСПВС + антикоагулант — висок риск от стомашно-чревно кървене.'],
-        ['antiplatelet','nsaid','умерен','повишен риск от кървене/стомашно дразнене.'],
-        ['salicylate','nsaid','умерен','двойно НСПВС/салицилат натоварване — риск от кървене и стомах.'],
-        ['nsaid','ace_arb','умерен','НСПВС намалява ефекта на кръвното лекарство и натоварва бъбреците.'],
-        ['nsaid','diuretic_loop_thiazide','умерен','НСПВС отслабва диуретика и натоварва бъбреците.'],
-        ['amiodarone','betablocker','висок','амиодарон + бета-блокер — риск от силно забавен пулс/блок.'],
-        ['amiodarone','ccb_nondihydro','висок','амиодарон + верапамил/дилтиазем — риск от брадикардия/блок.'],
-        ['amiodarone','statin','умерен','амиодарон повишава нивото на статина — риск от мускулни оплаквания.'],
-        ['amiodarone','digoxin','висок','амиодарон повишава дигоксина — риск от токсичност.'],
-        ['betablocker','ccb_nondihydro','висок','бета-блокер + верапамил/дилтиазем — риск от брадикардия/хипотония.'],
-        ['betablocker','clonidine','умерен','рязко спиране на клонидин при бета-блокер — риск от скок на кръвното.'],
+        ['anticoagulant','salicylate','висок','салицилат + антикоагулант → висок риск от кървене.'],
+        ['anticoagulant','antiplatelet','висок','антиагрегант + антикоагулант → висок риск от кървене.'],
+        ['anticoagulant','nsaid','висок','НСПВС + антикоагулант → висок риск от стомашно кървене.'],
+        ['anticoagulant','amiodarone','умерен','амиодарон вдига нивото на антикоагуланта → риск от кървене.'],
+        ['anticoagulant','ssri_snri','умерен','SSRI + антикоагулант → повишен риск от кървене.'],
+        ['amiodarone','betablocker','висок','амиодарон + бета-блокер → силно забавен пулс/блок.'],
+        ['amiodarone','ccb_nondihydro','висок','амиодарон + верапамил/дилтиазем → брадикардия/блок.'],
+        ['amiodarone','clonidine','умерен','двете забавят пулса → брадикардия.'],
+        ['amiodarone','digoxin','висок','амиодарон вдига дигоксина → токсичност.'],
+        ['amiodarone','statin','умерен','амиодарон вдига статина → мускулни оплаквания.'],
+        ['amiodarone','diuretic','умерен','загуба на калий/магнезий + амиодарон → риск от аритмия (QT).'],
+        ['betablocker','ccb_nondihydro','висок','бета-блокер + верапамил/дилтиазем → брадикардия/хипотония.'],
+        ['betablocker','clonidine','умерен','сваля кръвното и пулса; внимавай при спиране на клонидин.'],
         ['ace_arb','potassium_spar','умерен','риск от повишен калий — контролирай калия.'],
-        ['ace_arb','potassium','умерен','риск от повишен калий.'],
-        ['potassium_spar','potassium','умерен','риск от повишен калий.'],
-        ['ssri_snri','anticoagulant','умерен','SSRI + антикоагулант — повишен риск от кървене.'],
-        ['ssri_snri','nsaid','умерен','SSRI + НСПВС — повишен риск от стомашно кървене.'],
+        ['nsaid','ace_arb','умерен','НСПВС отслабва ефекта на кръвното и натоварва бъбреците.'],
+        ['nsaid','diuretic','умерен','НСПВС отслабва диуретика и натоварва бъбреците.'],
         ['ssri_snri','serotonergic','висок','риск от серотонинов синдром.'],
-        ['ssri_snri','maoi','висок','SSRI + MAO-инхибитор — опасен серотонинов синдром.'],
-        ['serotonergic','maoi','висок','риск от серотонинов синдром.'],
-        ['qt_prolong','qt_prolong','умерен','две лекарства, удължаващи QT — риск от аритмия.']
+        ['ssri_snri','nsaid','умерен','SSRI + НСПВС → риск от стомашно кървене.']
     ];
+    const INGRED=['apixaban','amiodarone','амиодарон','bisoprolol','бисопролол','perindopril','периндоприл','indapamide','индапамид','amlodipine','амлодипин','atorvastatin','ezetimibe','finerenone','allopurinol','алопуринол','clonidine','клонидин','chlortalidone','хлорталидон','sitagliptin','metformin','метформин','magnesium','melatonin','tryptophan','триптофан','griffonia','грифония','calcifediol'];
+    const NORMI={'амиодарон':'amiodarone','бисопролол':'bisoprolol','периндоприл':'perindopril','индапамид':'indapamide','амлодипин':'amlodipine','алопуринол':'allopurinol','клонидин':'clonidine','хлорталидон':'chlortalidone','метформин':'metformin','триптофан':'tryptophan','грифония':'griffonia'};
+    const ingredientsOf = (sub) => { const f=new Set(); INGRED.forEach(ing=>{ if(sub.includes(ing)) f.add(NORMI[ing]||ing); }); return f; };
 
-    // лицата на текущото лекарство
     const myPersons = (state.medicationPersons||[]).filter(mp => String(mp.medication_id)===String(myId)).map(mp => String(mp.person_id));
     const personName = pid => { const p=(state.persons||[]).find(x=>String(x.id)===String(pid)); return p ? (p.name||p.first_name||'') : ''; };
-    // активните лекарства на същите лица (без текущото), с активно вещество
     const peerIds = new Set((state.medicationPersons||[]).filter(mp => myPersons.includes(String(mp.person_id))).map(mp => String(mp.medication_id)));
-    const peers = (state.meds||[]).filter(x => peerIds.has(String(x.id)) && x.is_active && String(x.id)!==String(myId) && x.active_substance && x.active_substance.trim());
+    const peers = (state.meds||[]).filter(x => peerIds.has(String(x.id)) && (x.is_active||x.is_emergency) && String(x.id)!==String(myId) && x.active_substance && x.active_substance.trim());
 
-    const results = [];  // {sev, with, msg}
+    const results = [];
     if (my) {
         const myClasses = classesOf(my);
+        const myIng = ingredientsOf(my);
         peers.forEach(p => {
             const ps = norm(p.active_substance);
             const pClasses = classesOf(ps);
-            // 1) дублиране на вещество (съвпадаща ключова дума/вещество)
-            let dup = false;
-            // грубо: ако двете имена споделят достатъчно дълга обща дума
-            const myWords = my.split(/[^a-zа-я0-9]+/).filter(w=>w.length>=5);
-            if (myWords.some(w => ps.includes(w))) dup = true;
-            if (dup) results.push({sev:'умерен', with:p.name_bg, msg:'същото/подобно активно вещество — риск от двойна доза.'});
-            // 2) правила между класове
+            const shared = [...myIng].filter(x => ingredientsOf(ps).has(x));
+            if (shared.length) results.push({sev:'умерен', with:p.name_bg, msg:'съдържа същото вещество ('+shared.join(', ')+') → риск от двойна доза.'});
             RULES.forEach(([a,b,sev,msg]) => {
                 const hit = (myClasses.includes(a)&&pClasses.includes(b)) || (myClasses.includes(b)&&pClasses.includes(a));
                 if (hit) results.push({sev, with:p.name_bg, msg});
             });
         });
     }
-    // махни дубликати (същото лекарство+съобщение)
     const seen=new Set(); const uniq=[];
     results.forEach(r=>{const k=r.with+'|'+r.msg; if(!seen.has(k)){seen.add(k); uniq.push(r);}});
     const sevRank={'висок':0,'умерен':1,'нисък':2};
     uniq.sort((a,b)=>(sevRank[a.sev]??9)-(sevRank[b.sev]??9));
 
+    // Състави текст на оценката (на български) за записване в полето
+    let assessment;
+    if (!my) assessment='';
+    else if (!uniq.length) assessment='✅ Няма противопоказания с взиманите досега лекарства. Може да се взима.';
+    else assessment='⚠️ Внимание при съвместно вземане: '+uniq.map(x=>`${x.with} (${x.sev}) — ${x.msg}`).join(' ');
+
+    // Покажи резултата + бутон „Приложи в полето" (попълва редактируемото поле interaction_note)
     let html='';
     if (!my) {
-        html += '<div style="background:#FEEBC8; border:1px solid #DD6B20; border-radius:8px; padding:10px; color:#7B341E;">Няма въведено активно вещество — попълни „Активно вещество", за да проверя. (Козметика/изделия/хомеопатия нямат вещество за проверка.)</div>';
-    } else if (!uniq.length) {
-        html += '<div style="background:#C6F6D5; border:1px solid #38A169; border-radius:8px; padding:10px; color:#22543D;"><b>✅ Няма противопоказания с взиманите досега лекарства.</b> Може да се взима.</div>';
+        html += '<div style="background:#FEEBC8; border:1px solid #DD6B20; border-radius:8px; padding:10px; color:#7B341E;">Няма въведено активно вещество — попълни „Активно вещество", за да проверя.</div>';
     } else {
-        html += uniq.map(x => {
-            const col = x.sev==='висок' ? {bg:'#FED7D7',bd:'#C53030',fg:'#742A2A',ic:'⛔'} : {bg:'#FEEBC8',bd:'#DD6B20',fg:'#7B341E',ic:'⚠️'};
-            return `<div style="background:${col.bg}; border:1px solid ${col.bd}; border-radius:8px; padding:10px; margin-bottom:6px; color:${col.fg};">`+
-                   `<b>${col.ic} Несъвместимо с ${x.with}</b>${x.sev?' ('+x.sev+' риск)':''}<br>${x.msg}</div>`;
-        }).join('');
+        const col = uniq.length && uniq[0].sev==='висок' ? {bg:'#FED7D7',bd:'#C53030',fg:'#742A2A'} : (uniq.length ? {bg:'#FEEBC8',bd:'#DD6B20',fg:'#7B341E'} : {bg:'#C6F6D5',bd:'#38A169',fg:'#22543D'});
+        html += `<div style="background:${col.bg}; border:1px solid ${col.bd}; border-radius:8px; padding:10px; color:${col.fg};">${assessment.replace(/</g,'&lt;')}</div>`;
+        html += `<button type="button" id="applyInteractionBtn" style="margin-top:6px; background:#2F855A; color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold;">⬇️ Приложи в полето „Съвместимост"</button>`;
     }
-    // ръчната бележка винаги се показва, ако има
-    if (manualNote) {
-        html += `<div style="background:#E2E8F0; border-radius:8px; padding:10px; margin-top:6px; color:#2D3748;"><b>📝 Твоя бележка:</b><br>${manualNote.replace(/</g,'&lt;')}</div>`;
-    }
-
-    // --- Онлайн/копиране блок ---
-    try {
-        const latin = s => (s||'').toLowerCase().replace(/[^a-z0-9\s+]/g,' ');
-        const toks = new Set();
-        latin(mySub).split(/[\s+]+/).forEach(w=>{ if(w.length>3) toks.add(w); });
-        peers.forEach(p => latin(p.active_substance).split(/[\s+]+/).forEach(w=>{ if(w.length>3) toks.add(w); }));
+    // готов въпрос за Quick + бутон за копиране (чист, без inline onclick) + външни чекъри
+    if (my) {
         const nameInput = document.getElementById('name_bg');
-        const curName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (mySub||'лекарството');
-        // име на лицето/лицата на текущото лекарство
+        const curName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : mySub;
         const pnames = myPersons.map(personName).filter(Boolean);
         const forWhom = pnames.length ? (' за ' + pnames.join(' и ')) : '';
         const question = `Провери „${curName}"${forWhom} за несъвместимост с активните им лекарства.`;
-        const qEsc = question.replace(/</g,'&lt;').replace(/'/g,"\\'");
-
-        // Готов въпрос + копче за копиране — показва се винаги, акцент когато няма данни
-        const unknown = !my || !uniq.length;
-        if (my) {
-            html += `<div style="margin-top:10px; padding:10px; border:1px dashed #A0AEC0; border-radius:8px; background:#F7FAFC;">`+
-                `<div style="font-size:13px; color:#2D3748; margin-bottom:6px;">`+
-                (unknown ? '🩺 За жива проверка през Quick, копирай този въпрос и го постави в чата с мен:' : '🩺 Искаш жива онлайн проверка през Quick? Копирай готовия въпрос:')+
-                `</div>`+
-                `<div style="font-size:13px; color:#1A202C; background:#EDF2F7; border-radius:6px; padding:8px; margin-bottom:6px;">${question.replace(/</g,'&lt;')}</div>`+
-                `<button type="button" onclick="(function(){navigator.clipboard&&navigator.clipboard.writeText('${qEsc}').then(()=>{var b=event.target;var o=b.innerText;b.innerText='✓ Копирано';setTimeout(()=>b.innerText=o,1500);});})()" style="background:#6B46C1; color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold;">📋 Копирай за Quick</button>`+
-                `</div>`;
-        }
-        // Външни чекъри — винаги
-        html += `<div style="margin-top:8px;">`+
+        html += `<div style="margin-top:10px; padding:10px; border:1px dashed #A0AEC0; border-radius:8px; background:#F7FAFC;">`+
+            `<div style="font-size:13px; color:#2D3748; margin-bottom:6px;">🩺 Искаш жива онлайн проверка през Quick? Копирай готовия въпрос:</div>`+
+            `<div id="quickQuestion" style="font-size:13px; color:#1A202C; background:#EDF2F7; border-radius:6px; padding:8px; margin-bottom:6px;">${question.replace(/</g,'&lt;')}</div>`+
+            `<button type="button" id="copyQuickBtn" style="background:#6B46C1; color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold;">📋 Копирай за Quick</button>`+
+            `<div style="margin-top:8px;">`+
             `<a href="https://www.drugs.com/drug_interactions.html" target="_blank" rel="noopener" style="display:inline-block; background:#2B6CB0; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:bold;">🔎 Drugs.com</a> `+
             `<a href="https://mediately.co/bg/interactions" target="_blank" rel="noopener" style="display:inline-block; background:#2F855A; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:bold; margin-left:6px;">🔎 Mediately</a>`+
-            `</div>`;
-    } catch(e){}
-box.innerHTML = html;
+            `</div></div>`;
+    }
+    box.innerHTML = html;
+
+    // Слушатели (вместо inline onclick — за да не изтича код в HTML)
+    const applyBtn = document.getElementById('applyInteractionBtn');
+    if (applyBtn && noteEl) applyBtn.addEventListener('click', () => { noteEl.value = assessment; applyBtn.innerText='✓ Приложено'; setTimeout(()=>applyBtn.innerText='⬇️ Приложи в полето „Съвместимост"',1500); });
+    const copyBtn = document.getElementById('copyQuickBtn');
+    const qEl = document.getElementById('quickQuestion');
+    if (copyBtn && qEl) copyBtn.addEventListener('click', () => { const t=qEl.innerText; if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>{ copyBtn.innerText='✓ Копирано'; setTimeout(()=>copyBtn.innerText='📋 Копирай за Quick',1500); }); });
 }
 </script>
 
