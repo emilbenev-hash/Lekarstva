@@ -1709,7 +1709,7 @@
                 return `
                     <div class="card" onclick="openPanel('${m.id}')">
                         ${emergencyBadge}
-                        <h3>${displayName}</h3>
+                        <h3>${displayName}${m.atc_code ? ` <span style="color:#777; font-size:12px; font-weight:normal; font-family:monospace;">· ${m.atc_code}</span>` : ''}</h3>
                         <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">💰 ${priceHtml}</p>
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold;">За: ${assignedPersons}</p>` : ''}
@@ -1799,7 +1799,7 @@
         function openPanel(id) {
             const isNew = !id;
             const m = isNew ? {
-                id: null, name_bg: '', name_latin: '', active_substance: '', category_id: null, specialty_id: null, manufacturer_id: null, interaction_note: '',
+                id: null, name_bg: '', name_latin: '', active_substance: '', category_id: null, specialty_id: null, manufacturer_id: null, interaction_note: '', atc_code: '',
                 concentration: '', concentration_unit: '', volume_quantity: null, volume_unit: '', form: '', form_quantity: null, dosage: '',
                 doctor_id: null, prescription_medical_center_id: null, prescription_date: null, start_date: null, end_date: null,
                 health_insurance: false, is_active: true, is_emergency: false,
@@ -1918,7 +1918,7 @@
             const todayStr = new Date().toISOString().split('T')[0];
 
             document.getElementById('panelBody').innerHTML = `
-                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div></div>
+                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div><div class="form-group"><label>ATC код</label><input type="text" id="atc_code" value="${m.atc_code||''}" placeholder="напр. C02LC01" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" maxlength="10" style="text-transform:uppercase;"></div></div>
                 <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
                 <div class="form-group"><label>Описание (действие)</label><textarea id="desc" placeholder="Кратко действие на лекарството...">${m.description||''}</textarea></div>
                 
@@ -2383,6 +2383,7 @@
                 name_bg: nameBgVal,
                 name_latin: document.getElementById('name_latin').value,
                 active_substance: document.getElementById('active').value,
+                atc_code: (document.getElementById('atc_code') ? document.getElementById('atc_code').value.trim().toUpperCase() : '') || null,
                 category_id: categoryId,
                 specialty_id: specialtyId,
                 manufacturer_id: manufacturerId,
