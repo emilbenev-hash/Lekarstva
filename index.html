@@ -1928,6 +1928,7 @@
                         <div style="display:flex; gap:6px; align-items:stretch;">
                         <input type="text" id="specialty_name" list="specialty_list" value="${currentSpecName}" placeholder="Специалност..." style="flex:1; min-width:0;">
                         <button type="button" class="addnew-btn" onclick="addMedSpecialty()" title="Добави нова специалност">➕</button>
+                        <button type="button" class="addnew-btn" onclick="clearMedSpecialty()" title="Изчисти специалността за това лекарство" style="background:#C0392B;">🗑</button>
                         </div>
                         <datalist id="specialty_list">${specDatalist}</datalist>
                     </div>
@@ -1936,7 +1937,7 @@
                         <div style="display:flex; gap:6px; align-items:stretch;">
                         <input type="text" id="category_name" list="category_list" value="${currentCatName}" placeholder="Категория..." style="flex:1; min-width:0;">
                         <button type="button" class="addnew-btn" onclick="addMedCategory()" title="Добави нова категория">➕</button>
-                        <button type="button" class="addnew-btn" onclick="deleteMedCategory()" title="Изтрий категория" style="background:#C0392B;">🗑</button>
+                        <button type="button" class="addnew-btn" onclick="clearMedCategory()" title="Изчисти категорията за това лекарство" style="background:#C0392B;">🗑</button>
                         </div>
                         <datalist id="category_list">${catDatalist}</datalist>
                     </div>
@@ -2779,6 +2780,29 @@ async function deleteMedCategory() {
         if (sel) { const cur=sel.value; sel.innerHTML = sel.options[0].outerHTML + state.categories.map(x=>`<option value="${x.id}">${x.name}</option>`).join(''); if(cur!==String(cat.id)) sel.value=cur; }
         alert('Категорията „'+cat.name+'" е изтрита.');
     } catch(e){ alert('Грешка: '+e.message); }
+}
+</script>
+
+<script>
+// ---- Нулиране на категорията само за ТЕКУЩОТО лекарство (12.10.2026) ----
+// Не трие категория от списъка — само изчиства полето, за да стане лекарството „без категория".
+function clearMedCategory() {
+    const inp = document.getElementById('category_name');
+    if (!inp) return;
+    if (!inp.value.trim()) { inp.value=''; inp.focus(); return; }
+    inp.value = '';
+    inp.focus();
+}
+</script>
+
+<script>
+// ---- Нулиране на специалността само за ТЕКУЩОТО лекарство (12.10.2026) ----
+// Не трие специалност от списъка — само изчиства полето.
+function clearMedSpecialty() {
+    const inp = document.getElementById('specialty_name');
+    if (!inp) return;
+    inp.value = '';
+    inp.focus();
 }
 </script>
 </body>
