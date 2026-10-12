@@ -270,7 +270,39 @@
         #labContainer .lab-th-date { font-size: 15px !important; font-weight: bold; }
         #labContainer .lab-th-lab { font-size: 12px !important; font-weight: normal; opacity: 0.92; max-width: 88px; margin: 0 auto; overflow: hidden; text-overflow: ellipsis; }
         #labContainer td span[style*="font-size:9px"] { font-size: 11px !important; }
-    </style>
+    
+        /* Малко плюсче за „добави нов" (специалност/категория) */
+        .addnew-btn { background:#148F77; color:#fff; border:none; border-radius:8px; cursor:pointer;
+            font-weight:bold; font-size:18px; line-height:1; flex:0 0 auto; width:40px; min-width:40px;
+            padding:0; display:flex; align-items:center; justify-content:center; }
+        .addnew-btn:hover { background:#0E6B59; }
+
+        /* 7″ мобилна: плюсчето да НЕ се разтяга от общото правило за бутони */
+        .addnew-btn, .addnew-btn[style] { min-height:52px !important; width:52px !important; min-width:52px !important;
+            font-size:22px !important; padding:0 !important; flex:0 0 auto !important; }
+
+        /* Динамична ширина с горна граница за късите полета (12.10.2026).
+           Полето заема нужното място, но не повече от зададения максимум;
+           дългите полета (име, вещество, описание, специалност, категория,
+           производител, лекар, център, аптека) остават разтегнати. */
+        .form-row .form-group:has(> input#concentration),
+        .form-row .form-group:has(> input#concentration_unit),
+        .form-row .form-group:has(> input#vol),
+        .form-row .form-group:has(> input#unit),
+        .form-row .form-group:has(> input#form),
+        .form-row .form-group:has(> input#qty),
+        .form-row .form-group:has(> input#prescription_date),
+        .form-row .form-group:has(> input#start_date),
+        .form-row .form-group:has(> input#end_date),
+        .form-row .form-group:has(> input#purchase_date),
+        .form-row .form-group:has(> input#price_eur),
+        .form-row .form-group:has(> input#price_zk_eur) { max-width: 180px; }
+        .form-group:has(> input#dosage) { max-width: 260px; }
+        /* късите полета в ред да не се разтягат да запълнят целия ред */
+        .form-row:has(> .form-group > input#qty),
+        .form-row:has(> .form-group > input#unit),
+        .form-row:has(> .form-group > input#concentration_unit) { justify-content: flex-start; }
+</style>
 </head>
 <body>
     <!-- ZDRAVE Device Gate (Път 1: device token) -->
@@ -430,7 +462,6 @@
             <div id="personFilters" class="filter-buttons"></div>
             <div id="zokFilters" class="filter-buttons"></div>
             <div id="activeFilters" class="filter-buttons"></div>
-            <div id="dailyFilters" class="filter-buttons"></div>
             <div id="emergencyFilters" class="filter-buttons"></div>
             <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
                 <button onclick="openNewMed()" style="flex:1; min-width:120px; padding: 10px; background:#E67E22; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">➕ Ново лекарство</button>
@@ -522,7 +553,7 @@
         }
 
         let state = { 
-            selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedDaily: 'all', selectedEmergency: 'all', selectedCategory: 'all', 
+            selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedEmergency: 'all', selectedCategory: 'all', 
             meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], 
             currentId: null, editingPurchaseId: null, 
             labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false,
@@ -1503,7 +1534,7 @@
         async function refreshData() {
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
             try {
-                const [medsRes, purchRes, pharmRes, docRes, mcRes, catRes, manRes, persRes, medPersRes, docsRes, medDocsRes, labCatRes, labParRes, labTestRes, labResRes, labRangeRes, shopRes] = await Promise.all([
+                const [medsRes, purchRes, pharmRes, docRes, mcRes, catRes, manRes, persRes, medPersRes, docsRes, medDocsRes, labCatRes, labParRes, labTestRes, labResRes, labRangeRes, shopRes, specRes, interRes] = await Promise.all([
                     fetch(CONFIG.URL + '/rest/v1/medications?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/purchases?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/pharmacies?select=*', { headers: h }),
@@ -1520,7 +1551,9 @@
                     fetch(CONFIG.URL + '/rest/v1/lab_tests?select=*', { headers: h }),
                     (async () => { const all = []; const step = 1000; for (let from = 0; ; from += step) { const r = await fetch(CONFIG.URL + '/rest/v1/lab_results?select=*&order=id', { headers: { ...h, 'Range-Unit': 'items', 'Range': from + '-' + (from + step - 1) } }); if (!r.ok) return r; const part = await r.json(); all.push(...part); if (part.length < step) break; } return { ok: true, json: async () => all }; })(),
                     fetch(CONFIG.URL + '/rest/v1/lab_reference_ranges?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/shopping_list?select=*', { headers: h })
+                    fetch(CONFIG.URL + '/rest/v1/shopping_list?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/specialties?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/medication_interactions?select=*', { headers: h })
                 ]);
 
                 state.meds = medsRes.ok ? await medsRes.json() : [];
@@ -1540,6 +1573,8 @@
                 state.labResults = labResRes.ok ? await labResRes.json() : [];
                 state.labRanges = labRangeRes.ok ? await labRangeRes.json() : [];
                 state.shoppingList = shopRes.ok ? await shopRes.json() : [];
+                state.specialties = specRes && specRes.ok ? await specRes.json() : [];
+                state.medicationInteractions = interRes && interRes.ok ? await interRes.json() : [];
 
                 renderUI();
                 renderLabs();
@@ -1559,8 +1594,8 @@
 
             document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
             document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без ЗОК':'Всички'}</button>`).join('');
-            document.getElementById('activeFilters').innerHTML = ['true', 'false', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':a==='false'?'Неактивни':'Всички'}</button>`).join('');
-            document.getElementById('dailyFilters').innerHTML = ['true', 'all'].map(d => `<button class="filter-btn ${state.selectedDaily===d?'active':''}" onclick="state.selectedDaily='${d}'; renderUI()">${d==='true'?'Ежедневни':'Всички'}</button>`).join('');
+            document.getElementById('activeFilters').innerHTML = ['true', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':'Всички'}</button>`).join('');
+
             document.getElementById('emergencyFilters').innerHTML = ['true', 'all'].map(e => `<button class="filter-btn ${state.selectedEmergency===e?'active':''}" onclick="state.selectedEmergency='${e}'; renderUI()">${e==='true'?'Спешни':'Всички'}</button>`).join('');
 
             const search = document.getElementById('search').value.toLowerCase().trim();
@@ -1580,11 +1615,10 @@
                 const matchPerson = state.selectedPerson === 'all' || personsForMed.includes(state.selectedPerson);
                 const matchZok = state.selectedZok === 'all' || m.health_insurance === (state.selectedZok === 'true');
                 const matchActive = state.selectedActive === 'all' || m.is_active === (state.selectedActive === 'true');
-                const matchDaily = state.selectedDaily === 'all' || m.is_daily === (state.selectedDaily === 'true');
                 const matchCategory = state.selectedCategory === 'all' || String(m.category_id) === state.selectedCategory;
                 const matchEmergency = state.selectedEmergency === 'all' || m.is_emergency === (state.selectedEmergency === 'true');
 
-                return matchPerson && matchZok && matchActive && matchDaily && matchCategory && matchEmergency;
+                return matchPerson && matchZok && matchActive && matchCategory && matchEmergency;
             }).map(m => {
                 const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
                 let priceHtml = 'Няма цена';
@@ -1765,10 +1799,10 @@
         function openPanel(id) {
             const isNew = !id;
             const m = isNew ? {
-                id: null, name_bg: '', name_latin: '', active_substance: '', category_id: null, manufacturer_id: null,
+                id: null, name_bg: '', name_latin: '', active_substance: '', category_id: null, specialty_id: null, manufacturer_id: null, interaction_note: '',
                 concentration: '', concentration_unit: '', volume_quantity: null, volume_unit: '', form: '', form_quantity: null, dosage: '',
                 doctor_id: null, prescription_medical_center_id: null, prescription_date: null, start_date: null, end_date: null,
-                health_insurance: false, is_active: true, is_daily: true, is_emergency: false,
+                health_insurance: false, is_active: true, is_emergency: false,
                 notes: '', description: ''
             } : state.meds.find(x => String(x.id) === String(id));
 
@@ -1838,6 +1872,10 @@
             const currentCatObj = state.categories.find(c => String(c.id) === String(m.category_id));
             const currentCatName = currentCatObj ? currentCatObj.name : '';
             const catDatalist = state.categories.map(c => `<option value="${c.name}">`).join('');
+            const specList = [...(state.specialties||[])].sort((x,y)=>((x.sort_order||0)-(y.sort_order||0))||String(x.name_bg||'').localeCompare(String(y.name_bg||''),'bg'));
+            const currentSpecObj = (state.specialties||[]).find(sp => String(sp.id) === String(m.specialty_id));
+            const currentSpecName = currentSpecObj ? currentSpecObj.name_bg : '';
+            const specDatalist = specList.map(sp => `<option value="${sp.name_bg}">`).join('');
 
             const currentManObj = state.manufacturers.find(mn => String(mn.id) === String(m.manufacturer_id));
             const currentManName = currentManObj ? currentManObj.name : '';
@@ -1882,13 +1920,23 @@
             document.getElementById('panelBody').innerHTML = `
                 <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div></div>
                 <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
+                <div class="form-group"><label>Описание (действие)</label><textarea id="desc" placeholder="Кратко действие на лекарството...">${m.description||''}</textarea></div>
                 
                 <div class="form-row">
                     <div class="form-group">
+                        <label>Специалност</label>
+                        <div style="display:flex; gap:6px; align-items:stretch;">
+                        <input type="text" id="specialty_name" list="specialty_list" value="${currentSpecName}" placeholder="Специалност..." style="flex:1; min-width:0;">
+                        <button type="button" class="addnew-btn" onclick="addMedSpecialty()" title="Добави нова специалност">➕</button>
+                        </div>
+                        <datalist id="specialty_list">${specDatalist}</datalist>
+                    </div>
+                    <div class="form-group">
                         <label>Категория</label>
-                        <div style="display:flex; gap:8px; align-items:stretch;">
+                        <div style="display:flex; gap:6px; align-items:stretch;">
                         <input type="text" id="category_name" list="category_list" value="${currentCatName}" placeholder="Категория..." style="flex:1; min-width:0;">
-                        <button type="button" onclick="addMedCategory()" title="Добави нова категория" style="background:#148F77; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; white-space:nowrap;">➕ Нова</button>
+                        <button type="button" class="addnew-btn" onclick="addMedCategory()" title="Добави нова категория">➕</button>
+                        <button type="button" class="addnew-btn" onclick="deleteMedCategory()" title="Изтрий категория" style="background:#C0392B;">🗑</button>
                         </div>
                         <datalist id="category_list">${catDatalist}</datalist>
                     </div>
@@ -1902,12 +1950,15 @@
                 <div class="form-group">
                     <label>Предназначено за лица:</label>
                     <div class="checkbox-group">${personsCheckboxes || 'Няма лица'}</div>
+                    <div class="checkbox-group" style="margin-top:8px; display:flex; gap:18px; flex-wrap:wrap;">
+                        <label style="white-space:nowrap;"><input type="checkbox" id="is_active" ${m.is_active?'checked':''}> Активно</label>
+                        <label style="white-space:nowrap;"><input type="checkbox" id="is_emergency" ${m.is_emergency?'checked':''}> Спешно</label>
+                        <label style="white-space:nowrap;"><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> ЗОК</label>
+                    </div>
                 </div>
 
-                <div class="form-row"><div class="form-group"><label>Концентрация</label><input type="text" id="concentration" value="${m.concentration||''}" placeholder="напр. 500 или 875/125"></div><div class="form-group"><label>Мерна единица</label><input type="text" id="concentration_unit" value="${m.concentration_unit||''}" placeholder="напр. mg, mg/ml, %"></div></div>
-                <div class="form-row"><div class="form-group"><label>Количество</label><input type="text" id="vol" value="${m.volume_quantity !== null && m.volume_quantity !== undefined ? m.volume_quantity : ''}"></div><div class="form-group"><label>Единица</label><input type="text" id="unit" value="${m.volume_unit||''}"></div></div>
-                <div class="form-row"><div class="form-group"><label>Форма</label><input type="text" id="form" value="${m.form||''}"></div><div class="form-group"><label>Брой</label><input type="number" id="qty" value="${m.form_quantity||''}"></div></div>
-                <div class="form-group"><label>Дозировка</label><input type="text" id="dosage" value="${m.dosage||''}"></div>
+                <div class="form-row"><div class="form-group"><label>Количество</label><input type="text" id="vol" value="${m.volume_quantity !== null && m.volume_quantity !== undefined ? m.volume_quantity : ''}"></div><div class="form-group"><label>Единица</label><input type="text" id="unit" value="${m.volume_unit||''}"></div><div class="form-group"><label>Дозировка</label><input type="text" id="dosage" value="${m.dosage||''}"></div></div>
+                <div class="form-row"><div class="form-group"><label>Концентрация</label><input type="text" id="concentration" value="${m.concentration||''}" placeholder="напр. 500 или 875/125"></div><div class="form-group"><label>Мерна единица</label><input type="text" id="concentration_unit" value="${m.concentration_unit||''}" placeholder="напр. mg, mg/ml, %"></div><div class="form-group"><label>Форма</label><input type="text" id="form" value="${m.form||''}"></div><div class="form-group"><label>Брой</label><input type="number" id="qty" value="${m.form_quantity||''}"></div></div>
                 
                 <div class="form-group" style="background: #f9f9f9; padding: 10px; border: 1px dashed #148F77; border-radius: 6px;">
                     <label style="color: #148F77; font-weight: bold; margin-bottom: 5px;">Свързани документи / рецепти:</label>
@@ -1927,6 +1978,7 @@
                     </div>
                 </div>
 
+                <div class="form-row">
                 <div class="form-group">
                     <label>Лекар</label>
                     <div style="display:flex; gap:6px; align-items:center;">
@@ -1944,6 +1996,7 @@
                     <label>Дата на рецепта</label>
                     <input type="text" id="prescription_date" value="${formatDateToBG(m.prescription_date)}" placeholder="дд.мм.гггг">
                 </div>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Начало на прием</label>
@@ -1957,12 +2010,7 @@
                     </div>
                 </div>
                 
-                <div class="form-row">
-                    <div class="form-group"><label><input type="checkbox" id="health_insurance" ${m.health_insurance?'checked':''}> ЗОК</label></div>
-                    <div class="form-group"><label><input type="checkbox" id="is_active" ${m.is_active?'checked':''}> Активно</label></div>
-                    <div class="form-group"><label><input type="checkbox" id="is_daily" ${m.is_daily?'checked':''}> Ежедневно</label></div>
-                    <div class="form-group"><label><input type="checkbox" id="is_emergency" ${m.is_emergency?'checked':''}> Спешно</label></div>
-                </div>
+                
                 
                 <div class="form-row">
                     <div class="form-group">
@@ -1986,8 +2034,12 @@
                     ${purchasesHistoryHtml}
                 </div>
 
-                <div class="form-group"><label>Бележки</label><textarea id="notes">${m.notes||''}</textarea></div>
-                <div class="form-group"><label>Описание</label><textarea id="desc">${m.description||''}</textarea></div>`;
+                <div class="form-group" style="border-top:2px solid #E2E8F0; padding-top:12px; margin-top:4px;">
+                    <button type="button" onclick="checkInteractions()" style="background:#B7791F; color:white; border:none; border-radius:8px; padding:10px 16px; cursor:pointer; font-weight:bold;">⚠️ Провери за съвместимост</button>
+                    <div id="interactionResult" style="margin-top:8px;"></div>
+                </div>
+                <div class="form-group"><label>Бележка за взаимодействия</label><textarea id="interaction_note" placeholder="Бележка за лекарствени взаимодействия...">${m.interaction_note||''}</textarea></div>
+                <div class="form-group"><label>Бележки</label><textarea id="notes">${m.notes||''}</textarea></div>`;
             
             if(availableDocs.length > 0) {
                 const sel = document.getElementById('existing_doc_select');
@@ -2231,6 +2283,16 @@
 
             const volValue = document.getElementById('vol').value.trim();
 
+            const specInputName = (document.getElementById('specialty_name') ? document.getElementById('specialty_name').value.trim() : '');
+            let specialtyId = null;
+            if (specInputName !== '') {
+                let ex = (state.specialties||[]).find(s => (s.name_bg||'').toLowerCase() === specInputName.toLowerCase());
+                if (ex) { specialtyId = ex.id; }
+                else {
+                    const r = await fetch(`${CONFIG.URL}/rest/v1/specialties`, { method:'POST', headers:h, body: JSON.stringify({ name_bg: specInputName }) });
+                    if (r.ok) { const d = await r.json(); if (d && d.length) { specialtyId = d[0].id; state.specialties.push(d[0]); } }
+                }
+            }
             const catInputName = document.getElementById('category_name').value.trim();
             let categoryId = null;
             if (catInputName !== '') {
@@ -2319,7 +2381,9 @@
                 name_latin: document.getElementById('name_latin').value,
                 active_substance: document.getElementById('active').value,
                 category_id: categoryId,
+                specialty_id: specialtyId,
                 manufacturer_id: manufacturerId,
+                interaction_note: (document.getElementById('interaction_note') ? document.getElementById('interaction_note').value.trim() : '') || null,
                 concentration: document.getElementById('concentration').value.trim() || null,
                 concentration_unit: document.getElementById('concentration_unit').value.trim() || null,
                 volume_quantity: volValue !== '' ? volValue : null,
@@ -2334,7 +2398,6 @@
                 end_date: endRes.iso,
                 health_insurance: document.getElementById('health_insurance').checked,
                 is_active: document.getElementById('is_active').checked,
-                is_daily: document.getElementById('is_daily').checked,
                 is_emergency: document.getElementById('is_emergency').checked,
                 notes: document.getElementById('notes').value,
                 description: document.getElementById('desc').value
@@ -2605,6 +2668,117 @@ async function addMedCategory() {
         }
         alert('Категорията „' + c.name + '“ е добавена.');
     } catch (e) { alert('Грешка: ' + e.message); }
+}
+</script>
+
+<script>
+// ---- Нова специалност (12.10.2026) ----
+async function addMedSpecialty() {
+    const inp = document.getElementById('specialty_name');
+    let name = prompt('Име на новата специалност:', (inp && inp.value.trim()) || '');
+    if (name === null) return;
+    name = name.trim().replace(/\s+/g, ' ');
+    if (!name) { alert('Името е празно.'); return; }
+    const ex = (state.specialties||[]).find(s => (s.name_bg||'').trim().toLowerCase() === name.toLowerCase());
+    if (ex) { if (inp) inp.value = ex.name_bg; alert('Специалността „' + ex.name_bg + '" вече съществува – избрана е.'); return; }
+    if (!confirm('Да създам ли специалност „' + name + '"?')) return;
+    try {
+        const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+        const r = await fetch(CONFIG.URL + '/rest/v1/specialties', { method: 'POST', headers: h, body: JSON.stringify({ name_bg: name }) });
+        if (!r.ok) { alert('Грешка при запис: ' + r.status + ' ' + (await r.text())); return; }
+        const d = await r.json();
+        const s = Array.isArray(d) ? d[0] : d;
+        if (!s) { alert('Сървърът не върна новата специалност.'); return; }
+        state.specialties.push(s);
+        const dl = document.getElementById('specialty_list');
+        if (dl) {
+            const sorted = [...state.specialties].sort((x,y)=>((x.sort_order||0)-(y.sort_order||0))||String(x.name_bg||'').localeCompare(String(y.name_bg||''),'bg'));
+            dl.innerHTML = sorted.map(x => `<option value="${x.name_bg}">`).join('');
+        }
+        if (inp) inp.value = s.name_bg;
+        alert('Специалността „' + s.name_bg + '" е добавена.');
+    } catch (e) { alert('Грешка: ' + e.message); }
+}
+
+// ---- Провери за съвместимост (12.10.2026) ----
+// Сравнява активното вещество на текущото лекарство с активните вещества на
+// ВСИЧКИ активни лекарства на СЪЩИТЕ лица (Лили срещу Лили, Емил срещу Емил),
+// по таблица medication_interactions (двойки активни вещества).
+function checkInteractions() {
+    const box = document.getElementById('interactionResult');
+    if (!box) return;
+    const myId = state.currentId || null;
+    const subEl = document.getElementById('active');
+    const mySub = (subEl ? subEl.value : '').trim().toLowerCase();
+    if (!mySub) {
+        box.innerHTML = '<div style="background:#FEEBC8; border:1px solid #DD6B20; border-radius:8px; padding:10px; color:#7B341E;">Няма въведено активно вещество за това лекарство – не мога да проверя. Попълни „Активно вещество" първо.</div>';
+        return;
+    }
+    // лицата на текущото лекарство
+    const myPersons = (state.medicationPersons||[]).filter(mp => String(mp.medication_id)===String(myId)).map(mp => String(mp.person_id));
+    // активните лекарства на същите лица (без текущото), с активно вещество
+    const peerIds = new Set((state.medicationPersons||[]).filter(mp => myPersons.includes(String(mp.person_id))).map(mp => String(mp.medication_id)));
+    const peers = (state.meds||[]).filter(x => peerIds.has(String(x.id)) && x.is_active && String(x.id)!==String(myId) && x.active_substance && x.active_substance.trim());
+    const inter = state.medicationInteractions || [];
+    const norm = s => (s||'').toLowerCase();
+    const hits = [];
+    peers.forEach(p => {
+        const ps = norm(p.active_substance);
+        inter.forEach(it => {
+            const a = norm(it.substance_a), b = norm(it.substance_b);
+            const match = (mySub.includes(a) && ps.includes(b)) || (mySub.includes(b) && ps.includes(a));
+            if (match) hits.push({ with: p.name_bg, sev: it.severity||'', note: it.note||'' });
+        });
+    });
+    if (!inter.length) {
+        box.innerHTML = '<div style="background:#E2E8F0; border-radius:8px; padding:10px; color:#2D3748;">Таблицата с взаимодействия е празна – още няма заредени двойки за проверка.</div>';
+        return;
+    }
+    if (!hits.length) {
+        box.innerHTML = '<div style="background:#C6F6D5; border:1px solid #38A169; border-radius:8px; padding:10px; color:#22543D;">Няма открити известни взаимодействия с активните лекарства.</div>';
+        return;
+    }
+    box.innerHTML = hits.map(x =>
+        `<div style="background:#FED7D7; border:1px solid #C53030; border-radius:8px; padding:10px; margin-bottom:6px; color:#742A2A;">
+            <b>⚠️ ${x.with}</b>${x.sev?' — '+x.sev:''}<br>${x.note||''}
+         </div>`).join('');
+}
+</script>
+
+<script>
+// ---- Изтриване на категория лекарство (12.10.2026) ----
+async function deleteMedCategory() {
+    const cats = [...(state.categories||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'bg'));
+    if (!cats.length) { alert('Няма категории.'); return; }
+    const listTxt = cats.map((c,i)=>(i+1)+'. '+c.name).join('\n');
+    let ans = prompt('Коя категория да изтрия? Въведи номер или точното име:\n\n'+listTxt);
+    if (ans === null) return;
+    ans = ans.trim();
+    if (!ans) return;
+    let cat = null;
+    const num = parseInt(ans,10);
+    if (!isNaN(num) && num>=1 && num<=cats.length && String(num)===ans) cat = cats[num-1];
+    else cat = cats.find(c => (c.name||'').trim().toLowerCase() === ans.toLowerCase());
+    if (!cat) { alert('Няма такава категория: „'+ans+'".'); return; }
+    const used = (state.meds||[]).filter(m => String(m.category_id)===String(cat.id));
+    if (used.length) {
+        alert('Категорията „'+cat.name+'" се ползва от '+used.length+' лекарств'+(used.length===1?'о':'а')+' и не може да се изтрие.\n\nПърво премахни категорията от тези лекарства.');
+        return;
+    }
+    if (!confirm('Да изтрия ли категорията „'+cat.name+'"?')) return;
+    try {
+        const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
+        const r = await fetch(CONFIG.URL + '/rest/v1/categories?id=eq.' + cat.id, { method:'DELETE', headers:h });
+        if (!r.ok) { alert('Грешка при изтриване: ' + r.status + ' ' + (await r.text())); return; }
+        state.categories = (state.categories||[]).filter(c => String(c.id)!==String(cat.id));
+        const dl = document.getElementById('category_list');
+        if (dl) dl.innerHTML = [...state.categories].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'bg')).map(x=>`<option value="${x.name}">`).join('');
+        const inp = document.getElementById('category_name');
+        if (inp && inp.value.trim().toLowerCase()===cat.name.trim().toLowerCase()) inp.value='';
+        const sel = document.getElementById('categoryFilter');
+        if (sel) { const cur=sel.value; sel.innerHTML = sel.options[0].outerHTML + state.categories.map(x=>`<option value="${x.id}">${x.name}</option>`).join(''); if(cur!==String(cat.id)) sel.value=cur; }
+        alert('Категорията „'+cat.name+'" е изтрита.');
+    } catch(e){ alert('Грешка: '+e.message); }
 }
 </script>
 </body>
