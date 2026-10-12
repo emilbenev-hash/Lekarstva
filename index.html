@@ -1929,6 +1929,7 @@
                         <input type="text" id="specialty_name" list="specialty_list" value="${currentSpecName}" placeholder="Специалност..." style="flex:1; min-width:0;">
                         <button type="button" class="addnew-btn" onclick="addMedSpecialty()" title="Добави нова специалност">➕</button>
                         <button type="button" class="addnew-btn" onclick="clearMedSpecialty()" title="Изчисти специалността за това лекарство" style="background:#C0392B;">🗑</button>
+                        <button type="button" class="addnew-btn" onclick="openListManager('specialty')" title="Управление на списъка със специалности" style="background:#5A6A7A;">📋</button>
                         </div>
                         <datalist id="specialty_list">${specDatalist}</datalist>
                     </div>
@@ -1938,6 +1939,7 @@
                         <input type="text" id="category_name" list="category_list" value="${currentCatName}" placeholder="Категория..." style="flex:1; min-width:0;">
                         <button type="button" class="addnew-btn" onclick="addMedCategory()" title="Добави нова категория">➕</button>
                         <button type="button" class="addnew-btn" onclick="clearMedCategory()" title="Изчисти категорията за това лекарство" style="background:#C0392B;">🗑</button>
+                        <button type="button" class="addnew-btn" onclick="openListManager('category')" title="Управление на списъка с категории" style="background:#5A6A7A;">📋</button>
                         </div>
                         <datalist id="category_list">${catDatalist}</datalist>
                     </div>
@@ -2803,6 +2805,88 @@ function clearMedSpecialty() {
     if (!inp) return;
     inp.value = '';
     inp.focus();
+}
+</script>
+
+<script>
+// ---- Управление на списък (Категория / Специалност) с 🗑 вътре (12.10.2026) ----
+// Отваря панел със записите; всеки ред има 🗑 за ТРАЙНО триене от списъка.
+// При триене на запис, ползван от лекарства: първо се изчиства от тях (null), после се трие.
+function openListManager(kind) {
+    let modal = document.getElementById('listManagerModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'listManagerModal';
+        modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; display:flex; align-items:center; justify-content:center; padding:16px;';
+        modal.innerHTML = '<div id="listManagerBox" style="background:#fff; border-radius:12px; max-width:520px; width:100%; max-height:80vh; overflow:auto; padding:18px;"></div>';
+        modal.addEventListener('click', e => { if (e.target===modal) modal.remove(); });
+        document.body.appendChild(modal);
+    }
+    renderListManager(kind);
+}
+
+function renderListManager(kind) {
+    const box = document.getElementById('listManagerBox');
+    if (!box) return;
+    const isCat = (kind==='category');
+    const title = isCat ? 'Категории' : 'Специалности';
+    const items = isCat
+        ? [...(state.categories||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'bg'))
+        : [...(state.specialties||[])].sort((a,b)=>((a.sort_order||0)-(b.sort_order||0))||String(a.name_bg||'').localeCompare(String(b.name_bg||''),'bg'));
+    const nameOf = it => isCat ? it.name : it.name_bg;
+    const usedCount = it => (state.meds||[]).filter(m => String(isCat ? m.category_id : m.specialty_id)===String(it.id)).length;
+    let rows = items.map(it => {
+        const n = usedCount(it);
+        return `<div style="display:flex; align-items:center; gap:10px; padding:8px 6px; border-bottom:1px solid #eee;">
+            <span style="flex:1; font-size:15px;">${nameOf(it)}${n?` <span style="color:#888; font-size:12px;">(${n} лек.)</span>`:''}</span>
+            <button type="button" onclick="deleteListItem('${kind}','${it.id}')" title="Изтрий от списъка" style="background:#C0392B; color:#fff; border:none; border-radius:8px; width:40px; height:40px; cursor:pointer; font-size:18px;">🗑</button>
+        </div>`;
+    }).join('');
+    if (!items.length) rows = '<div style="color:#888; padding:12px;">Няма записи.</div>';
+    box.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="margin:0; font-size:18px;">${title}</h3>
+            <button type="button" onclick="document.getElementById('listManagerModal').remove()" style="background:#777; color:#fff; border:none; border-radius:8px; padding:8px 14px; cursor:pointer;">Затвори</button>
+        </div>
+        ${rows}`;
+}
+
+async function deleteListItem(kind, id) {
+    const isCat = (kind==='category');
+    const arr = isCat ? (state.categories||[]) : (state.specialties||[]);
+    const it = arr.find(x => String(x.id)===String(id));
+    if (!it) return;
+    const nm = isCat ? it.name : it.name_bg;
+    const used = (state.meds||[]).filter(m => String(isCat ? m.category_id : m.specialty_id)===String(id));
+    let msg = 'Да изтрия ли „'+nm+'" от списъка?';
+    if (used.length) msg += '\n\nЩе бъде премахната от '+used.length+' лекарств'+(used.length===1?'о':'а') + ' (стават без '+(isCat?'категория':'специалност')+').';
+    if (!confirm(msg)) return;
+    try {
+        const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type':'application/json' };
+        const col = isCat ? 'category_id' : 'specialty_id';
+        if (used.length) {
+            const r1 = await fetch(CONFIG.URL + '/rest/v1/medications?'+col+'=eq.'+id, { method:'PATCH', headers:h, body: JSON.stringify({ [col]: null }) });
+            if (!r1.ok) { alert('Грешка при изчистване от лекарствата: '+r1.status+' '+(await r1.text())); return; }
+            used.forEach(m => { const mm=(state.meds||[]).find(x=>String(x.id)===String(m.id)); if(mm) mm[col]=null; });
+        }
+        const tbl = isCat ? 'categories' : 'specialties';
+        const r2 = await fetch(CONFIG.URL + '/rest/v1/'+tbl+'?id=eq.'+id, { method:'DELETE', headers:h });
+        if (!r2.ok) { alert('Грешка при изтриване: '+r2.status+' '+(await r2.text())); return; }
+        if (isCat) state.categories = (state.categories||[]).filter(x=>String(x.id)!==String(id));
+        else state.specialties = (state.specialties||[]).filter(x=>String(x.id)!==String(id));
+        // refresh datalists + filter
+        const catDL=document.getElementById('category_list');
+        if (catDL) catDL.innerHTML=[...(state.categories||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'bg')).map(x=>`<option value="${x.name}">`).join('');
+        const specDL=document.getElementById('specialty_list');
+        if (specDL) specDL.innerHTML=[...(state.specialties||[])].sort((a,b)=>((a.sort_order||0)-(b.sort_order||0))||String(a.name_bg||'').localeCompare(String(b.name_bg||''),'bg')).map(x=>`<option value="${x.name_bg}">`).join('');
+        const sel=document.getElementById('categoryFilter');
+        if (sel && isCat) { const cur=sel.value; sel.innerHTML=sel.options[0].outerHTML+[...state.categories].map(x=>`<option value="${x.id}">${x.name}</option>`).join(''); sel.value=(cur===String(id))?'all':cur; }
+        // clear the field if it currently shows the deleted item
+        const inp = document.getElementById(isCat ? 'category_name' : 'specialty_name');
+        if (inp && inp.value.trim().toLowerCase()===String(nm).trim().toLowerCase()) inp.value='';
+        renderListManager(kind);
+        if (typeof renderUI==='function') renderUI();
+    } catch(e){ alert('Грешка: '+e.message); }
 }
 </script>
 </body>
