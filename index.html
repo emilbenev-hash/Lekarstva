@@ -1799,8 +1799,8 @@
         function openPanel(id) {
             const isNew = !id;
             const m = isNew ? {
-                id: null, name_bg: '', name_latin: '', active_substance: '', category_id: null, specialty_id: null, manufacturer_id: null, interaction_note: '', atc_code: '', barcode: '',
-                concentration: '', co
+                id: null, name_bg: '', name_latin: '', active_substance: '', category_id: null, specialty_id: null, manufacturer_id: null, interaction_note: '', atc_code: '',
+                concentration: '', concentration_unit: '', volume_quantity: null, volume_unit: '', form: '', form_quantity: null, dosage: '',
                 doctor_id: null, prescription_medical_center_id: null, prescription_date: null, start_date: null, end_date: null,
                 health_insurance: false, is_active: true, is_emergency: false,
                 notes: '', description: ''
@@ -1918,7 +1918,7 @@
             const todayStr = new Date().toISOString().split('T')[0];
 
             document.getElementById('panelBody').innerHTML = `
-                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div><div class="form-group"><label>ATC код</label><input type="text" id="atc_code" value="${m.atc_code||''}" placeholder="напр. C02LC01" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" maxlength="10" style="text-transform:uppercase;"></div><div class="form-group"><label>Баркод (EAN)</label><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="barcode" value="${m.barcode||''}" placeholder="сканирай или въведи" inputmode="numeric" style="flex:1;"><button type="button" onclick="scanBarcode()" style="background:#2B6CB0; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-weight:bold; white-space:nowrap;">📷 Сканирай</button></div></div></div>
+                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div><div class="form-group"><label>ATC код</label><input type="text" id="atc_code" value="${m.atc_code||''}" placeholder="напр. C02LC01" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" maxlength="10" style="text-transform:uppercase;"></div></div>
                 <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
                 <div class="form-group"><label>Описание (действие)</label><textarea id="desc" placeholder="Кратко действие на лекарството...">${m.description||''}</textarea></div>
                 
@@ -2384,7 +2384,6 @@
                 name_latin: document.getElementById('name_latin').value,
                 active_substance: document.getElementById('active').value,
                 atc_code: (document.getElementById('atc_code') ? document.getElementById('atc_code').value.trim().toUpperCase() : '') || null,
-                barcode: (document.getElementById('barcode') ? document.getElementById('barcode').value.trim() : '') || null,
                 category_id: categoryId,
                 specialty_id: specialtyId,
                 manufacturer_id: manufacturerId,
@@ -2970,130 +2969,5 @@ async function deleteListItem(kind, id) {
     } catch(e){ alert('Грешка: '+e.message); }
 }
 </script>
-
-<script>
-// ====== Баркод скенер (само мобилна) 2026.10.13 ======
-async function scanBarcode() {
-    const out = document.getElementById('barcode');
-    // Нужен е HTTPS/камера
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('Камерата не е достъпна в този браузър.');
-        return;
-    }
-    // Оверлей с видео
-    let ov = document.getElementById('barcodeOverlay');
-    if (ov) ov.remove();
-    ov = document.createElement('div');
-    ov.id = 'barcodeOverlay';
-    ov.style.cssText = 'position:fixed; inset:0; background:#000; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center;';
-    ov.innerHTML = '<video id="bcVideo" playsinline style="width:100%; max-height:70vh; object-fit:cover;"></video>'+
-        '<div style="color:#fff; margin:12px; font-size:15px;">Насочи камерата към баркода…</div>'+
-        '<button id="bcCancel" style="background:#C53030; color:#fff; border:none; border-radius:8px; padding:12px 20px; font-weight:bold; font-size:16px;">Отказ</button>';
-    document.body.appendChild(ov);
-    const video = document.getElementById('bcVideo');
-    let stream = null, stop = false, raf = null;
-    const cleanup = () => { stop = true; if (raf) cancelAnimationFrame(raf); if (stream) stream.getTracks().forEach(t=>t.stop()); if (ov) ov.remove(); };
-    document.getElementById('bcCancel').addEventListener('click', cleanup);
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        video.srcObject = stream; await video.play();
-    } catch(e) { alert('Няма достъп до камерата: '+e.message); cleanup(); return; }
-
-    const onFound = async (code) => {
-        if (!code) return;
-        cleanup();
-        out.value = code;
-        out.dispatchEvent(new Event('input',{bubbles:true}));
-        await handleScannedBarcode(code);
-    };
-
-    // 1) Нативен BarcodeDetector (Android Chrome/Samsung Internet)
-    if ('BarcodeDetector' in window) {
-        try {
-            const det = new window.BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128'] });
-            const tick = async () => {
-                if (stop) return;
-                try {
-                    const codes = await det.detect(video);
-                    if (codes && codes.length) { onFound(codes[0].rawValue); return; }
-                } catch(_){}
-                raf = requestAnimationFrame(tick);
-            };
-            raf = requestAnimationFrame(tick);
-            return;
-        } catch(_){ /* fall through to ZXing */ }
-    }
-    // 2) Fallback: ZXing от CDN
-    try {
-        if (!window.ZXing) {
-            await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
-        }
-        const reader = new window.ZXing.BrowserMultiFormatReader();
-        reader.decodeFromVideoElement(video, (result, err) => {
-            if (stop) { try{reader.reset();}catch(_){ } return; }
-            if (result) { try{reader.reset();}catch(_){ } onFound(result.getText()); }
-        });
-    } catch(e) {
-        alert('Неуспешно стартиране на скенера. Можеш да въведеш баркода ръчно.');
-        cleanup();
-    }
-}
-
-// Обработка след сканиране: търси в базата; ако липсва — опит за авто-попълване
-async function handleScannedBarcode(code) {
-    const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
-    try {
-        const r = await fetch(`${CONFIG.URL}/rest/v1/medications?barcode=eq.${encodeURIComponent(code)}&select=id,name_bg`, { headers: h });
-        const found = r.ok ? await r.json() : [];
-        if (found && found.length) {
-            // вече съществува → отвори го за редакция
-            if (confirm(`Това лекарство вече е в базата: „${found[0].name_bg}". Да го отворя ли?`)) {
-                if (typeof openPanel === 'function') { state.currentId = found[0].id; openPanel(found[0].id); }
-            }
-            return;
-        }
-        // ново → опит за авто-попълване по EAN
-        await autofillByEan(code);
-    } catch(e) {
-        console.warn('barcode lookup error', e);
-    }
-}
-
-// Опит за авто-попълване по EAN от публични баркод-бази (best-effort, не гарантирано за БГ лекарства)
-async function autofillByEan(code) {
-    const nameEl = document.getElementById('name_bg');
-    const latEl = document.getElementById('name_latin');
-    let filled = false;
-    // Опит 1: Open Food/EAN бази (някои връщат и лекарства/козметика)
-    const tryUrls = [
-        `https://world.openbeautyfacts.org/api/v2/product/${code}.json`,
-        `https://world.openfoodfacts.org/api/v2/product/${code}.json`
-    ];
-    for (const u of tryUrls) {
-        try {
-            const r = await fetch(u);
-            if (!r.ok) continue;
-            const d = await r.json();
-            if (d && d.status === 1 && d.product) {
-                const p = d.product;
-                const nm = p.product_name_bg || p.product_name || p.generic_name || '';
-                const brand = p.brands || '';
-                if (nm && latEl && !latEl.value) { latEl.value = nm; latEl.dispatchEvent(new Event('input',{bubbles:true})); filled = true; }
-                if (brand) {
-                    const mEl = document.getElementById('manufacturer_name');
-                    if (mEl && !mEl.value) { mEl.value = brand; mEl.dispatchEvent(new Event('input',{bubbles:true})); filled = true; }
-                }
-                break;
-            }
-        } catch(_){}
-    }
-    if (filled) {
-        alert('Намерих частична информация по баркода и я попълних. Моля, провери и допълни.');
-    } else {
-        alert('Баркодът е записан. Не намерих автоматична информация за този EAN — въведи данните ръчно (мога да помогна през чата: „Провери баркод '+code+'").');
-    }
-}
-</script>
-
 </body>
 </html>
