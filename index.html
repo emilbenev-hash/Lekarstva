@@ -1918,7 +1918,8 @@
             const todayStr = new Date().toISOString().split('T')[0];
 
             document.getElementById('panelBody').innerHTML = `
-                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div><div class="form-group"><label>ATC код</label><input type="text" id="atc_code" value="${m.atc_code||''}" placeholder="напр. C02LC01" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" maxlength="10" style="text-transform:uppercase;"></div><div class="form-group"><label>Баркод (EAN)</label><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="barcode" value="${m.barcode||''}" placeholder="въведи баркод" inputmode="numeric" style="flex:1; padding:10px; font-size:15px;"><button type="button" onclick="if(typeof scanBarcode==='function'){scanBarcode()}else{alert('Скенерът не е наличен.')}" style="background:#2B6CB0; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:18px; line-height:1; flex:0 0 auto;">📷</button></div></div></div>
+                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div><div class="form-group"><label>ATC код</label><input type="text" id="atc_code" value="${m.atc_code||''}" placeholder="напр. C02LC01" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" maxlength="10" style="text-transform:uppercase;"></div><div class="form-group"><label>Баркод (EAN)</label><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="barcode" value="${m.barcode||''}" placeholder="въведи баркод" inputmode="numeric" style="flex:1; padding:10px; font-size:15px;"><button type="button" onclick="if(typeof scanBarcode==='function'){scanBarcode()}else{alert('Скенерът не е наличен.')}" style="background:#2B6CB0; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:18px; line-height:1; flex:0 0 auto;">📷</button></div>
+                <div style="margin-top:6px;"><button type="button" onclick="if(typeof scanMedBox==='function'){scanMedBox()}else{alert('Снимането не е налично.')}" style="width:100%; background:#2F855A; color:#fff; border:none; border-radius:8px; padding:12px; cursor:pointer; font-size:16px; font-weight:600;">📸 Снимай кутията (за авто-попълване)</button></div></div></div>
                 <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
                 <div class="form-group"><label>Описание (действие)</label><textarea id="desc" placeholder="Кратко действие на лекарството...">${m.description||''}</textarea></div>
                 
@@ -3013,7 +3014,7 @@ async function deleteListItem(kind, id) {
         // 1) Нативен BarcodeDetector
         if ('BarcodeDetector' in window) {
           try {
-            var det = new window.BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128'] });
+            var det = new window.BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','qr_code','data_matrix','pdf417','aztec'] });
             var tick = async function(){
               if (stopped) return;
               try { var codes = await det.detect(video); if (codes && codes.length) { onFound(codes[0].rawValue); return; } } catch(e){}
@@ -3063,7 +3064,7 @@ async function deleteListItem(kind, id) {
     window.autofillByEan = async function(code){
       try {
         var latEl = document.getElementById('name_latin');
-        var filled = false;
+        var filledMsg = '';
         var urls = ['https://world.openbeautyfacts.org/api/v2/product/' + code + '.json',
                     'https://world.openfoodfacts.org/api/v2/product/' + code + '.json'];
         for (var i=0; i<urls.length; i++){
@@ -3074,41 +3075,91 @@ async function deleteListItem(kind, id) {
             if (d && d.status === 1 && d.product){
               var nm = d.product.product_name_bg || d.product.product_name || d.product.generic_name || '';
               var brand = d.product.brands || '';
-              if (nm && latEl && !latEl.value){ latEl.value = nm; latEl.dispatchEvent(new Event('input',{bubbles:true})); filled = true; }
-              if (brand){ var mEl = document.getElementById('manufacturer_name'); if (mEl && !mEl.value){ mEl.value = brand; mEl.dispatchEvent(new Event('input',{bubbles:true})); filled = true; } }
+              if (nm && latEl && !latEl.value){ latEl.value = nm; latEl.dispatchEvent(new Event('input',{bubbles:true})); filledMsg = 'Попълних частична информация от баркод базата. '; }
+              if (brand){ var mEl = document.getElementById('manufacturer_name'); if (mEl && !mEl.value){ mEl.value = brand; mEl.dispatchEvent(new Event('input',{bubbles:true})); filledMsg = 'Попълних частична информация от баркод базата. '; } }
               break;
             }
           } catch(e){}
         }
-        if (filled) { alert('Намерих частична информация по баркода и я попълних. Провери и допълни.'); return; }
-        // Нищо автоматично → покажи помощен панел: копирай въпрос за Quick + връзка към GS1 (ръчна проверка)
-        try {
-          var box = document.getElementById('interactionResult') || (function(){
-            var p = document.getElementById('barcode'); return p ? p.parentNode.parentNode : null;
-          })();
-          var q = 'Провери баркод ' + code + ' и попълни каквото намериш за това лекарство (име, вещество, производител, ATC).';
-          var gs1 = 'https://www.gs1bg.org/bg/get-a-barcode/barcode-check/?gtin=' + encodeURIComponent(code);
-          var html = '<div style="margin-top:8px; padding:10px; border:1px dashed #A0AEC0; border-radius:8px; background:#F7FAFC;">' +
-            '<div style="font-size:13px; color:#2D3748; margin-bottom:6px;">Няма автоматична информация за този баркод. Копирай въпрос за Quick (жива проверка) или виж производителя в GS1:</div>' +
-            '<div id="bcQ" style="font-size:13px; color:#1A202C; background:#EDF2F7; border-radius:6px; padding:8px; margin-bottom:6px;">' + q + '</div>' +
-            '<button type="button" id="bcCopy" style="background:#6B46C1; color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold;">📋 Копирай за Quick</button> ' +
-            '<a href="' + gs1 + '" target="_blank" rel="noopener" style="display:inline-block; background:#2B6CB0; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:bold; margin-left:6px;">🔎 Провери в GS1</a>' +
-            '<a href="https://ncpr.bg" target="_blank" rel="noopener" style="display:inline-block; background:#2F855A; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:bold; margin-left:6px;">🔎 НСЦРЛП (цена)</a>' +
-            '<a href="https://mediately.co/bg" target="_blank" rel="noopener" style="display:inline-block; background:#6B46C1; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:bold; margin-left:6px;">🔎 Mediately</a>' +
-            '</div>';
-          if (box) {
-            box.insertAdjacentHTML('beforeend', html);
-            var cb = document.getElementById('bcCopy');
-            if (cb) cb.addEventListener('click', function(){ if(navigator.clipboard){ navigator.clipboard.writeText(q).then(function(){ cb.innerText='✓ Копирано'; setTimeout(function(){ cb.innerText='📋 Копирай за Quick'; },1500); }); } });
-          } else {
-            alert('Баркодът е записан. Няма автоматична информация — питай ме в чата: „' + q + '"');
-          }
-        } catch(e){ alert('Баркодът е записан. Няма автоматична информация — питай ме в чата: „Провери баркод ' + code + '"'); }
+        // Търсим с ИМЕ ако е въведено, иначе с баркода
+        var nameEl = document.getElementById('name_bg');
+        var term = (nameEl && nameEl.value.trim()) ? nameEl.value.trim() : code;
+        var box = (function(){
+          var p = document.getElementById('barcode'); return p ? p.parentNode.parentNode : null;
+        })() || document.getElementById('interactionResult');
+        var q = 'Провери баркод ' + code + ' и попълни каквото намериш за това лекарство (име, вещество, производител, ATC).';
+        // Google site-search линкове — винаги предзаредени с термина
+        function gsite(site){ return 'https://www.google.com/search?q=' + encodeURIComponent('site:' + site + ' ' + term); }
+        var intro = filledMsg
+          ? (filledMsg + 'Провери и допълни в официалните източници:')
+          : 'Няма автоматична информация. Копирай въпрос за Quick (жива проверка) или търси директно (предзаредено с ' + (term===code ? 'баркода' : 'името') + '):';
+        var html = '<div id="bcPanel" style="margin-top:8px; padding:10px; border:1px dashed #A0AEC0; border-radius:8px; background:#F7FAFC;">' +
+          '<div style="font-size:13px; color:#2D3748; margin-bottom:6px;">' + intro + '</div>' +
+          '<div id="bcQ" style="font-size:13px; color:#1A202C; background:#EDF2F7; border-radius:6px; padding:8px; margin-bottom:6px;">' + q + '</div>' +
+          '<button type="button" id="bcCopy" style="background:#6B46C1; color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold;">📋 Копирай за Quick</button>' +
+          '<div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">' +
+          '<a href="' + gsite('mediately.co') + '" target="_blank" rel="noopener" style="display:inline-block; background:#805AD5; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:bold;">🔎 Mediately</a>' +
+          '<a href="' + gsite('ncpr.bg') + '" target="_blank" rel="noopener" style="display:inline-block; background:#2F855A; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:bold;">🔎 НСЦРЛП (цена)</a>' +
+          '<a href="' + gsite('apteka.framar.bg') + '" target="_blank" rel="noopener" style="display:inline-block; background:#DD6B20; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:bold;">🔎 Framar</a>' +
+          '<a href="https://www.gs1bg.org/bg/get-a-barcode/barcode-check/" target="_blank" rel="noopener" style="display:inline-block; background:#2B6CB0; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:bold;">🔎 GS1 (№ ' + code + ')</a>' +
+          '</div></div>';
+        if (box) {
+          var oldp = document.getElementById('bcPanel'); if (oldp) oldp.remove();
+          box.insertAdjacentHTML('beforeend', html);
+          var cb = document.getElementById('bcCopy');
+          if (cb) cb.addEventListener('click', function(){ if(navigator.clipboard){ navigator.clipboard.writeText(q).then(function(){ cb.innerText='✓ Копирано'; setTimeout(function(){ cb.innerText='📋 Копирай за Quick'; },1500); }); } });
+        } else {
+          alert((filledMsg || 'Баркодът е записан. ') + 'Питай ме в чата: „' + q + '"');
+        }
       } catch(e){ console.warn('autofillByEan', e); }
     };
   } catch(e){ /* дефинициите не трябва да чупят страницата при никакви обстоятелства */ console.warn('barcode block init', e); }
 })();
 </script>
 
+
+<script>
+/* 📸 Снимай кутията — качва снимка в medical-docs, създава документ (опашка за разчитане) и връзка към лекарството. Защитено: нищо тежко при load. */
+(function(){
+  try {
+    window.scanMedBox = async function(){
+      try {
+        if (typeof state==='undefined' || !state.currentId) { alert('Първо отвори или създай лекарство, после снимай кутията.'); return; }
+        var input = document.createElement('input');
+        input.type='file'; input.accept='image/*'; input.capture='environment';
+        input.onchange = async function(){
+          try {
+            var file = input.files && input.files[0];
+            if(!file){ return; }
+            var ov=document.createElement('div');
+            ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:99999;color:#fff;font-size:18px;';
+            ov.textContent='Качвам снимката…'; document.body.appendChild(ov);
+            var h={ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' };
+            var ext=(file.name.split('.').pop()||'jpg');
+            var cleanFileName='medscan_'+Date.now()+'_'+Math.random().toString(36).substring(2,7)+'.'+ext;
+            var up=await fetch(CONFIG.URL+'/storage/v1/object/medical-docs/'+cleanFileName, { method:'POST', headers:{ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':file.type||'image/jpeg' }, body:file });
+            if(!up.ok){ var et=await up.text(); ov.remove(); alert('Грешка при качване: '+et); return; }
+            var publicUrl=CONFIG.URL+'/storage/v1/object/public/medical-docs/'+cleanFileName;
+            var docRes=await fetch(CONFIG.URL+'/rest/v1/documents', { method:'POST', headers:h, body:JSON.stringify({ file_url:publicUrl, file_name:file.name, doc_type:'med_scan', scan_status:'pending', uploaded_from:'mobile' }) });
+            var docData=await docRes.json();
+            if(docData && docData.length){
+              var doc=docData[0];
+              if(typeof state.documents!=='undefined' && state.documents.push) state.documents.push(doc);
+              await fetch(CONFIG.URL+'/rest/v1/medication_documents', { method:'POST', headers:h, body:JSON.stringify({ medication_id:state.currentId, document_id:doc.id }) });
+              if(typeof state.medication_documents!=='undefined' && state.medication_documents.push) state.medication_documents.push({ medication_id:state.currentId, document_id:doc.id });
+              ov.remove();
+              alert('✅ Снимката е качена и прикачена към лекарството.\nЩе бъде разчетена и полетата попълнени при следваща обработка.');
+              if(typeof refreshData==='function'){ try{ refreshData(); }catch(e){} }
+            } else {
+              ov.remove(); alert('Снимката е качена, но документът не бе записан.');
+            }
+          } catch(e){ alert('Грешка: '+(e && e.message ? e.message : e)); var o=document.querySelector('div[style*="Качвам"]'); if(o)o.remove(); }
+        };
+        input.click();
+      } catch(e){ alert('Грешка при стартиране на камерата: '+(e && e.message ? e.message : e)); }
+    };
+  } catch(e){ console.warn('scanMedBox init', e); }
+})();
+</script>
 </body>
 </html>
