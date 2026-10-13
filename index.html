@@ -378,9 +378,10 @@
     })();
     </script>
 
-    <div class="header">
+    <div class="header" style="position:relative;">
         <button id="backHomeBtn" onclick="showHome()" style="display:none; padding:6px 10px; background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5); border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">&#8592; Начало</button>
         <h1 style="margin:0; flex:1; text-align:center;"><span class="h1-main">Здравен мениджър</span><span class="h1-labs">Изследвания</span><span class="subtitle">📱 Версия за 7″ мобилен телефон</span></h1>
+        <div id="scanBadge" onclick="if(typeof showScanQueue==='function'){showScanQueue()}" style="display:none; position:absolute; right:10px; top:8px; background:#E53E3E; color:#fff; min-width:22px; height:22px; border-radius:11px; font-size:12px; font-weight:bold; line-height:22px; text-align:center; padding:0 6px; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.3);" title="Снимки, чакащи разчитане">0</div>
     </div>
 
     <!-- НАЧАЛНО МЕНЮ -->
@@ -1566,6 +1567,7 @@
                 state.persons = persRes.ok ? await persRes.json() : [];
                 state.medicationPersons = medPersRes.ok ? await medPersRes.json() : [];
                 state.documents = docsRes.ok ? await docsRes.json() : [];
+                try{ if(typeof updateScanBadge==='function') updateScanBadge(); }catch(e){}
                 state.medication_documents = medDocsRes.ok ? await medDocsRes.json() : [];
                 state.labCategories = labCatRes.ok ? await labCatRes.json() : [];
                 state.labParameters = labParRes.ok ? await labParRes.json() : [];
@@ -3124,7 +3126,7 @@ async function deleteListItem(kind, id) {
   try {
     window.scanMedBox = async function(){
       try {
-        if (typeof state==='undefined' || !state.currentId) { alert('Първо отвори или създай лекарство, после снимай кутията.'); return; }
+        if (typeof state==='undefined') { alert('Приложението още се зарежда.'); return; }
         var input = document.createElement('input');
         input.type='file'; input.accept='image/*'; input.capture='environment';
         input.onchange = async function(){
@@ -3140,16 +3142,52 @@ async function deleteListItem(kind, id) {
             var up=await fetch(CONFIG.URL+'/storage/v1/object/medical-docs/'+cleanFileName, { method:'POST', headers:{ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':file.type||'image/jpeg' }, body:file });
             if(!up.ok){ var et=await up.text(); ov.remove(); alert('Грешка при качване: '+et); return; }
             var publicUrl=CONFIG.URL+'/storage/v1/object/public/medical-docs/'+cleanFileName;
-            var docRes=await fetch(CONFIG.URL+'/rest/v1/documents', { method:'POST', headers:h, body:JSON.stringify({ file_url:publicUrl, file_name:file.name, doc_type:'med_scan', scan_status:'pending', uploaded_from:'mobile' }) });
+            // Ако сме на празна форма (ново лекарство без id) → създаваме чернова
+            var medId = state.currentId;
+            var createdNew = false;
+            if(!medId){
+              ov.textContent='Създавам ново лекарство…';
+              var dt=new Date().toLocaleString('bg-BG');
+              var medRes=await fetch(CONFIG.URL+'/rest/v1/medications', { method:'POST', headers:h, body:JSON.stringify({ name_bg:'Ново лекарство (от снимка) '+dt, is_active:true }) });
+              if(!medRes.ok){ var me=await medRes.text(); ov.remove(); alert('Грешка при създаване на лекарството: '+me); return; }
+              var medData=await medRes.json();
+              if(medData && medData.length){ medId=medData[0].id; createdNew=true; if(state.meds && state.meds.push) state.meds.push(medData[0]); }
+              else { ov.remove(); alert('Лекарството не бе създадено.'); return; }
+            }
+            // OCR опит (мързелив Tesseract); текстът влиза в scan_notes, парснатото допопълва празни полета
+            ov.textContent='Разчитам текста… (може да отнеме време)';
+            var ocrText='';
+            try { if(typeof ocrImageFile==='function'){ ocrText=await ocrImageFile(file); } } catch(e){ ocrText=''; }
+            var parsed = (typeof parseMedText==='function') ? parseMedText(ocrText||'') : { barcode:'', atc:'', name_guess:'' };
+            // допопълване само на празни полета на съществуващо/новосъздадено лекарство
+            try {
+              var curMed=(state.meds||[]).find(function(x){ return String(x.id)===String(medId); });
+              if(curMed){
+                var patch={};
+                if(parsed.barcode && !curMed.barcode) patch.barcode=parsed.barcode;
+                if(parsed.atc && !curMed.atc_code) patch.atc_code=parsed.atc;
+                if(Object.keys(patch).length){
+                  await fetch(CONFIG.URL+'/rest/v1/medications?id=eq.'+medId, { method:'PATCH', headers:h, body:JSON.stringify(patch) });
+                  Object.keys(patch).forEach(function(k){ curMed[k]=patch[k]; });
+                }
+              }
+            } catch(e){}
+            ov.textContent='Качвам снимката…';
+            var docRes=await fetch(CONFIG.URL+'/rest/v1/documents', { method:'POST', headers:h, body:JSON.stringify({ file_url:publicUrl, file_name:file.name, doc_type:'med_scan', scan_status:'pending', uploaded_from:'mobile', scan_notes:(ocrText||'').slice(0,4000) }) });
             var docData=await docRes.json();
             if(docData && docData.length){
               var doc=docData[0];
               if(typeof state.documents!=='undefined' && state.documents.push) state.documents.push(doc);
-              await fetch(CONFIG.URL+'/rest/v1/medication_documents', { method:'POST', headers:h, body:JSON.stringify({ medication_id:state.currentId, document_id:doc.id }) });
-              if(typeof state.medication_documents!=='undefined' && state.medication_documents.push) state.medication_documents.push({ medication_id:state.currentId, document_id:doc.id });
+              await fetch(CONFIG.URL+'/rest/v1/medication_documents', { method:'POST', headers:h, body:JSON.stringify({ medication_id:medId, document_id:doc.id }) });
+              if(typeof state.medication_documents!=='undefined' && state.medication_documents.push) state.medication_documents.push({ medication_id:medId, document_id:doc.id });
               ov.remove();
-              alert('✅ Снимката е качена и прикачена към лекарството.\nЩе бъде разчетена и полетата попълнени при следваща обработка.');
-              if(typeof refreshData==='function'){ try{ refreshData(); }catch(e){} }
+              if(createdNew){
+                alert('✅ Създадено ново лекарство и снимката е прикачена.\nЩе бъде разчетена и полетата попълнени при следваща обработка.');
+                try{ if(typeof refreshData==='function'){ await refreshData(); } if(typeof openPanel==='function'){ openPanel(medId); } }catch(e){}
+              } else {
+                alert('✅ Снимката е качена и прикачена към лекарството.\nЩе бъде разчетена и полетата попълнени при следваща обработка.');
+                if(typeof refreshData==='function'){ try{ refreshData(); }catch(e){} }
+              }
             } else {
               ov.remove(); alert('Снимката е качена, но документът не бе записан.');
             }
@@ -3159,6 +3197,77 @@ async function deleteListItem(kind, id) {
       } catch(e){ alert('Грешка при стартиране на камерата: '+(e && e.message ? e.message : e)); }
     };
   } catch(e){ console.warn('scanMedBox init', e); }
+})();
+</script>
+
+<script>
+/* 🔴 Балонче опашка за разчитане на снимки — брои documents с doc_type=med_scan и scan_status=pending. Защитено. */
+(function(){
+  try {
+    window.updateScanBadge = function(){
+      try {
+        var el=document.getElementById('scanBadge'); if(!el) return;
+        var docs=(typeof state!=='undefined' && state.documents)?state.documents:[];
+        var n=docs.filter(function(d){ return d && d.doc_type==='med_scan' && d.scan_status==='pending'; }).length;
+        if(n>0){ el.textContent=String(n); el.style.display='block'; } else { el.style.display='none'; }
+      } catch(e){}
+    };
+    window.showScanQueue = function(){
+      try {
+        var docs=(typeof state!=='undefined' && state.documents)?state.documents:[];
+        var pend=docs.filter(function(d){ return d && d.doc_type==='med_scan' && d.scan_status==='pending'; });
+        if(!pend.length){ alert('Няма снимки, чакащи разчитане.'); return; }
+        var medName=function(docId){
+          try{
+            var link=(state.medication_documents||[]).find(function(x){return String(x.document_id)===String(docId);});
+            if(!link) return '(несвързана)';
+            var m=(state.meds||[]).find(function(x){return String(x.id)===String(link.medication_id);});
+            return m?(m.name_bg||m.name_lat||'(лекарство)'):'(лекарство)';
+          }catch(e){ return ''; }
+        };
+        var lines=pend.map(function(d,i){
+          var dt=d.created_at?new Date(d.created_at).toLocaleString('bg-BG'):'';
+          return (i+1)+'. '+medName(d.id)+' — '+dt;
+        });
+        alert('📸 Снимки, чакащи разчитане ('+pend.length+'):\n\n'+lines.join('\n')+'\n\nЩе бъдат разчетени при следваща обработка.');
+      } catch(e){ alert('Грешка: '+(e&&e.message?e.message:e)); }
+    };
+  } catch(e){ console.warn('scanBadge init', e); }
+})();
+</script>
+
+<script>
+/* 🔎 OCR хибрид — Tesseract.js се зарежда МЪРЗЕЛИВО само при нужда. parseMedText налучква баркод/ATC/име. Защитено, нищо тежко при load. */
+(function(){
+  try {
+    window.ocrImageFile = async function(file){
+      try {
+        if(!window.Tesseract){
+          await new Promise(function(res,rej){
+            var s=document.createElement('script');
+            s.src='https://unpkg.com/tesseract.js@5/dist/tesseract.min.js';
+            s.onload=res; s.onerror=rej; document.head.appendChild(s);
+          });
+        }
+        if(!window.Tesseract) return '';
+        var res=await window.Tesseract.recognize(file, 'bul+eng');
+        return (res && res.data && res.data.text) ? res.data.text : '';
+      } catch(e){ return ''; }
+    };
+    window.parseMedText = function(text){
+      var out={ barcode:'', atc:'', name_guess:'' };
+      try {
+        if(!text) return out;
+        var t=' '+text.replace(/\s+/g,' ')+' ';
+        var mb=t.match(/\D(\d{13})\D/); if(mb) out.barcode=mb[1];
+        else { var mb8=t.match(/\D(\d{8})\D/); if(mb8) out.barcode=mb8[1]; }
+        var ma=t.match(/\b([A-Z]\d{2}[A-Z]{2}\d{2})\b/); if(ma) out.atc=ma[1];
+        var lines=text.split(/\n/).map(function(x){return x.trim();}).filter(function(x){return x.length>=3;});
+        if(lines.length) out.name_guess=lines[0].slice(0,80);
+      } catch(e){}
+      return out;
+    };
+  } catch(e){ console.warn('ocr init', e); }
 })();
 </script>
 </body>
