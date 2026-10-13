@@ -3080,8 +3080,28 @@ async function deleteListItem(kind, id) {
             }
           } catch(e){}
         }
-        if (filled) alert('Намерих частична информация по баркода и я попълних. Провери и допълни.');
-        else alert('Баркодът е записан. Няма автоматична информация за този EAN — въведи ръчно (или ме питай в чата: „Провери баркод ' + code + '").');
+        if (filled) { alert('Намерих частична информация по баркода и я попълних. Провери и допълни.'); return; }
+        // Нищо автоматично → покажи помощен панел: копирай въпрос за Quick + връзка към GS1 (ръчна проверка)
+        try {
+          var box = document.getElementById('interactionResult') || (function(){
+            var p = document.getElementById('barcode'); return p ? p.parentNode.parentNode : null;
+          })();
+          var q = 'Провери баркод ' + code + ' и попълни каквото намериш за това лекарство (име, вещество, производител, ATC).';
+          var gs1 = 'https://www.gs1.org/services/verified-by-gs1/results?gtin=' + encodeURIComponent(code);
+          var html = '<div style="margin-top:8px; padding:10px; border:1px dashed #A0AEC0; border-radius:8px; background:#F7FAFC;">' +
+            '<div style="font-size:13px; color:#2D3748; margin-bottom:6px;">Няма автоматична информация за този баркод. Копирай въпрос за Quick (жива проверка) или виж производителя в GS1:</div>' +
+            '<div id="bcQ" style="font-size:13px; color:#1A202C; background:#EDF2F7; border-radius:6px; padding:8px; margin-bottom:6px;">' + q + '</div>' +
+            '<button type="button" id="bcCopy" style="background:#6B46C1; color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:bold;">📋 Копирай за Quick</button> ' +
+            '<a href="' + gs1 + '" target="_blank" rel="noopener" style="display:inline-block; background:#2B6CB0; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:bold; margin-left:6px;">🔎 Провери в GS1</a>' +
+            '</div>';
+          if (box) {
+            box.insertAdjacentHTML('beforeend', html);
+            var cb = document.getElementById('bcCopy');
+            if (cb) cb.addEventListener('click', function(){ if(navigator.clipboard){ navigator.clipboard.writeText(q).then(function(){ cb.innerText='✓ Копирано'; setTimeout(function(){ cb.innerText='📋 Копирай за Quick'; },1500); }); } });
+          } else {
+            alert('Баркодът е записан. Няма автоматична информация — питай ме в чата: „' + q + '"');
+          }
+        } catch(e){ alert('Баркодът е записан. Няма автоматична информация — питай ме в чата: „Провери баркод ' + code + '"'); }
       } catch(e){ console.warn('autofillByEan', e); }
     };
   } catch(e){ /* дефинициите не трябва да чупят страницата при никакви обстоятелства */ console.warn('barcode block init', e); }
