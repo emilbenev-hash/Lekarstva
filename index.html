@@ -302,7 +302,9 @@
         .form-row:has(> .form-group > input#qty),
         .form-row:has(> .form-group > input#unit),
         .form-row:has(> .form-group > input#concentration_unit) { justify-content: flex-start; }
-</style>
+.med-filter-row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+        .med-filter-row .filter-buttons { margin-bottom: 0; }
+    </style>
 </head>
 <body>
     <!-- ZDRAVE Device Gate (Път 1: device token) -->
@@ -461,9 +463,9 @@
                 <option value="all">Всички</option>
             </select>
             <div id="personFilters" class="filter-buttons"></div>
-            <div id="zokFilters" class="filter-buttons"></div>
-            <div id="activeFilters" class="filter-buttons"></div>
+            <div class="med-filter-row"><div id="activeFilters" class="filter-buttons"></div>
             <div id="emergencyFilters" class="filter-buttons"></div>
+            <div id="zokFilters" class="filter-buttons"></div></div>
             <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
                 <button onclick="openNewMed()" style="flex:1; min-width:120px; padding: 10px; background:#E67E22; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">➕ Ново лекарство</button>
                 <button onclick="refreshData()" style="flex:1; min-width:100px; padding: 10px; background:#148F77; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">Опресни</button>
@@ -1594,8 +1596,8 @@
             });
             catSelect.innerHTML = catOptions;
 
-            document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p.toUpperCase()}</button>`).join('');
-            document.getElementById('zokFilters').innerHTML = ['true', 'false', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':z==='false'?'Без ЗОК':'Всички'}</button>`).join('');
+            document.getElementById('personFilters').innerHTML = ['Лили', 'Емил', 'all'].map(p => `<button class="filter-btn ${state.selectedPerson===p.toLowerCase()?'active':''}" onclick="state.selectedPerson='${p.toLowerCase()}'; renderUI()">${p==='all'?'Всички':p}</button>`).join('');
+            document.getElementById('zokFilters').innerHTML = ['true', 'all'].map(z => `<button class="filter-btn ${state.selectedZok===z?'active':''}" onclick="state.selectedZok='${z}'; renderUI()">${z==='true'?'ЗОК':'Всички'}</button>`).join('');
             document.getElementById('activeFilters').innerHTML = ['true', 'all'].map(a => `<button class="filter-btn ${state.selectedActive===a?'active':''}" onclick="state.selectedActive='${a}'; renderUI()">${a==='true'?'Активни':'Всички'}</button>`).join('');
 
             document.getElementById('emergencyFilters').innerHTML = ['true', 'all'].map(e => `<button class="filter-btn ${state.selectedEmergency===e?'active':''}" onclick="state.selectedEmergency='${e}'; renderUI()">${e==='true'?'Спешни':'Всички'}</button>`).join('');
@@ -1621,6 +1623,12 @@
                 const matchEmergency = state.selectedEmergency === 'all' || m.is_emergency === (state.selectedEmergency === 'true');
 
                 return matchPerson && matchZok && matchActive && matchCategory && matchEmergency;
+            }).sort((a,b) => {
+                var hasFilter = (search !== '') || (state.selectedPerson !== 'all') || (state.selectedZok !== 'all') || (state.selectedActive !== 'all') || (state.selectedCategory !== 'all') || (state.selectedEmergency !== 'all');
+                if (hasFilter) {
+                    return String(a.name_bg||a.name_latin||'').localeCompare(String(b.name_bg||b.name_latin||''), 'bg');
+                }
+                return new Date(b.created_at||0) - new Date(a.created_at||0);
             }).map(m => {
                 const medPurchases = state.purchases.filter(p => String(p.medication_id) === String(m.id));
                 let priceHtml = 'Няма цена';
@@ -1701,17 +1709,23 @@
                     docButtonsHtml = `<div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">`;
                     medDocs.forEach(doc => {
                         const docName = doc.file_name || doc.title || 'Документ';
-                        docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${escJs(doc.file_url)}', '${escJs(docName)}')">📄 ${docName}</button>`;
+                        docButtonsHtml += `<button class="doc-btn" onclick="event.stopPropagation(); openFullscreen('${escJs(doc.file_url)}', '${escJs(docName)}')">${(doc.doc_type==='med_scan')?'📷':'📄'} ${docName}</button>`;
                     });
                     docButtonsHtml += `</div>`;
                 }
+
+                // Снимки на кутия (med_scan) — за иконка на картата
+                const scanPhotos = medDocs.filter(doc => doc.doc_type === 'med_scan');
+                const photoBadge = scanPhotos.length > 0
+                    ? ` <span onclick="event.stopPropagation(); showMedPhotos('${m.id}')" title="Налична снимка на кутията" style="cursor:pointer; font-size:17px; vertical-align:middle;">📷</span>`
+                    : '';
 
                 const emergencyBadge = m.is_emergency ? `<div style="background:#E74C3C; color:white; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; display:inline-block; margin-bottom:4px;">СПЕШНО</div>` : '';
 
                 return `
                     <div class="card" onclick="openPanel('${m.id}')">
                         ${emergencyBadge}
-                        <h3>${displayName}${m.atc_code ? ` <span style="color:#777; font-size:12px; font-weight:normal; font-family:monospace;">· ${m.atc_code}</span>` : ''}</h3>
+                        <h3>${displayName}${photoBadge}${m.atc_code ? ` <span style="color:#777; font-size:12px; font-weight:normal; font-family:monospace;">· ${m.atc_code}</span>` : ''}</h3>
                         <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">💰 ${priceHtml}</p>
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold;">За: ${assignedPersons}</p>` : ''}
@@ -1908,7 +1922,7 @@
                     const docName = doc.file_name || doc.title || 'Документ';
                     return `
                     <div class="doc-item">
-                        <button type="button" onclick="openFullscreen('${escJs(doc.file_url)}', '${escJs(docName)}')" style="background:none; border:none; padding:0; color:#2980B9; font-weight:bold; text-decoration:underline; cursor:pointer; font-size:13px; text-align:left;">📄 ${docName}</button>
+                        <button type="button" onclick="openFullscreen('${escJs(doc.file_url)}', '${escJs(docName)}')" style="background:none; border:none; padding:0; color:#2980B9; font-weight:bold; text-decoration:underline; cursor:pointer; font-size:13px; text-align:left;">${(doc.doc_type==='med_scan')?'📷':'📄'} ${docName}</button>
                         <button type="button" onclick="unlinkDocument('${doc.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Премахни</button>
                     </div>`;
                 }).join('');
@@ -1920,8 +1934,8 @@
             const todayStr = new Date().toISOString().split('T')[0];
 
             document.getElementById('panelBody').innerHTML = `
-                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div><div class="form-group"><label>ATC код</label><input type="text" id="atc_code" value="${m.atc_code||''}" placeholder="напр. C02LC01" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" maxlength="10" style="text-transform:uppercase;"></div><div class="form-group"><label>Баркод (EAN)</label><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="barcode" value="${m.barcode||''}" placeholder="въведи баркод" inputmode="numeric" style="flex:1; padding:10px; font-size:15px;"><button type="button" onclick="if(typeof scanBarcode==='function'){scanBarcode()}else{alert('Скенерът не е наличен.')}" style="background:#2B6CB0; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:18px; line-height:1; flex:0 0 auto;">📷</button></div>
-                <div style="margin-top:6px;"><button type="button" onclick="if(typeof scanMedBox==='function'){scanMedBox()}else{alert('Снимането не е налично.')}" style="width:100%; background:#2F855A; color:#fff; border:none; border-radius:8px; padding:12px; cursor:pointer; font-size:16px; font-weight:600;">📸 Снимай кутията (за авто-попълване)</button></div></div></div>
+                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div><div class="form-group"><label>ATC код</label><input type="text" id="atc_code" value="${m.atc_code||''}" placeholder="напр. C02LC01" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" maxlength="10" style="text-transform:uppercase;"></div><div class="form-group"><label>Баркод / QR код</label><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="barcode" value="${m.barcode||''}" placeholder="въведи баркод" inputmode="numeric" style="flex:1; padding:10px; font-size:15px;"><button type="button" onclick="if(typeof scanBarcode==='function'){scanBarcode()}else{alert('Скенерът не е наличен.')}" style="background:#2B6CB0; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:18px; line-height:1; flex:0 0 auto;">📷</button></div>
+                <div style="margin-top:6px;"><button type="button" onclick="if(typeof scanMedBox==='function'){scanMedBox()}else{alert('Снимането не е налично.')}" style="width:100%; background:#2F855A; color:#fff; border:none; border-radius:8px; padding:12px; cursor:pointer; font-size:16px; font-weight:600;">📸 Снимай кутията</button></div></div></div>
                 <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
                 <div class="form-group"><label>Описание (действие)</label><textarea id="desc" placeholder="Кратко действие на лекарството...">${m.description||''}</textarea></div>
                 
@@ -3173,7 +3187,7 @@ async function deleteListItem(kind, id) {
               }
             } catch(e){}
             ov.textContent='Качвам снимката…';
-            var docRes=await fetch(CONFIG.URL+'/rest/v1/documents', { method:'POST', headers:h, body:JSON.stringify({ file_url:publicUrl, file_name:file.name, doc_type:'med_scan', scan_status:'pending', uploaded_from:'mobile', scan_notes:(ocrText||'').slice(0,4000) }) });
+            var docRes=await fetch(CONFIG.URL+'/rest/v1/documents', { method:'POST', headers:h, body:JSON.stringify({ file_url:publicUrl, file_name:file.name, doc_type:'med_scan', scan_status:'pending', uploaded_from:'mobile', scan_medication_id:medId, scan_notes:(ocrText||'').slice(0,4000) }) });
             var docData=await docRes.json();
             if(docData && docData.length){
               var doc=docData[0];
@@ -3181,13 +3195,13 @@ async function deleteListItem(kind, id) {
               await fetch(CONFIG.URL+'/rest/v1/medication_documents', { method:'POST', headers:h, body:JSON.stringify({ medication_id:medId, document_id:doc.id }) });
               if(typeof state.medication_documents!=='undefined' && state.medication_documents.push) state.medication_documents.push({ medication_id:medId, document_id:doc.id });
               ov.remove();
+              window.__scanMedId = medId;
               if(createdNew){
-                alert('✅ Създадено ново лекарство и снимката е прикачена.\nЩе бъде разчетена и полетата попълнени при следваща обработка.');
                 try{ if(typeof refreshData==='function'){ await refreshData(); } if(typeof openPanel==='function'){ openPanel(medId); } }catch(e){}
               } else {
-                alert('✅ Снимката е качена и прикачена към лекарството.\nЩе бъде разчетена и полетата попълнени при следваща обработка.');
                 if(typeof refreshData==='function'){ try{ refreshData(); }catch(e){} }
               }
+              try{ if(typeof showScanSearchButton==='function'){ showScanSearchButton(medId); } }catch(e){}
             } else {
               ov.remove(); alert('Снимката е качена, но документът не бе записан.');
             }
@@ -3268,6 +3282,99 @@ async function deleteListItem(kind, id) {
       return out;
     };
   } catch(e){ console.warn('ocr init', e); }
+})();
+</script>
+
+<script>
+/* 📋 „Текст за търсене" след снимане на кутия — показва САМО бутон, който копира
+   готовия текст в клипборда (без видимо поле). Емил атачва снимката от галерията
+   и paste-ва текста в чата. Защитено: нищо не се изпълнява при зареждане. */
+(function(){
+  window.showScanSearchButton = function(medId){
+    try {
+      var med = (state && state.meds) ? state.meds.find(function(x){ return String(x.id)===String(medId); }) : null;
+      var nm = (med && (med.name_bg || med.name_latin)) ? (med.name_bg || med.name_latin) : '';
+      var q = 'Разчети прикачената снимка на кутията на лекарство (търси и на български, и на латиница — търговско име и активно вещество) и попълни празните полета на това лекарство в ZDRAVE. scan_medication_id=' + medId + (nm ? ' (име в базата: ' + nm + ')' : '') + '. Ако снимката не съвпада със съществуващо лекарство, създай ново и попълни полетата. Пиши резултата в documents.scan_result и го маркирай scan_status=done.';
+      // контейнер за бутона — в панела, ако е отворен; иначе плаващ отдолу
+      var host = document.getElementById('scanSearchHost');
+      if(!host){
+        host = document.createElement('div');
+        host.id = 'scanSearchHost';
+        host.style.cssText = 'position:fixed; left:12px; right:12px; bottom:12px; z-index:3000; display:flex; justify-content:center;';
+        document.body.appendChild(host);
+      }
+      host.innerHTML = '';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = '📋 Текст за търсене';
+      btn.style.cssText = 'background:#6B46C1; color:#fff; border:none; border-radius:10px; padding:14px 18px; font-size:16px; font-weight:700; box-shadow:0 3px 10px rgba(0,0,0,.3); cursor:pointer;';
+      var closeX = document.createElement('button');
+      closeX.type = 'button';
+      closeX.textContent = '✕';
+      closeX.style.cssText = 'margin-left:8px; background:#555; color:#fff; border:none; border-radius:10px; padding:14px; font-size:16px; cursor:pointer;';
+      closeX.onclick = function(){ host.innerHTML=''; };
+      btn.onclick = function(){
+        try {
+          if(navigator.clipboard && navigator.clipboard.writeText){
+            navigator.clipboard.writeText(q).then(function(){
+              btn.textContent = '✓ Копирано — paste в чата';
+              setTimeout(function(){ btn.textContent='📋 Текст за търсене'; }, 2000);
+            }, function(){ prompt('Копирай текста ръчно:', q); });
+          } else {
+            prompt('Копирай текста ръчно:', q);
+          }
+        } catch(e){ prompt('Копирай текста ръчно:', q); }
+      };
+      host.appendChild(btn);
+      host.appendChild(closeX);
+    } catch(e){ console.warn('showScanSearchButton', e); }
+  };
+})();
+</script>
+
+<script>
+/* 📷 showMedPhotos(medId) — показва снимките на кутия (med_scan) за лекарство.
+   1 снимка → отваря директно; повече → списък за избор. Защитено: само дефиниция. */
+(function(){
+  window.showMedPhotos = function(medId){
+    try {
+      var linked = (state.medication_documents||[])
+        .filter(function(md){ return String(md.medication_id)===String(medId); })
+        .map(function(md){ return String(md.document_id); });
+      var photos = (state.documents||[]).filter(function(d){
+        return linked.indexOf(String(d.id))!==-1 && d.doc_type==='med_scan';
+      });
+      if(photos.length===0){ alert('Няма записани снимки на кутията.'); return; }
+      if(photos.length===1){
+        if(typeof openFullscreen==='function') openFullscreen(photos[0].file_url, photos[0].file_name||'Снимка');
+        return;
+      }
+      var ov=document.createElement('div');
+      ov.style.cssText='position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:4000; display:flex; align-items:center; justify-content:center;';
+      var box=document.createElement('div');
+      box.style.cssText='background:#fff; border-radius:10px; padding:16px; max-width:90vw; max-height:80vh; overflow:auto; min-width:260px;';
+      var title=document.createElement('div');
+      title.textContent='Изберете снимка ('+photos.length+'):';
+      title.style.cssText='font-weight:bold; margin-bottom:10px; font-size:16px;';
+      box.appendChild(title);
+      photos.forEach(function(p,idx){
+        var b=document.createElement('button');
+        b.type='button';
+        b.textContent='📷 '+(p.file_name||('Снимка '+(idx+1)));
+        b.style.cssText='display:block; width:100%; text-align:left; background:#2980B9; color:#fff; border:none; border-radius:8px; padding:14px; margin-bottom:8px; cursor:pointer; font-size:15px;';
+        b.onclick=function(){ ov.remove(); if(typeof openFullscreen==='function') openFullscreen(p.file_url, p.file_name||'Снимка'); };
+        box.appendChild(b);
+      });
+      var cl=document.createElement('button');
+      cl.type='button'; cl.textContent='Затвори';
+      cl.style.cssText='display:block; width:100%; background:#E74C3C; color:#fff; border:none; border-radius:8px; padding:14px; margin-top:4px; cursor:pointer; font-size:15px;';
+      cl.onclick=function(){ ov.remove(); };
+      box.appendChild(cl);
+      ov.appendChild(box);
+      ov.onclick=function(e){ if(e.target===ov) ov.remove(); };
+      document.body.appendChild(ov);
+    } catch(e){ console.warn('showMedPhotos', e); alert('Грешка при показване на снимките.'); }
+  };
 })();
 </script>
 </body>
