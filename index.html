@@ -305,34 +305,45 @@
 .med-filter-row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
         .med-filter-row .filter-buttons { margin-bottom: 0; }
 
-        /* === ТЕЛЕФОН (≤600px): намаляване на едрите 7″-таблет стилове === */
+        /* === ТЕЛЕФОН (≤600px): компактни бутони и полета (v2) === */
         @media (max-width: 600px) {
-            /* Полета по-компактни */
-            .form-group input, .form-group select, .form-group textarea,
-            input[type="text"], input[type="date"] {
-                font-size: 14px !important;
-                padding: 8px !important;
-                min-height: 40px !important;
+            /* Горни бутони Изтрий / Запази / Затвори и подобни */
+            .close-btn, .save-btn, .close-fs-btn, .doc-btn, .qty-btn, .filter-btn {
+                min-height: 34px !important;
+                font-size: 13px !important;
+                padding: 6px 10px !important;
                 border-radius: 8px !important;
+                flex: 0 1 auto !important;
             }
-            /* Бутоните ➕ 🗑 ⚙️ до полетата — по-малки, да не бутат input-а */
-            .addnew-btn {
-                width: 34px !important;
-                min-width: 34px !important;
-                font-size: 15px !important;
-                border-radius: 7px !important;
+            .panel-header { gap: 6px; flex-wrap: wrap; }
+            .panel-header h2 { font-size: 15px !important; }
+            .panel-header > div { gap: 6px !important; flex-wrap: wrap; }
+            /* Общи бутони */
+            button { font-size: 13px !important; padding: 6px 10px !important; min-height: 34px !important; flex: 0 1 auto !important; }
+            /* Полета */
+            .form-group input, .form-group select, .form-group textarea,
+            input[type="text"], input[type="date"], input[type="number"] {
+                font-size: 14px !important; padding: 7px 9px !important;
+                min-height: 38px !important; border-radius: 8px !important;
             }
-            /* Общите бутони да не се разтягат задължително на 100% */
-            button { font-size: 14px !important; }
-            /* Редът поле + ➕🗑⚙️ да НЕ се пренася — input остава четим */
+            /* Редовете с две групи (напр. Специалност/Категория) -> една под друга на цял ред */
+            .form-row, .form-row-mobile { flex-direction: column !important; gap: 8px !important; }
+            .form-row .form-group, .form-row-mobile .form-group {
+                min-width: 0 !important; width: 100% !important; max-width: none !important; flex: 1 1 auto !important;
+            }
+            /* Поле + малките бутони: полето да заема останалото място */
             .form-group > div[style*="display:flex"] { flex-wrap: nowrap !important; gap: 5px !important; }
-            .form-group > div[style*="display:flex"] > input { flex: 1 1 auto !important; min-width: 0 !important; }
-            /* Чекбоксове по-малки */
+            .form-group > div[style*="display:flex"] > input { flex: 1 1 auto !important; min-width: 0 !important; width: auto !important; }
+            .addnew-btn {
+                width: 34px !important; min-width: 34px !important; height: 38px !important;
+                min-height: 38px !important; padding: 0 !important; font-size: 15px !important;
+                border-radius: 8px !important; flex: 0 0 auto !important;
+            }
+            /* Чекбокси и етикети */
             input[type="checkbox"] { width: 20px !important; height: 20px !important; }
-            /* Search поле */
-            .med-search-input { font-size: 15px !important; padding: 9px !important; min-height: 42px !important; }
-            /* Заглавия на групи */
-            .form-group label.title-label, .form-group label { font-size: 14px !important; }
+            .form-group label.title-label, .form-group label { font-size: 14px !important; margin-bottom: 4px !important; }
+            .form-group { margin-bottom: 10px !important; }
+            .med-search-input { font-size: 15px !important; padding: 8px !important; min-height: 40px !important; }
         }
     </style>
 </head>
