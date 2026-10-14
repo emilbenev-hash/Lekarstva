@@ -305,45 +305,37 @@
 .med-filter-row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
         .med-filter-row .filter-buttons { margin-bottom: 0; }
 
-        /* === ТЕЛЕФОН (≤600px): компактни бутони и полета (v2) === */
+        /* === ТЕЛЕФОН (≤600px): компактни бутони и полета (v3) === */
         @media (max-width: 600px) {
-            /* Горни бутони Изтрий / Запази / Затвори и подобни */
             .close-btn, .save-btn, .close-fs-btn, .doc-btn, .qty-btn, .filter-btn {
-                min-height: 34px !important;
-                font-size: 13px !important;
-                padding: 6px 10px !important;
-                border-radius: 8px !important;
-                flex: 0 1 auto !important;
+                min-height: 30px !important; height: 30px !important;
+                font-size: 12px !important; padding: 3px 8px !important;
+                border-radius: 7px !important; flex: 0 1 auto !important; line-height: 1 !important;
             }
-            .panel-header { gap: 6px; flex-wrap: wrap; }
-            .panel-header h2 { font-size: 15px !important; }
-            .panel-header > div { gap: 6px !important; flex-wrap: wrap; }
-            /* Общи бутони */
-            button { font-size: 13px !important; padding: 6px 10px !important; min-height: 34px !important; flex: 0 1 auto !important; }
-            /* Полета */
+            .panel-header { gap: 5px; flex-wrap: nowrap; }
+            .panel-header h2 { font-size: 14px !important; }
+            .panel-header > div { gap: 5px !important; flex-wrap: nowrap !important; }
+            button { font-size: 12px !important; padding: 4px 8px !important; min-height: 30px !important; flex: 0 1 auto !important; }
             .form-group input, .form-group select, .form-group textarea,
             input[type="text"], input[type="date"], input[type="number"] {
-                font-size: 14px !important; padding: 7px 9px !important;
-                min-height: 38px !important; border-radius: 8px !important;
+                font-size: 14px !important; padding: 6px 8px !important;
+                min-height: 36px !important; border-radius: 7px !important;
             }
-            /* Редовете с две групи (напр. Специалност/Категория) -> една под друга на цял ред */
-            .form-row, .form-row-mobile { flex-direction: column !important; gap: 8px !important; }
+            .form-row, .form-row-mobile { flex-direction: column !important; gap: 7px !important; }
             .form-row .form-group, .form-row-mobile .form-group {
                 min-width: 0 !important; width: 100% !important; max-width: none !important; flex: 1 1 auto !important;
             }
-            /* Поле + малките бутони: полето да заема останалото място */
-            .form-group > div[style*="display:flex"] { flex-wrap: nowrap !important; gap: 5px !important; }
+            .form-group > div[style*="display:flex"] { flex-wrap: nowrap !important; gap: 4px !important; }
             .form-group > div[style*="display:flex"] > input { flex: 1 1 auto !important; min-width: 0 !important; width: auto !important; }
             .addnew-btn {
-                width: 34px !important; min-width: 34px !important; height: 38px !important;
-                min-height: 38px !important; padding: 0 !important; font-size: 15px !important;
-                border-radius: 8px !important; flex: 0 0 auto !important;
+                width: 30px !important; min-width: 30px !important; height: 36px !important;
+                min-height: 36px !important; padding: 0 !important; font-size: 14px !important;
+                border-radius: 7px !important; flex: 0 0 auto !important;
             }
-            /* Чекбокси и етикети */
-            input[type="checkbox"] { width: 20px !important; height: 20px !important; }
-            .form-group label.title-label, .form-group label { font-size: 14px !important; margin-bottom: 4px !important; }
-            .form-group { margin-bottom: 10px !important; }
-            .med-search-input { font-size: 15px !important; padding: 8px !important; min-height: 40px !important; }
+            input[type="checkbox"] { width: 18px !important; height: 18px !important; }
+            .form-group label.title-label, .form-group label { font-size: 13px !important; margin-bottom: 3px !important; }
+            .form-group { margin-bottom: 9px !important; }
+            .med-search-input { font-size: 15px !important; padding: 7px !important; min-height: 38px !important; }
         }
     </style>
 </head>
@@ -3291,7 +3283,7 @@ async function deleteListItem(kind, id) {
       photos.forEach(function(p,idx){
         var b=document.createElement('button');
         b.type='button';
-        b.textContent='📷 '+(p.file_name||('Снимка '+(idx+1)));
+        b.textContent='📷 '+(p.file_name||'Снимка')+' ('+(idx+1)+')';
         b.style.cssText='display:block; width:100%; text-align:left; background:#2980B9; color:#fff; border:none; border-radius:8px; padding:14px; margin-bottom:8px; cursor:pointer; font-size:15px;';
         b.onclick=function(){ ov.remove(); if(typeof openFullscreen==='function') openFullscreen(p.file_url, p.file_name||'Снимка'); };
         box.appendChild(b);
