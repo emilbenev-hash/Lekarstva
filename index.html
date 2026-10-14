@@ -304,6 +304,36 @@
         .form-row:has(> .form-group > input#concentration_unit) { justify-content: flex-start; }
 .med-filter-row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
         .med-filter-row .filter-buttons { margin-bottom: 0; }
+
+        /* === ТЕЛЕФОН (≤600px): намаляване на едрите 7″-таблет стилове === */
+        @media (max-width: 600px) {
+            /* Полета по-компактни */
+            .form-group input, .form-group select, .form-group textarea,
+            input[type="text"], input[type="date"] {
+                font-size: 14px !important;
+                padding: 8px !important;
+                min-height: 40px !important;
+                border-radius: 8px !important;
+            }
+            /* Бутоните ➕ 🗑 ⚙️ до полетата — по-малки, да не бутат input-а */
+            .addnew-btn {
+                width: 34px !important;
+                min-width: 34px !important;
+                font-size: 15px !important;
+                border-radius: 7px !important;
+            }
+            /* Общите бутони да не се разтягат задължително на 100% */
+            button { font-size: 14px !important; }
+            /* Редът поле + ➕🗑⚙️ да НЕ се пренася — input остава четим */
+            .form-group > div[style*="display:flex"] { flex-wrap: nowrap !important; gap: 5px !important; }
+            .form-group > div[style*="display:flex"] > input { flex: 1 1 auto !important; min-width: 0 !important; }
+            /* Чекбоксове по-малки */
+            input[type="checkbox"] { width: 20px !important; height: 20px !important; }
+            /* Search поле */
+            .med-search-input { font-size: 15px !important; padding: 9px !important; min-height: 42px !important; }
+            /* Заглавия на групи */
+            .form-group label.title-label, .form-group label { font-size: 14px !important; }
+        }
     </style>
 </head>
 <body>
@@ -1696,7 +1726,20 @@
                     return p ? p.name : '';
                 }).filter(Boolean).join(', ');
 
-                let displayName = m.name_bg || '';
+                let displayName;
+                {
+                    const _tmp = (m.name_bg || '').trim();
+                    const _isTemp = /^Ново лекарство \(от снимка\)/.test(_tmp);
+                    if (_isTemp && m.name_latin && m.name_latin.trim()) {
+                        displayName = m.name_latin.trim();
+                    } else if (_isTemp) {
+                        const _linked = (state.medication_documents||[]).filter(md => String(md.medication_id)===String(m.id)).map(md => String(md.document_id));
+                        const _n = (state.documents||[]).filter(d => _linked.indexOf(String(d.id))!==-1 && d.doc_type==='med_scan').length;
+                        displayName = '🆕 Ново (от снимка)' + (_n > 1 ? ` (${_n} снимки)` : '');
+                    } else {
+                        displayName = _tmp;
+                    }
+                }
                 if (m.concentration) displayName += ` ${m.concentration}${m.concentration_unit ? ' ' + m.concentration_unit : ''}`;
                 if (m.volume_quantity) displayName += ` ${m.volume_quantity}`;
                 if (m.volume_unit) displayName += ` ${m.volume_unit}`;
@@ -1935,7 +1978,7 @@
 
             document.getElementById('panelBody').innerHTML = `
                 <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div><div class="form-group"><label>ATC код</label><input type="text" id="atc_code" value="${m.atc_code||''}" placeholder="напр. C02LC01" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" maxlength="10" style="text-transform:uppercase;"></div><div class="form-group"><label>Баркод / QR код</label><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="barcode" value="${m.barcode||''}" placeholder="въведи баркод" inputmode="numeric" style="flex:1; padding:10px; font-size:15px;"><button type="button" onclick="if(typeof scanBarcode==='function'){scanBarcode()}else{alert('Скенерът не е наличен.')}" style="background:#2B6CB0; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:18px; line-height:1; flex:0 0 auto;">📷</button></div>
-                <div style="margin-top:6px;"><button type="button" onclick="if(typeof scanMedBox==='function'){scanMedBox()}else{alert('Снимането не е налично.')}" style="width:100%; background:#2F855A; color:#fff; border:none; border-radius:8px; padding:12px; cursor:pointer; font-size:16px; font-weight:600;">📸 Снимай кутията</button></div></div></div>
+                </div></div>
                 <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
                 <div class="form-group"><label>Описание (действие)</label><textarea id="desc" placeholder="Кратко действие на лекарството...">${m.description||''}</textarea></div>
                 
@@ -3134,85 +3177,7 @@ async function deleteListItem(kind, id) {
 </script>
 
 
-<script>
-/* 📸 Снимай кутията — качва снимка в medical-docs, създава документ (опашка за разчитане) и връзка към лекарството. Защитено: нищо тежко при load. */
-(function(){
-  try {
-    window.scanMedBox = async function(){
-      try {
-        if (typeof state==='undefined') { alert('Приложението още се зарежда.'); return; }
-        var input = document.createElement('input');
-        input.type='file'; input.accept='image/*'; input.capture='environment';
-        input.onchange = async function(){
-          try {
-            var file = input.files && input.files[0];
-            if(!file){ return; }
-            var ov=document.createElement('div');
-            ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:99999;color:#fff;font-size:18px;';
-            ov.textContent='Качвам снимката…'; document.body.appendChild(ov);
-            var h={ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' };
-            var ext=(file.name.split('.').pop()||'jpg');
-            var cleanFileName='medscan_'+Date.now()+'_'+Math.random().toString(36).substring(2,7)+'.'+ext;
-            var up=await fetch(CONFIG.URL+'/storage/v1/object/medical-docs/'+cleanFileName, { method:'POST', headers:{ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':file.type||'image/jpeg' }, body:file });
-            if(!up.ok){ var et=await up.text(); ov.remove(); alert('Грешка при качване: '+et); return; }
-            var publicUrl=CONFIG.URL+'/storage/v1/object/public/medical-docs/'+cleanFileName;
-            // Ако сме на празна форма (ново лекарство без id) → създаваме чернова
-            var medId = state.currentId;
-            var createdNew = false;
-            if(!medId){
-              ov.textContent='Създавам ново лекарство…';
-              var dt=new Date().toLocaleString('bg-BG');
-              var medRes=await fetch(CONFIG.URL+'/rest/v1/medications', { method:'POST', headers:h, body:JSON.stringify({ name_bg:'Ново лекарство (от снимка) '+dt, is_active:true }) });
-              if(!medRes.ok){ var me=await medRes.text(); ov.remove(); alert('Грешка при създаване на лекарството: '+me); return; }
-              var medData=await medRes.json();
-              if(medData && medData.length){ medId=medData[0].id; createdNew=true; if(state.meds && state.meds.push) state.meds.push(medData[0]); }
-              else { ov.remove(); alert('Лекарството не бе създадено.'); return; }
-            }
-            // OCR опит (мързелив Tesseract); текстът влиза в scan_notes, парснатото допопълва празни полета
-            ov.textContent='Разчитам текста… (може да отнеме време)';
-            var ocrText='';
-            try { if(typeof ocrImageFile==='function'){ ocrText=await ocrImageFile(file); } } catch(e){ ocrText=''; }
-            var parsed = (typeof parseMedText==='function') ? parseMedText(ocrText||'') : { barcode:'', atc:'', name_guess:'' };
-            // допопълване само на празни полета на съществуващо/новосъздадено лекарство
-            try {
-              var curMed=(state.meds||[]).find(function(x){ return String(x.id)===String(medId); });
-              if(curMed){
-                var patch={};
-                if(parsed.barcode && !curMed.barcode) patch.barcode=parsed.barcode;
-                if(parsed.atc && !curMed.atc_code) patch.atc_code=parsed.atc;
-                if(Object.keys(patch).length){
-                  await fetch(CONFIG.URL+'/rest/v1/medications?id=eq.'+medId, { method:'PATCH', headers:h, body:JSON.stringify(patch) });
-                  Object.keys(patch).forEach(function(k){ curMed[k]=patch[k]; });
-                }
-              }
-            } catch(e){}
-            ov.textContent='Качвам снимката…';
-            var docRes=await fetch(CONFIG.URL+'/rest/v1/documents', { method:'POST', headers:h, body:JSON.stringify({ file_url:publicUrl, file_name:file.name, doc_type:'med_scan', scan_status:'pending', uploaded_from:'mobile', scan_medication_id:medId, scan_notes:(ocrText||'').slice(0,4000) }) });
-            var docData=await docRes.json();
-            if(docData && docData.length){
-              var doc=docData[0];
-              if(typeof state.documents!=='undefined' && state.documents.push) state.documents.push(doc);
-              await fetch(CONFIG.URL+'/rest/v1/medication_documents', { method:'POST', headers:h, body:JSON.stringify({ medication_id:medId, document_id:doc.id }) });
-              if(typeof state.medication_documents!=='undefined' && state.medication_documents.push) state.medication_documents.push({ medication_id:medId, document_id:doc.id });
-              ov.remove();
-              window.__scanMedId = medId;
-              if(createdNew){
-                try{ if(typeof refreshData==='function'){ await refreshData(); } if(typeof openPanel==='function'){ openPanel(medId); } }catch(e){}
-              } else {
-                if(typeof refreshData==='function'){ try{ refreshData(); }catch(e){} }
-              }
-              try{ if(typeof showScanSearchButton==='function'){ showScanSearchButton(medId); } }catch(e){}
-            } else {
-              ov.remove(); alert('Снимката е качена, но документът не бе записан.');
-            }
-          } catch(e){ alert('Грешка: '+(e && e.message ? e.message : e)); var o=document.querySelector('div[style*="Качвам"]'); if(o)o.remove(); }
-        };
-        input.click();
-      } catch(e){ alert('Грешка при стартиране на камерата: '+(e && e.message ? e.message : e)); }
-    };
-  } catch(e){ console.warn('scanMedBox init', e); }
-})();
-</script>
+
 
 <script>
 /* 🔴 Балонче опашка за разчитане на снимки — брои documents с doc_type=med_scan и scan_status=pending. Защитено. */
@@ -3285,52 +3250,7 @@ async function deleteListItem(kind, id) {
 })();
 </script>
 
-<script>
-/* 📋 „Текст за търсене" след снимане на кутия — показва САМО бутон, който копира
-   готовия текст в клипборда (без видимо поле). Емил атачва снимката от галерията
-   и paste-ва текста в чата. Защитено: нищо не се изпълнява при зареждане. */
-(function(){
-  window.showScanSearchButton = function(medId){
-    try {
-      var med = (state && state.meds) ? state.meds.find(function(x){ return String(x.id)===String(medId); }) : null;
-      var nm = (med && (med.name_bg || med.name_latin)) ? (med.name_bg || med.name_latin) : '';
-      var q = 'Разчети прикачената снимка на кутията на лекарство (търси и на български, и на латиница — търговско име и активно вещество) и попълни празните полета на това лекарство в ZDRAVE. scan_medication_id=' + medId + (nm ? ' (име в базата: ' + nm + ')' : '') + '. Ако снимката не съвпада със съществуващо лекарство, създай ново и попълни полетата. Пиши резултата в documents.scan_result и го маркирай scan_status=done.';
-      // контейнер за бутона — в панела, ако е отворен; иначе плаващ отдолу
-      var host = document.getElementById('scanSearchHost');
-      if(!host){
-        host = document.createElement('div');
-        host.id = 'scanSearchHost';
-        host.style.cssText = 'position:fixed; left:12px; right:12px; bottom:12px; z-index:3000; display:flex; justify-content:center;';
-        document.body.appendChild(host);
-      }
-      host.innerHTML = '';
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.textContent = '📋 Текст за търсене';
-      btn.style.cssText = 'background:#6B46C1; color:#fff; border:none; border-radius:10px; padding:14px 18px; font-size:16px; font-weight:700; box-shadow:0 3px 10px rgba(0,0,0,.3); cursor:pointer;';
-      var closeX = document.createElement('button');
-      closeX.type = 'button';
-      closeX.textContent = '✕';
-      closeX.style.cssText = 'margin-left:8px; background:#555; color:#fff; border:none; border-radius:10px; padding:14px; font-size:16px; cursor:pointer;';
-      closeX.onclick = function(){ host.innerHTML=''; };
-      btn.onclick = function(){
-        try {
-          if(navigator.clipboard && navigator.clipboard.writeText){
-            navigator.clipboard.writeText(q).then(function(){
-              btn.textContent = '✓ Копирано — paste в чата';
-              setTimeout(function(){ btn.textContent='📋 Текст за търсене'; }, 2000);
-            }, function(){ prompt('Копирай текста ръчно:', q); });
-          } else {
-            prompt('Копирай текста ръчно:', q);
-          }
-        } catch(e){ prompt('Копирай текста ръчно:', q); }
-      };
-      host.appendChild(btn);
-      host.appendChild(closeX);
-    } catch(e){ console.warn('showScanSearchButton', e); }
-  };
-})();
-</script>
+
 
 <script>
 /* 📷 showMedPhotos(medId) — показва снимките на кутия (med_scan) за лекарство.
