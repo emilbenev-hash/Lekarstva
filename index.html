@@ -305,7 +305,7 @@
 .med-filter-row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
         .med-filter-row .filter-buttons { margin-bottom: 0; }
 
-        /* === ТЕЛЕФОН/ТАБЛЕТ (≤900px ИЛИ сензорен екран): компактни бутони (v6) === */
+        /* === ТЕЛЕФОН/ТАБЛЕТ (≤900px ИЛИ сензорен екран): компактни бутони  === */
         @media (max-width: 900px), (pointer: coarse) {
             /* Горни бутони Изтрий / Запази / Затвори — компактни като бутона + */
             .close-btn, .save-btn, .close-fs-btn, .doc-btn, .qty-btn, .filter-btn,
@@ -349,23 +349,6 @@
     </style>
 </head>
 <body>
-<div id="zdraveDiag" style="position:fixed; top:0; left:0; right:0; z-index:99999; background:#111; color:#0f0; font:11px/1.4 monospace; padding:3px 6px; text-align:center;">diag…</div>
-<script>
-(function(){
-  function upd(){
-    try {
-      var mq600 = window.matchMedia('(max-width: 600px)').matches;
-      var mq900 = window.matchMedia('(max-width: 900px)').matches;
-      var coarse = window.matchMedia('(pointer: coarse)').matches;
-      var el = document.getElementById('zdraveDiag');
-      if(el) el.textContent = 'v6 | innerW='+window.innerWidth+' dpr='+window.devicePixelRatio+' | ≤600:'+mq600+' ≤900:'+mq900+' coarse:'+coarse;
-    } catch(e){}
-  }
-  if(document.readyState!=='loading') upd(); else document.addEventListener('DOMContentLoaded', upd);
-  window.addEventListener('resize', upd);
-})();
-</script>
-
     <!-- ZDRAVE Device Gate (Път 1: device token) -->
     <div id="zdraveGateOverlay" style="position:fixed; inset:0; z-index:99999; background:#667eea;
          display:none; align-items:center; justify-content:center; padding:20px;">
