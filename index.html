@@ -2656,7 +2656,15 @@
             refreshData();
         }
 
-        function openFullscreen(url, title) {
+        function zdraveRenderDoc(viewUrl, origUrl) {
+                    const u = (origUrl || viewUrl).toLowerCase().split('?')[0];
+                    const isImg = /\.(jpg|jpeg|png|gif|webp|bmp|heic|heif)$/.test(u);
+                    if (isImg) {
+                        return `<img src="${viewUrl}" style="max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; display:block; margin:auto;">`;
+                    }
+                    return `<iframe src="${viewUrl}" style="width:100%; height:100%; border:none;"></iframe>`;
+                }
+                function openFullscreen(url, title) {
             document.getElementById('fsTitle').innerText = "Документ: " + title;
             document.getElementById('fsContainer').innerHTML = '<div style="padding:30px; text-align:center; color:#555;">Зареждане…</div>';
             document.getElementById('fullscreenModal').style.display = 'flex';
@@ -2677,9 +2685,9 @@
                             if (sj && sj.signedURL) viewUrl = CONFIG.URL + '/storage/v1' + sj.signedURL;
                         }
                     }
-                    document.getElementById('fsContainer').innerHTML = `<iframe src="${viewUrl}" style="width:100%; height:100%; border:none;"></iframe>`;
+                    document.getElementById('fsContainer').innerHTML = zdraveRenderDoc(viewUrl, url);
                 } catch (e) {
-                    document.getElementById('fsContainer').innerHTML = `<iframe src="${url}" style="width:100%; height:100%; border:none;"></iframe>`;
+                    document.getElementById('fsContainer').innerHTML = zdraveRenderDoc(url, url);
                 }
             })();
         }
