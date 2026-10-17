@@ -787,7 +787,7 @@
             if(pb2) pb2.style.outline = isAnalysis?'3px solid #fff':'none';
             if(!rows.length){ cont.innerHTML='<div style="padding:20px; text-align:center; color:#777;">Още няма съставена здравна картина за '+state.person+'.</div>'; meta.textContent=''; return; }
             var specName=function(id){ var s=(state.specialties||[]).find(function(x){return String(x.id)===String(id);}); return s?(s.name_bg||s.name):''; };
-            rows.sort(function(a,b){ if(!a.specialty_id&&b.specialty_id)return -1; if(a.specialty_id&&!b.specialty_id)return 1; return specName(a.specialty_id).localeCompare(specName(b.specialty_id),'bg'); });
+            rows.sort(function(a,b){ if(!a.specialty_id&&b.specialty_id)return -1; if(a.specialty_id&&!b.specialty_id)return 1; var ra=(a.severity_rank==null?9999:a.severity_rank), rb=(b.severity_rank==null?9999:b.severity_rank); if(ra!==rb) return ra-rb; return specName(a.specialty_id).localeCompare(specName(b.specialty_id),'bg'); });
             if(isAnalysis){
                 var any=rows.filter(function(r){return r.analysis_md && r.analysis_md.trim();});
                 if(!any.length){ cont.innerHTML='<div style="padding:20px; text-align:center; color:#777;">Още няма AwsQ Анализ за '+state.person+'.</div>'; meta.textContent=''; return; }
