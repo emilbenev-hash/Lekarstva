@@ -346,6 +346,33 @@
             .form-group { margin-bottom: 9px !important; }
             .med-search-input { font-size: 15px !important; padding: 7px !important; min-height: 38px !important; height: auto !important; }
         }
+    
+        /* === НОВ ДИЗАЙН мобилна (Етап 1, 17.10.2026) === */
+        .m-person-bar { display:flex; justify-content:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+        .m-person-btn { padding:12px 22px; border:2px solid #fff; background:rgba(255,255,255,0.18); color:#fff; border-radius:30px; cursor:pointer; font-weight:bold; font-size:17px; }
+        .m-person-btn.active { background:#fff; color:#667eea; }
+        .m-person-btn.health { background:rgba(255,255,255,0.92); color:#C0392B; }
+        #homeMenu.m-tiles { display:grid !important; grid-template-columns:repeat(2,1fr) !important; gap:14px !important; margin-top:16px !important; flex-direction:unset !important; align-items:stretch !important; }
+        #homeMenu.m-tiles > div { width:auto !important; height:120px !important; flex-direction:column !important; gap:8px !important; border-radius:16px !important; }
+        #homeMenu.m-tiles > div > div:first-child { font-size:40px !important; }
+        #homeMenu.m-tiles > div > div:last-child { font-size:17px !important; }
+        .m-subtiles { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:14px; }
+        .m-subtile { background:#fff; min-height:92px; border-radius:14px; box-shadow:0 3px 10px rgba(0,0,0,0.18); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:6px; padding:8px; }
+        .m-subtile .ico { font-size:30px; }
+        .m-subtile .lbl { font-size:15px; font-weight:bold; color:#333; text-align:center; }
+        .m-subnote { color:rgba(255,255,255,0.92); font-size:13px; text-align:center; margin-top:14px; line-height:1.5; }
+        /* иконки-навигация (назад/начало) */
+        .m-navbtn { min-width:44px; min-height:44px; padding:8px 12px !important; background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.5); border-radius:8px; cursor:pointer; font-weight:bold; font-size:20px !important; }
+    </style>
+<!-- pdf.js (CDN) за рендиране на PDF с fit/завъртане/zoom -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}</script>
+    <style>
+        #docToolbar { display:flex; gap:8px; align-items:center; padding:6px 10px; background:#333; flex-wrap:wrap; }
+        #docToolbar button { background:#555; color:#fff; border:none; border-radius:5px; padding:6px 10px; font-size:13px; cursor:pointer; font-weight:bold; }
+        #docToolbar button:hover { background:#666; }
+        #docScroll { flex:1; overflow:auto; background:#525659; width:100%; }
+        #docScroll canvas, #docScroll img { display:block; margin:10px auto; box-shadow:0 2px 10px rgba(0,0,0,0.4); background:#fff; }
     </style>
 </head>
 <body>
@@ -423,25 +450,106 @@
     </script>
 
     <div class="header" style="position:relative;">
-        <button id="backHomeBtn" onclick="showHome()" style="display:none; padding:6px 10px; background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5); border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">&#8592; Начало</button>
+        <button id="backStepBtn" onclick="goBack()" class="m-navbtn" style="display:none; margin-right:4px;" title="Назад">&#8592;</button><button id="backHomeBtn" onclick="goHome()" class="m-navbtn" style="display:none;" title="Начало">&#127968;</button>
         <h1 style="margin:0; flex:1; text-align:center;"><span class="h1-main">Здравен мениджър</span><span class="h1-labs">Изследвания</span><span class="subtitle">📱 Версия за 7″ мобилен телефон</span></h1>
         <div id="scanBadge" onclick="if(typeof showScanQueue==='function'){showScanQueue()}" style="display:none; position:absolute; right:10px; top:8px; background:#E53E3E; color:#fff; min-width:22px; height:22px; border-radius:11px; font-size:12px; font-weight:bold; line-height:22px; text-align:center; padding:0 6px; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.3);" title="Снимки, чакащи разчитане">0</div>
     </div>
 
+    <!-- Превключвател лице (глобален, мобилен) -->
+    <div class="m-person-bar" id="personBar">
+        <button class="m-person-btn active" id="pbLili" onclick="setPerson('Лили')">Лили</button>
+        <button class="m-person-btn" id="pbEmil" onclick="setPerson('Емил')">Емил</button>
+        <button class="m-person-btn health" id="pbHealth" onclick="showHealth()">🩺 Картина</button>
+        <button class="m-person-btn" id="pbAnalysis" onclick="showAnalysis()" style="background:rgba(255,255,255,0.92); color:#6C3483;">🧠 AwsQ Анализ</button>
+    </div>
+
     <!-- НАЧАЛНО МЕНЮ -->
-    <div id="homeMenu" style="display:flex; gap:15px; justify-content:center; align-items:center; margin-top:40px; flex-wrap:wrap;">
-        <div onclick="showMeds()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
-            <div style="font-size:38px;">💊</div>
-            <div style="font-size:15px; font-weight:bold; color:#148F77;">Лекарства</div>
+    <div id="homeMenu" class="m-tiles">
+        <div onclick="showPregledi()" style="background:white; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; justify-content:center; align-items:center;"><div style="font-size:40px;">📋</div><div style="font-weight:bold; color:#8E44AD;">Прегледи</div></div>
+        <div onclick="showIzsledvania()" style="background:white; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; justify-content:center; align-items:center;"><div style="font-size:40px;">🔬</div><div style="font-weight:bold; color:#2980B9;">Изследвания</div></div>
+        <div onclick="showMeds()" style="background:white; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; justify-content:center; align-items:center;"><div style="font-size:40px;">💊</div><div style="font-weight:bold; color:#148F77;">Лекарства</div></div>
+        <div onclick="showShopping()" style="background:white; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; justify-content:center; align-items:center;"><div style="font-size:40px;">🛒</div><div style="font-weight:bold; color:#E67E22;">Закупуване</div></div>
+    </div>
+
+    <!-- МЕЖДИНЕН ЕКРАН: ПРЕГЛЕДИ (мобилен) -->
+    <div id="preglediMenu" style="display:none;">
+        <div class="m-subtiles">
+            <div class="m-subtile" onclick="openVisitType('АЛ')"><div class="ico">📄</div><div class="lbl">Амбулаторни листове</div></div>
+            <div class="m-subtile" onclick="openVisitType('Епикризи')"><div class="ico">🏥</div><div class="lbl">Епикризи</div></div>
+            <div class="m-subtile" onclick="openVisitType('Спешни')"><div class="ico">🚑</div><div class="lbl">Спешни</div></div>
         </div>
-        <div onclick="showLabs()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
-            <div style="font-size:38px;">🧪</div>
-            <div style="font-size:15px; font-weight:bold; color:#2980B9;">Изследвания</div>
+    </div>
+
+    <!-- МЕЖДИНЕН ЕКРАН: ИЗСЛЕДВАНИЯ (мобилен) -->
+    <div id="izsledvaniaMenu" style="display:none;">
+        <div class="m-subtiles">
+            <div class="m-subtile" onclick="showLabs()"><div class="ico">🩸</div><div class="lbl">Кръвни и уринни</div></div>
+            <div class="m-subtile" onclick="openImaging('Рентгенови')"><div class="ico">🦴</div><div class="lbl">Рентгенови</div></div>
+            <div class="m-subtile" onclick="openImaging('Скенер (КТ)')"><div class="ico">🖥️</div><div class="lbl">Скенер (КТ)</div></div>
+            <div class="m-subtile" onclick="openImaging('ЯМР (МРТ)')"><div class="ico">🧲</div><div class="lbl">ЯМР (МРТ)</div></div>
+            <div class="m-subtile" onclick="openImaging('Ехографски')"><div class="ico">〰️</div><div class="lbl">Ехографски</div></div>
+            <div class="m-subtile" onclick="openImaging('Функционални')"><div class="ico">📈</div><div class="lbl">Функционални</div></div>
+            <div class="m-subtile" onclick="openImaging('Други')" style="grid-column:1 / -1;"><div class="ico">🔖</div><div class="lbl">Други</div></div>
         </div>
-        <div onclick="showShopping()" style="background:white; width:160px; height:130px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px;">
-            <div style="font-size:38px;">🛒</div>
-            <div style="font-size:15px; font-weight:bold; color:#E67E22;">Закупуване</div>
+    </div>
+
+    <!-- PLACEHOLDER модули (Етап 1; съдържанието идва в следващи етапи) -->
+    <!-- МОДУЛ ПРЕГЛЕДИ (Етап 2) -->
+    <div id="visitsModule" style="display:none;">
+        <div class="filters">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <h2 id="visitsTitle" style="color:#8E44AD; font-size:16px; margin:0; flex:1;">📋 Прегледи</h2>
+                <input type="text" id="visitSearch" placeholder="Търси по лекар, диагноза, заведение..." oninput="renderVisits()" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; flex:1; min-width:180px; font-size:13px;">
+            </div>
         </div>
+        <div id="visitsContainer" class="grid"></div>
+    </div>
+
+    <!-- ПАНЕЛ ДЕТАЙЛ ПРЕГЛЕД -->
+    <div id="visitPanel" class="panel">
+        <div class="panel-header">
+            <h2 id="visitPanelTitle">Преглед</h2>
+            <button class="close-btn" onclick="document.getElementById('visitPanel').style.display='none'">✕ Затвори</button>
+        </div>
+        <div id="visitPanelBody" style="font-size:13px;"></div>
+    </div>
+    </div>
+    <!-- МОДУЛ ОБРАЗНИ ИЗСЛЕДВАНИЯ (Етап 3) -->
+    <div id="imagingModule" style="display:none;">
+        <div class="filters">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <h2 id="imagingTitle" style="color:#2980B9; font-size:16px; margin:0; flex:1;">🔬 Образни изследвания</h2>
+                <input type="text" id="imagingSearch" placeholder="Търси по заключение, лекар, заведение..." oninput="renderImaging()" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; flex:1; min-width:180px; font-size:13px;">
+            </div>
+        </div>
+        <div id="imagingContainer" class="grid"></div>
+    </div>
+
+    <!-- ПАНЕЛ ДЕТАЙЛ ОБРАЗНО -->
+    <div id="imagingPanel" class="panel">
+        <div class="panel-header">
+            <h2 id="imagingPanelTitle">Изследване</h2>
+            <button class="close-btn" onclick="document.getElementById('imagingPanel').style.display='none'">✕ Затвори</button>
+        </div>
+        <div id="imagingPanelBody" style="font-size:13px;"></div>
+    </div>
+
+    <!-- МОДУЛ ЗДРАВНА КАРТИНА -->
+    <div id="healthModule" style="display:none;">
+        <div class="filters" style="background:#fff;">
+            <h2 id="healthTitle" style="color:#C0392B; font-size:17px; margin:0;">🩺 Здравна картина</h2>
+            <div id="healthMeta" style="font-size:12px; color:#777; margin-top:4px;"></div>
+        </div>
+        <div id="healthContent" style="background:#fff; border-radius:8px; padding:16px 18px; box-shadow:0 2px 6px rgba(0,0,0,0.1); line-height:1.6; font-size:14px;"></div>
+    </div>
+    </div>
+    <div id="healthModule" style="display:none;">
+        <div class="filters" style="background:#fff; padding:10px 12px;">
+            <h2 id="healthTitle" style="color:#C0392B; font-size:17px; margin:0;">🩺 Здравна картина</h2>
+            <div id="healthMeta" style="font-size:12px; color:#777; margin-top:3px;"></div>
+        </div>
+        <div id="healthContent" style="background:#fff; border-radius:10px; padding:14px; line-height:1.6; font-size:15px;"></div>
+    </div>
     </div>
 
     <!-- МОДУЛ СПИСЪК ЗА ЗАКУПУВАНЕ -->
@@ -598,52 +706,335 @@
         }
 
         let state = { 
-            selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedEmergency: 'all', selectedCategory: 'all', 
+            person: 'Лили', selectedPerson: 'all', selectedZok: 'all', selectedActive: 'all', selectedEmergency: 'all', selectedCategory: 'all', 
             meds: [], purchases: [], pharmacies: [], doctors: [], medicalCenters: [], categories: [], manufacturers: [], persons: [], medicationPersons: [], documents: [], medication_documents: [], 
             currentId: null, editingPurchaseId: null, 
             labCategories: [], labParameters: [], labTests: [], labResults: [], labRanges: [], labPerson: 'Лили', labSection: 'all', labSearch: '', labOnlyOOR: false,
-            shoppingList: [], shoppingSuggest: {} 
+            shoppingList: [], shoppingSuggest: {},
+            visits: [], visitDiagnoses: [], visitMeasurements: [], visitTherapy: [], imagingStudies: [], imagingMeasurements: [], imagingTypes: [], imagingCategory: null,
+            visitCategory: 'АЛ', currentVisitId: null, navStack: [], currentScreen: null, healthOverview: [] 
         };
 
-        function showHome() {
+        function hideAllScreens() {
+            ['homeMenu','preglediMenu','izsledvaniaMenu','medsModule','labModule','shoppingModule','visitsModule','imagingModule','healthModule'].forEach(function(id){
+                var el=document.getElementById(id); if(el) el.style.display='none';
+            });
+        }
+        function updateNavButtons() {
+            var home=document.getElementById('backHomeBtn'), back=document.getElementById('backStepBtn');
+            var onHome = (state.currentScreen && state.currentScreen.fn==='_home');
+            if(home) home.style.display = onHome ? 'none':'inline-block';
+            if(back) back.style.display = (state.navStack && state.navStack.length>0) ? 'inline-block':'none';
+        }
+        function _render(scr) {
+            hideAllScreens();
             document.body.classList.remove('in-labs');
-            document.getElementById('homeMenu').style.display = 'flex';
-            document.getElementById('medsModule').style.display = 'none';
-            document.getElementById('labModule').style.display = 'none';
-            document.getElementById('shoppingModule').style.display = 'none';
-            document.getElementById('backHomeBtn').style.display = 'none';
+            var pb=document.getElementById('personBar'); if(pb) pb.style.display='flex';
+            if(scr.fn==='_home'){ var hm=document.getElementById('homeMenu'); hm.style.display='grid'; }
+            else if(scr.fn==='showPregledi'){ document.getElementById('preglediMenu').style.display='block'; }
+            else if(scr.fn==='showIzsledvania'){ document.getElementById('izsledvaniaMenu').style.display='block'; }
+            else if(scr.fn==='showMeds'){ document.getElementById('medsModule').style.display='block'; if(pb) pb.style.display='none'; }
+            else if(scr.fn==='showLabs'){ document.getElementById('labModule').style.display='block'; document.body.classList.add('in-labs'); window.scrollTo(0,0); if(typeof setLabBarCollapsed==='function') setLabBarCollapsed(false); renderLabs(); }
+            else if(scr.fn==='showShopping'){ document.getElementById('shoppingModule').style.display='block'; if(pb) pb.style.display='none'; renderShoppingList(); }
+            else if(scr.fn==='openVisitType'){ state.visitCategory=scr.arg; document.getElementById('visitsModule').style.display='block'; var t={'АЛ':'📄 Амбулаторни листове','Епикризи':'🏥 Епикризи','Спешни':'🚑 Спешни'}; var el=document.getElementById('visitsTitle'); if(el) el.textContent=t[scr.arg]||'📋 Прегледи'; var vs=document.getElementById('visitSearch'); if(vs) vs.value=''; renderVisits(); }
+            else if(scr.fn==='openImaging'){ state.imagingCategory=scr.arg; document.getElementById('imagingModule').style.display='block'; var el2=document.getElementById('imagingTitle'); if(el2) el2.textContent='🔬 '+scr.arg; var is=document.getElementById('imagingSearch'); if(is) is.value=''; renderImaging(); }
+            else if(scr.fn==='showHealth'){ document.getElementById('healthModule').style.display='block'; renderHealth(); }
+            state.currentScreen=scr; updateNavButtons();
+        }
+        function navGo(fn,arg){ if(state.currentScreen) state.navStack.push(state.currentScreen); _render({fn:fn,arg:arg}); }
+        function goBack(){ if(!state.navStack||!state.navStack.length){ goHome(); return; } _render(state.navStack.pop()); }
+        function goHome(){ state.navStack=[]; _render({fn:'_home'}); }
+        function showHome(){ goHome(); }
+        function showPregledi(){ navGo('showPregledi'); }
+        function showIzsledvania(){ navGo('showIzsledvania'); }
+        function showMeds(){ navGo('showMeds'); }
+        function showLabs(){ navGo('showLabs'); }
+        function showShopping(){ navGo('showShopping'); }
+        function openVisitType(cat){ navGo('openVisitType',cat); }
+        function openImaging(cat){ navGo('openImaging',cat); }
+        function showHealth(){ navGo('showHealth'); }
+        // временни заглушки (Етап 1) — заменят се в следващи етапи
+        function healthMdToHtml(md){
+            var esc=function(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+            var lines=(md||'').split('\n'), html='', inList=false;
+            function inline(s){ s=esc(s); s=s.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>'); s=s.replace(/(^|\s)_([^_]+)_/g,'$1<i>$2</i>'); return s; }
+            for(var i=0;i<lines.length;i++){ var ln=lines[i];
+                if(/^###\s+/.test(ln)){ if(inList){html+='</ul>';inList=false;} html+='<h4 style="margin:12px 0 4px; color:#C0392B;">'+esc(ln.replace(/^###\s+/,''))+'</h4>'; continue; }
+                if(/^##\s+/.test(ln)){ if(inList){html+='</ul>';inList=false;} html+='<h3 style="margin:14px 0 6px; color:#C0392B; border-bottom:2px solid #f0d0cc; padding-bottom:3px;">'+esc(ln.replace(/^##\s+/,''))+'</h3>'; continue; }
+                if(/^#\s+/.test(ln)){ if(inList){html+='</ul>';inList=false;} html+='<h2 style="margin:0 0 8px; color:#C0392B;">'+esc(ln.replace(/^#\s+/,''))+'</h2>'; continue; }
+                if(/^\s*-\s+/.test(ln)){ if(!inList){html+='<ul style="margin:4px 0 4px 18px; padding:0;">';inList=true;} html+='<li style="margin:2px 0;">'+inline(ln.replace(/^\s*-\s+/,''))+'</li>'; continue; }
+                if(ln.trim()===''){ if(inList){html+='</ul>';inList=false;} continue; }
+                if(inList){html+='</ul>';inList=false;}
+                html+='<p style="margin:4px 0;">'+inline(ln)+'</p>';
+            }
+            if(inList) html+='</ul>';
+            return html;
+        }
+        function parseRefs2(r){ if(!r) return null; try{ return (typeof r==='string')?JSON.parse(r):r; }catch(e){ return null; } }
+        function visitChips(visits){
+            if(!visits||!visits.length) return '';
+            return '<div style="margin:2px 0 10px;">'+visits.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');}).map(function(v){
+                return '<button onclick="openVisit(\''+v.id+'\')" style="background:#f3eaf8; color:#8E44AD; border:1px solid #d9c3e8; border-radius:5px; padding:3px 8px; font-size:12px; cursor:pointer; margin:2px 3px 0 0;">'+fmtDate(v.date)+'</button>';
+            }).join('')+'</div>';
+        }
+        state.healthView = 'status';
+        function showHealth(){ state.healthView='status'; navGo('showHealth'); }
+        function showAnalysis(){ state.healthView='analysis'; navGo('showHealth'); }
+        function renderHealth(){
+            var pid=personIdByName(state.person);
+            var rows=(state.healthOverview||[]).filter(function(r){ return String(r.person_id)===String(pid) && r.is_current; });
+            var cont=document.getElementById('healthContent'); var meta=document.getElementById('healthMeta'); var title=document.getElementById('healthTitle');
+            var isAnalysis = (state.healthView==='analysis');
+            if(title) title.textContent = (isAnalysis?'🧠 AwsQ Анализ — ':'🩺 Здравна картина — ')+state.person;
+            var pb1=document.getElementById('pbHealth'), pb2=document.getElementById('pbAnalysis');
+            if(pb1) pb1.style.outline = isAnalysis?'none':'3px solid #fff';
+            if(pb2) pb2.style.outline = isAnalysis?'3px solid #fff':'none';
+            if(!rows.length){ cont.innerHTML='<div style="padding:20px; text-align:center; color:#777;">Още няма съставена здравна картина за '+state.person+'.</div>'; meta.textContent=''; return; }
+            var specName=function(id){ var s=(state.specialties||[]).find(function(x){return String(x.id)===String(id);}); return s?(s.name_bg||s.name):''; };
+            rows.sort(function(a,b){ if(!a.specialty_id&&b.specialty_id)return -1; if(a.specialty_id&&!b.specialty_id)return 1; return specName(a.specialty_id).localeCompare(specName(b.specialty_id),'bg'); });
+            if(isAnalysis){
+                var any=rows.filter(function(r){return r.analysis_md && r.analysis_md.trim();});
+                if(!any.length){ cont.innerHTML='<div style="padding:20px; text-align:center; color:#777;">Още няма AwsQ Анализ за '+state.person+'.</div>'; meta.textContent=''; return; }
+                cont.innerHTML = '<div style="background:#f6eefb; border:1px solid #e0cdef; border-radius:8px; padding:10px; margin-bottom:12px; font-size:13px; color:#6C3483;">🧠 Това е анализ от AwsQ за ваше ползване. Показвайте на лекаря раздела „🩺 Здравна картина" (само диагнози и факти).</div>'
+                    + any.map(function(r){ return healthMdToHtml(r.analysis_md); }).join('<hr style="border:none; border-top:1px solid #eee; margin:14px 0;">');
+                meta.textContent=''; return;
+            }
+            // статус (за лекар): summary_md + бутончета-източници по диагноза
+            var html = rows.map(function(r){
+                var refs=parseRefs2(r.refs); var body=healthMdToHtml(r.summary_md);
+                if(refs && refs.diagnoses && refs.diagnoses.length){
+                    refs.diagnoses.forEach(function(d){ body=body.replace('@@'+d.key+'@@', '<span style="color:#999; font-size:11px;">('+(d.visits?d.visits.length:0)+' прегледа)</span>'+visitChips(d.visits)); });
+                    body=body.replace(/@@[a-z0-9_]+@@/gi,'');
+                }
+                return '<div style="margin-bottom:10px;">'+body+'</div>';
+            }).join('<hr style="border:none; border-top:1px solid #eee; margin:14px 0;">');
+            var flat=[]; rows.forEach(function(r){ var rf=parseRefs2(r.refs); if(Array.isArray(rf)) rf.forEach(function(x){ if(x&&x.id) flat.push(x); }); });
+            if(flat.length){ var seen={}; var uniq=flat.filter(function(x){ if(seen[x.id])return false; seen[x.id]=1; return true; });
+                html+='<div style="margin-top:16px; padding-top:12px; border-top:2px solid #f0d0cc;"><div style="font-weight:bold; color:#C0392B; margin-bottom:6px;">📎 Източници:</div><div style="display:flex; flex-wrap:wrap; gap:6px;">'
+                    + uniq.map(function(x){ return '<button onclick="openVisit(\''+x.id+'\')" style="background:#f3eaf8; color:#8E44AD; border:1px solid #d9c3e8; border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer;">'+(x.label||'преглед')+'</button>'; }).join('')+'</div></div>';
+            }
+            cont.innerHTML=html;
+            var dmax=rows.map(function(r){return r.based_on_until||'';}).sort().slice(-1)[0];
+            meta.textContent=dmax?('Обхваща документи до: '+fmtDate(dmax)):'';
+        }
+        function fmtDate(iso){ if(!iso) return ''; var s=String(iso).slice(0,10); return /^\d{4}-\d{2}-\d{2}$/.test(s)? s.replace(/-/g,'.'):s; }
+        // === ПРЕГЛЕДИ (Етап 2) ===
+        // Категоризация по visit_type: Епикризи = Хоспитализация/Болничен престой; Спешни = Спешна помощ; АЛ = всичко друго
+        function visitCategoryOf(vt) {
+            vt = (vt || '').trim();
+            if (vt === 'Хоспитализация' || vt === 'Болничен престой') return 'Епикризи';
+            if (vt === 'Спешна помощ') return 'Спешни';
+            return 'АЛ';
+        }
+        function personIdByName(name) {
+            var p = (state.persons||[]).find(function(x){ return x.name === name; });
+            return p ? String(p.id) : null;
+        }
+        function renderVisits() {
+            var cont = document.getElementById('visitsContainer');
+            if (!cont) return;
+            var pid = personIdByName(state.person);
+            var q = (document.getElementById('visitSearch')||{}).value || '';
+            q = q.trim().toLowerCase();
+            var docName = function(id){ var d=(state.doctors||[]).find(function(x){return String(x.id)===String(id);}); return d?d.name:''; };
+            var mcName = function(id){ var m=(state.medicalCenters||[]).find(function(x){return String(x.id)===String(id);}); return m?m.name:''; };
+            var rows = (state.visits||[]).filter(function(v){
+                if (pid && String(v.person_id)!==pid) return false;
+                if (visitCategoryOf(v.visit_type)!==state.visitCategory) return false;
+                if (q) {
+                    var diag = (state.visitDiagnoses||[]).filter(function(d){return String(d.visit_id)===String(v.id);}).map(function(d){return (d.icd_text||'')+' '+(d.icd_code||'');}).join(' ');
+                    var hay = ((v.visit_type||'')+' '+docName(v.doctor_id)+' '+mcName(v.facility_id)+' '+(v.anamnesis||'')+' '+diag).toLowerCase();
+                    if (hay.indexOf(q)===-1) return false;
+                }
+                return true;
+            });
+            rows.sort(function(a,b){ return (b.visit_date||'').localeCompare(a.visit_date||''); }); // най-новите отгоре
+            if (rows.length===0) { cont.innerHTML = '<div style="padding:30px; text-align:center; color:#777;">Няма записи за '+state.person+' в тази категория.</div>'; return; }
+            cont.innerHTML = rows.map(function(v){
+                var diags = (state.visitDiagnoses||[]).filter(function(d){return String(d.visit_id)===String(v.id);});
+                var mainD = diags.find(function(d){return d.role==='основна';}) || diags[0];
+                var nDocs = ((v.source_document_id?1:0));
+                var imgs = (state.imagingStudies||[]).filter(function(im){return String(im.visit_id)===String(v.id);});
+                var nImg = imgs.length;
+                var dt = fmtDate(v.visit_date) || v.date_text || '';
+                var badges = '';
+                if (v.source_document_id) badges += '<span title="Прикачен документ" style="margin-left:6px;">📄</span>';
+                if (nImg) badges += '<span title="Образни изследвания: '+nImg+'" style="margin-left:6px;">🔬'+(nImg>1?('×'+nImg):'')+'</span>';
+                return '<div class="card" onclick="openVisit(\''+v.id+'\')">'
+                    + '<h3>'+dt+' — '+ (mcName(v.facility_id)||'') + badges + '</h3>'
+                    + '<p><b>'+(docName(v.doctor_id)?('Д-р '+docName(v.doctor_id)):'')+'</b>'+(v.visit_type?(' · '+v.visit_type):'')+'</p>'
+                    + (mainD ? ('<p style="color:#8E44AD;">'+(mainD.icd_code?('['+mainD.icd_code+'] '):'')+(mainD.icd_text||'')+'</p>') : '')
+                    + '</div>';
+            }).join('');
+        }
+        function openVisit(id) {
+            var v = (state.visits||[]).find(function(x){return String(x.id)===String(id);});
+            if (!v) return;
+            state.currentVisitId = id;
+            var docName = function(did){ var d=(state.doctors||[]).find(function(x){return String(x.id)===String(did);}); return d?d.name:''; };
+            var mcName = function(mid){ var m=(state.medicalCenters||[]).find(function(x){return String(x.id)===String(mid);}); return m?m.name:''; };
+            var esc = function(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+            var dt = fmtDate(v.visit_date) || v.date_text || '';
+            var html = '';
+            html += '<div style="background:#f6f3fa; border-radius:8px; padding:10px; margin-bottom:12px;">';
+            html += '<p style="margin:0 0 4px;"><b>Дата:</b> '+dt+'</p>';
+            if (v.facility_id) html += '<p style="margin:0 0 4px;"><b>Заведение:</b> '+esc(mcName(v.facility_id))+'</p>';
+            if (v.doctor_id) html += '<p style="margin:0 0 4px;"><b>Лекар:</b> Д-р '+esc(docName(v.doctor_id))+'</p>';
+            if (v.visit_type) html += '<p style="margin:0;"><b>Тип:</b> '+esc(v.visit_type)+'</p>';
+            html += '</div>';
+            // Диагнози
+            var diags = (state.visitDiagnoses||[]).filter(function(d){return String(d.visit_id)===String(v.id);});
+            if (diags.length) {
+                html += '<h3 style="color:#8E44AD; font-size:14px; margin:12px 0 6px;">Диагнози</h3>';
+                html += diags.map(function(d){ return '<p style="margin:0 0 4px;">'+(d.role==='основна'?'<b>':'')+(d.icd_code?('['+d.icd_code+'] '):'')+esc(d.icd_text)+(d.status?(' <span style="color:#888;">· '+esc(d.status)+'</span>'):'')+(d.role==='основна'?'</b>':'')+'</p>'; }).join('');
+            }
+            // Анамнеза / обективно
+            if (v.anamnesis) html += '<h3 style="color:#8E44AD; font-size:14px; margin:12px 0 6px;">Анамнеза</h3><p style="margin:0; white-space:pre-wrap;">'+esc(v.anamnesis)+'</p>';
+            if (v.objective_status) html += '<h3 style="color:#8E44AD; font-size:14px; margin:12px 0 6px;">Обективно състояние</h3><p style="margin:0; white-space:pre-wrap;">'+esc(v.objective_status)+'</p>';
+            // Измервания
+            var meas = (state.visitMeasurements||[]).filter(function(m){return String(m.visit_id)===String(v.id);});
+            if (meas.length) {
+                html += '<h3 style="color:#8E44AD; font-size:14px; margin:12px 0 6px;">Измервания</h3>';
+                html += '<table style="width:100%; border-collapse:collapse; font-size:12px;">'+meas.map(function(m){ return '<tr><td style="padding:3px 6px; border-bottom:1px solid #eee;">'+esc(m.measure)+'</td><td style="padding:3px 6px; border-bottom:1px solid #eee; font-weight:bold;">'+esc(m.value)+' '+esc(m.unit||'')+'</td></tr>'; }).join('')+'</table>';
+            }
+            // Терапия (лекарствата кликаеми)
+            var ther = (state.visitTherapy||[]).filter(function(t){return String(t.visit_id)===String(v.id);});
+            if (ther.length) {
+                html += '<h3 style="color:#8E44AD; font-size:14px; margin:12px 0 6px;">Терапия</h3>';
+                html += ther.map(function(t){
+                    var label = esc(t.medication_text || '');
+                    if (t.medication_id) {
+                        label = '<a href="#" onclick="openVisitMed(\''+t.medication_id+'\'); return false;" style="color:#148F77; font-weight:bold; text-decoration:underline;">'+(label||'(лекарство)')+'</a>';
+                    }
+                    return '<p style="margin:0 0 4px;">💊 '+label+(t.dosage?(' — '+esc(t.dosage)):'')+'</p>';
+                }).join('');
+            }
+            // Образни изследвания
+            var imgs = (state.imagingStudies||[]).filter(function(im){return String(im.visit_id)===String(v.id);});
+            if (imgs.length) {
+                html += '<h3 style="color:#2980B9; font-size:14px; margin:12px 0 6px;">Образни изследвания</h3>';
+                html += imgs.map(function(im){
+                    var mm = (state.imagingMeasurements||[]).filter(function(x){return String(x.study_id)===String(im.id);});
+                    var mmTxt = mm.length ? ('<div style="font-size:11px; color:#555; margin-top:3px;">'+mm.map(function(x){return esc(x.measure)+': <b>'+esc(x.value)+' '+esc(x.unit||'')+'</b>';}).join(' · ')+'</div>') : '';
+                    var docBtn = im.document_id ? (' <button onclick="openVisitDoc(\''+im.document_id+'\')" style="background:#2980B9; color:#fff; border:none; border-radius:5px; padding:2px 8px; font-size:11px; cursor:pointer; margin-left:6px;">📄 Отвори</button>') : '';
+                    return '<div style="background:#f3f8fc; border-radius:6px; padding:8px; margin-bottom:6px;"><div>🔬 <b>'+esc(im.conclusion||'Изследване')+'</b>'+docBtn+'</div>'+mmTxt+'</div>';
+                }).join('');
+            }
+            // Препоръки
+            if (v.recommendations) html += '<h3 style="color:#8E44AD; font-size:14px; margin:12px 0 6px;">Препоръки</h3><p style="margin:0; white-space:pre-wrap;">'+esc(v.recommendations)+'</p>';
+            if (v.notes) html += '<h3 style="color:#8E44AD; font-size:14px; margin:12px 0 6px;">Бележки</h3><p style="margin:0; white-space:pre-wrap; color:#555;">'+esc(v.notes)+'</p>';
+            // Прикачен основен документ (АЛ/епикриза)
+            if (v.source_document_id) {
+                html += '<div style="margin-top:14px;"><button onclick="openVisitDoc(\''+v.source_document_id+'\')" style="background:#8E44AD; color:#fff; border:none; border-radius:6px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:bold;">📄 Отвори документа на прегледа</button></div>';
+            }
+            document.getElementById('visitPanelTitle').textContent = dt + ' — ' + (mcName(v.facility_id)||'Преглед');
+            document.getElementById('visitPanelBody').innerHTML = html;
+            document.getElementById('visitPanel').style.display = 'block';
+        }
+        // Клик на лекарство в терапията → отваря картата му
+        function openVisitMed(medId) {
+            document.getElementById('visitPanel').style.display = 'none';
+            showMeds();
+            if (typeof openPanel === 'function') openPanel(medId);
+        }
+        // Клик на прикачен документ → отваря го (signed URL се прави в openFullscreen)
+        function openVisitDoc(docId) {
+            var d = (state.documents||[]).find(function(x){return String(x.id)===String(docId);});
+            if (!d) { alert('Документът не е намерен.'); return; }
+            if (typeof openFullscreen === 'function') openFullscreen(d.file_url, d.file_name || 'Документ');
+        }
+        // === ОБРАЗНИ ИЗСЛЕДВАНИЯ (Етап 3) ===
+        // Мапиране на подбутон → имена на imaging_types
+        var IMAGING_GROUPS = {
+            'Рентгенови': ['Рентген'],
+            'Скенер (КТ)': ['Скенер (КТ)', 'ПЕТ-КТ'],
+            'ЯМР (МРТ)': ['ЯМР'],
+            'Ехографски': ['Ехография', 'Доплер', 'Ехокардиография'],
+            'Функционални': ['ЕКГ', 'Холтер ЕКГ', 'Холтер АН'],
+            'Други': ['Сцинтиграфия', 'Мамография', 'Остеоденситометрия', 'Коронарография', 'Ендоскопия']
+        };
+        function imagingTypeName(id) {
+            var t = (state.imagingTypes||[]).find(function(x){ return String(x.id)===String(id); });
+            return t ? (t.name_bg || t.name || '') : '';
+        }
+        function renderImaging() {
+            var cont = document.getElementById('imagingContainer');
+            if (!cont) return;
+            var pid = personIdByName(state.person);
+            var allowed = IMAGING_GROUPS[state.imagingCategory] || [];
+            var q = ((document.getElementById('imagingSearch')||{}).value || '').trim().toLowerCase();
+            var docName = function(id){ var d=(state.doctors||[]).find(function(x){return String(x.id)===String(id);}); return d?d.name:''; };
+            var mcName = function(id){ var m=(state.medicalCenters||[]).find(function(x){return String(x.id)===String(id);}); return m?m.name:''; };
+            var rows = (state.imagingStudies||[]).filter(function(im){
+                if (pid && String(im.person_id)!==pid) return false;
+                var tn = imagingTypeName(im.imaging_type_id);
+                if (allowed.indexOf(tn)===-1) return false;
+                if (q) {
+                    var hay = ((im.conclusion||'')+' '+(im.findings||'')+' '+docName(im.doctor_id)+' '+mcName(im.facility_id)+' '+tn).toLowerCase();
+                    if (hay.indexOf(q)===-1) return false;
+                }
+                return true;
+            });
+            rows.sort(function(a,b){ return (b.study_date||'').localeCompare(a.study_date||''); });
+            if (rows.length===0) { cont.innerHTML = '<div style="padding:30px; text-align:center; color:#777;">Няма '+state.imagingCategory+' изследвания за '+state.person+'.</div>'; return; }
+            cont.innerHTML = rows.map(function(im){
+                var dt = fmtDate(im.study_date) || im.date_text || '';
+                var tn = imagingTypeName(im.imaging_type_id);
+                var concl = (im.conclusion||'').trim();
+                if (concl.length>160) concl = concl.slice(0,160)+'…';
+                var docBadge = im.document_id ? '<span title="Прикачен документ" style="margin-left:6px;">📄</span>' : '';
+                return '<div class="card" onclick="openStudy(\''+im.id+'\')">'
+                    + '<h3>'+dt+' — '+tn+docBadge+'</h3>'
+                    + '<p style="color:#555;">'+(mcName(im.facility_id)||'')+(docName(im.doctor_id)?(' · Д-р '+docName(im.doctor_id)):'')+'</p>'
+                    + (concl ? ('<p style="color:#2980B9;">'+concl+'</p>') : '')
+                    + '</div>';
+            }).join('');
+        }
+        function openStudy(id) {
+            var im = (state.imagingStudies||[]).find(function(x){return String(x.id)===String(id);});
+            if (!im) return;
+            var docName = function(did){ var d=(state.doctors||[]).find(function(x){return String(x.id)===String(did);}); return d?d.name:''; };
+            var mcName = function(mid){ var m=(state.medicalCenters||[]).find(function(x){return String(x.id)===String(mid);}); return m?m.name:''; };
+            var esc = function(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+            var dt = fmtDate(im.study_date) || im.date_text || '';
+            var tn = imagingTypeName(im.imaging_type_id);
+            var html = '';
+            html += '<div style="background:#f3f8fc; border-radius:8px; padding:10px; margin-bottom:12px;">';
+            html += '<p style="margin:0 0 4px;"><b>Вид:</b> '+esc(tn)+'</p>';
+            html += '<p style="margin:0 0 4px;"><b>Дата:</b> '+dt+'</p>';
+            if (im.facility_id) html += '<p style="margin:0 0 4px;"><b>Заведение:</b> '+esc(mcName(im.facility_id))+'</p>';
+            if (im.doctor_id) html += '<p style="margin:0;"><b>Лекар:</b> Д-р '+esc(docName(im.doctor_id))+'</p>';
+            html += '</div>';
+            if (im.conclusion) html += '<h3 style="color:#2980B9; font-size:14px; margin:12px 0 6px;">Заключение</h3><p style="margin:0; white-space:pre-wrap;">'+esc(im.conclusion)+'</p>';
+            if (im.findings) html += '<h3 style="color:#2980B9; font-size:14px; margin:12px 0 6px;">Находка</h3><p style="margin:0; white-space:pre-wrap;">'+esc(im.findings)+'</p>';
+            var mm = (state.imagingMeasurements||[]).filter(function(x){return String(x.study_id)===String(im.id);});
+            if (mm.length) {
+                html += '<h3 style="color:#2980B9; font-size:14px; margin:12px 0 6px;">Измервания</h3>';
+                html += '<table style="width:100%; border-collapse:collapse; font-size:12px;">'+mm.map(function(x){ return '<tr><td style="padding:3px 6px; border-bottom:1px solid #eee;">'+esc(x.measure)+'</td><td style="padding:3px 6px; border-bottom:1px solid #eee; font-weight:bold;">'+esc(x.value)+' '+esc(x.unit||'')+'</td></tr>'; }).join('')+'</table>';
+            }
+            // Връзка към прегледа (ако има visit_id)
+            if (im.visit_id) {
+                html += '<div style="margin-top:12px;"><button onclick="openStudyVisit(\''+im.visit_id+'\')" style="background:#8E44AD; color:#fff; border:none; border-radius:6px; padding:7px 12px; font-size:12px; cursor:pointer;">📋 Към прегледа</button></div>';
+            }
+            if (im.document_id) {
+                html += '<div style="margin-top:10px;"><button onclick="openVisitDoc(\''+im.document_id+'\')" style="background:#2980B9; color:#fff; border:none; border-radius:6px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:bold;">📄 Отвори документа</button></div>';
+            }
+            document.getElementById('imagingPanelTitle').textContent = dt + ' — ' + tn;
+            document.getElementById('imagingPanelBody').innerHTML = html;
+            document.getElementById('imagingPanel').style.display = 'block';
+        }
+        function openStudyVisit(visitId) {
+            document.getElementById('imagingPanel').style.display = 'none';
+            if (typeof openVisit === 'function') openVisit(visitId);
         }
 
-        function showMeds() {
-            document.body.classList.remove('in-labs');
-            document.getElementById('homeMenu').style.display = 'none';
-            document.getElementById('medsModule').style.display = 'block';
-            document.getElementById('labModule').style.display = 'none';
-            document.getElementById('shoppingModule').style.display = 'none';
-            document.getElementById('backHomeBtn').style.display = 'inline-block';
-        }
-
-        function showLabs() {
-            document.getElementById('homeMenu').style.display = 'none';
-            document.getElementById('medsModule').style.display = 'none';
-            document.getElementById('labModule').style.display = 'block';
-            document.getElementById('shoppingModule').style.display = 'none';
-            document.getElementById('backHomeBtn').style.display = 'inline-block';
-            document.body.classList.add('in-labs');
-            window.scrollTo(0, 0);
-            setLabBarCollapsed(false);
-            renderLabs();
-        }
-
-        function showShopping() {
-            document.body.classList.remove('in-labs');
-            document.getElementById('homeMenu').style.display = 'none';
-            document.getElementById('medsModule').style.display = 'none';
-            document.getElementById('labModule').style.display = 'none';
-            document.getElementById('shoppingModule').style.display = 'block';
-            document.getElementById('backHomeBtn').style.display = 'inline-block';
-            
-            renderShoppingList();
+        function setPerson(p){
+            state.person=p; state.labPerson=p; state.selectedPerson=p.toLowerCase();
+            var l=document.getElementById('pbLili'), e=document.getElementById('pbEmil');
+            if(l) l.classList.toggle('active',p==='Лили'); if(e) e.classList.toggle('active',p==='Емил');
+            if(document.getElementById('labModule').style.display!=='none' && typeof renderLabs==='function') renderLabs();
+            if(document.getElementById('medsModule').style.display!=='none' && typeof renderUI==='function') renderUI();
+            if(document.getElementById('healthModule')&&document.getElementById('healthModule').style.display!=='none' && typeof renderHealth==='function') renderHealth();
         }
 
         async function addShoppingItem() {
@@ -1595,7 +1986,7 @@
         async function refreshData() {
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
             try {
-                const [medsRes, purchRes, pharmRes, docRes, mcRes, catRes, manRes, persRes, medPersRes, docsRes, medDocsRes, labCatRes, labParRes, labTestRes, labResRes, labRangeRes, shopRes, specRes, interRes] = await Promise.all([
+                const [medsRes, purchRes, pharmRes, docRes, mcRes, catRes, manRes, persRes, medPersRes, docsRes, medDocsRes, labCatRes, labParRes, labTestRes, labResRes, labRangeRes, shopRes, specRes, interRes, healthRes, visitsRes, vdiagRes, vmeasRes, vtherRes, imgRes, imgmeasRes, imgTypesRes] = await Promise.all([
                     fetch(CONFIG.URL + '/rest/v1/medications?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/purchases?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/pharmacies?select=*', { headers: h }),
@@ -1614,7 +2005,15 @@
                     fetch(CONFIG.URL + '/rest/v1/lab_reference_ranges?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/shopping_list?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/specialties?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/medication_interactions?select=*', { headers: h })
+                    fetch(CONFIG.URL + '/rest/v1/medication_interactions?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/health_overview?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/visits?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/visit_diagnoses?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/visit_measurements?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/visit_therapy?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/imaging_studies?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/imaging_measurements?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/imaging_types?select=*', { headers: h })
                 ]);
 
                 state.meds = medsRes.ok ? await medsRes.json() : [];
@@ -1637,6 +2036,14 @@
                 state.shoppingList = shopRes.ok ? await shopRes.json() : [];
                 state.specialties = specRes && specRes.ok ? await specRes.json() : [];
                 state.medicationInteractions = interRes && interRes.ok ? await interRes.json() : [];
+                state.healthOverview = healthRes && healthRes.ok ? await healthRes.json() : [];
+                state.visits = visitsRes && visitsRes.ok ? await visitsRes.json() : [];
+                state.visitDiagnoses = vdiagRes && vdiagRes.ok ? await vdiagRes.json() : [];
+                state.visitMeasurements = vmeasRes && vmeasRes.ok ? await vmeasRes.json() : [];
+                state.visitTherapy = vtherRes && vtherRes.ok ? await vtherRes.json() : [];
+                state.imagingStudies = imgRes && imgRes.ok ? await imgRes.json() : [];
+                state.imagingMeasurements = imgmeasRes && imgmeasRes.ok ? await imgmeasRes.json() : [];
+                state.imagingTypes = imgTypesRes && imgTypesRes.ok ? await imgTypesRes.json() : [];
 
                 renderUI();
                 renderLabs();
@@ -2682,30 +3089,125 @@
                 }
                 function openFullscreen(url, title) {
             document.getElementById('fsTitle').innerText = "Документ: " + title;
-            document.getElementById('fsContainer').innerHTML = '<div style="padding:30px; text-align:center; color:#555;">Зареждане…</div>';
+            var cont = document.getElementById('fsContainer');
+            cont.innerHTML = '<div style="padding:30px; text-align:center; color:#fff;">Зареждане…</div>';
             document.getElementById('fullscreenModal').style.display = 'flex';
             (async () => {
-                try {
-                    let viewUrl = url;
-                    const marker = '/medical-docs/';
-                    const idx = url.indexOf(marker);
-                    if (idx !== -1) {
-                        const path = url.substring(idx + marker.length);
-                        const signRes = await fetch(`${CONFIG.URL}/storage/v1/object/sign/medical-docs/${path}`, {
-                            method: 'POST',
-                            headers: { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ expiresIn: 3600 })
-                        });
-                        if (signRes.ok) {
-                            const sj = await signRes.json();
-                            if (sj && sj.signedURL) viewUrl = CONFIG.URL + '/storage/v1' + sj.signedURL;
-                        }
-                    }
-                    document.getElementById('fsContainer').innerHTML = zdraveRenderDoc(viewUrl, url);
-                } catch (e) {
-                    document.getElementById('fsContainer').innerHTML = zdraveRenderDoc(url, url);
-                }
+                var viewUrl = await signMedUrl(url);
+                var u = (url || '').toLowerCase().split('?')[0];
+                var isImg = /\.(jpg|jpeg|png|gif|webp|bmp|heic|heif)$/.test(u);
+                renderDocViewer(cont, viewUrl, isImg);
             })();
+        }
+        function updateZoomPct(z){ var el=document.getElementById('zoomPct'); if(!el) return; var t=Math.round(z*100)+'%'; if('value' in el) el.value=t; else el.textContent=t; }
+        function setZoomPct(v){ var n=parseFloat(String(v).replace('%','').replace(',','.')); if(isNaN(n)||n<=0) return; n=Math.max(10,Math.min(500,n)); if(window.docViewer&&window.docViewer.setZoom) window.docViewer.setZoom(n/100); }
+        // Универсален преглед: PDF през pdf.js, изображения директно. Fit + авто-завъртане на високите + zoom + завърти.
+        function renderDocViewer(cont, viewUrl, isImg) {
+            var state2 = { rotation: 0, zoom: 1, fitW: true, fitScale: 1 };
+            cont.innerHTML = '';
+            cont.style.display = 'flex';
+            cont.style.flexDirection = 'column';
+            cont.style.overflow = 'hidden';
+            cont.style.padding = '0';
+            // toolbar
+            var tb = document.createElement('div'); tb.id = 'docToolbar';
+            tb.innerHTML = '<button onclick="docViewer.rotate()">↻ Завърти</button>'
+                + '<button onclick="docViewer.zoomOut()">− Намали</button>'
+                + '<button onclick="docViewer.zoomIn()">+ Увеличи</button>'
+                + '<button onclick="docViewer.fit()">⤢ Побери</button>'
+                + '<span style="color:#fff; font-size:13px; margin-left:8px;">Мащаб:</span>'
+                + '<input id="zoomPct" type="text" value="100%" onkeydown="if(event.key===\'Enter\'){setZoomPct(this.value);event.preventDefault();}" style="width:56px; text-align:center; font-size:13px; font-weight:bold; border:none; border-radius:4px; padding:5px 4px; margin-left:4px;">'
+                + '<span style="color:#aaa; font-size:12px; margin-left:8px;">(колелце = скрол)</span>';
+            var scroll = document.createElement('div'); scroll.id = 'docScroll';
+            cont.appendChild(tb); cont.appendChild(scroll);
+
+            if (isImg) {
+                var img = new Image();
+                img.onload = function(){ applyImg(); };
+                img.src = viewUrl;
+                function computeFit() {
+                    var rot = ((state2.rotation%360)+360)%360;
+                    var dispW = (rot===90||rot===270) ? img.naturalHeight : img.naturalWidth;
+                    var dispH = (rot===90||rot===270) ? img.naturalWidth : img.naturalHeight;
+                    var availW = scroll.clientWidth - 24, availH = scroll.clientHeight - 24;
+                    return Math.min(availW/dispW, availH/dispH);
+                }
+                function applyImg() {
+                    scroll.innerHTML = '';
+                    var portrait = img.naturalHeight > img.naturalWidth;
+                    if (state2.autoDone===undefined) { state2.rotation = portrait ? 90 : 0; state2.autoDone=true; }
+                    state2.fitScale = computeFit();
+                    if (state2.fitW) state2.zoom = state2.fitScale;   // „Побери" = реалния fit мащаб
+                    var el = document.createElement('img');
+                    el.src = viewUrl;
+                    el.style.transform = 'rotate('+state2.rotation+'deg) scale('+state2.zoom+')';
+                    el.style.transformOrigin = 'center center';
+                    el.style.marginTop = '20px';
+                    scroll.appendChild(el);
+                    updateZoomPct(state2.zoom);
+                }
+                window.docViewer = {
+                    rotate: function(){ state2.rotation += 90; state2.fitW=true; applyImg(); },
+                    zoomIn: function(){ state2.zoom *= 1.08; state2.fitW=false; applyImg(); },
+                    zoomOut: function(){ state2.zoom /= 1.08; state2.fitW=false; applyImg(); },
+                    fit: function(){ state2.fitW=true; applyImg(); },
+                    setZoom: function(z){ state2.zoom=z; state2.fitW=false; applyImg(); }
+                };
+                return;
+            }
+
+            // PDF през pdf.js
+            if (!window.pdfjsLib) {
+                scroll.innerHTML = '<iframe src="'+viewUrl+'" style="width:100%; height:100%; border:none; background:#fff;"></iframe>';
+                return;
+            }
+            var pdfDoc = null;
+            scroll.innerHTML = '<div style="padding:30px; text-align:center; color:#fff;">Зареждане на PDF…</div>';
+            pdfjsLib.getDocument(viewUrl).promise.then(function(pdf){
+                pdfDoc = pdf;
+                renderAll();
+            }).catch(function(e){
+                scroll.innerHTML = '<iframe src="'+viewUrl+'" style="width:100%; height:100%; border:none; background:#fff;"></iframe>';
+            });
+            function renderAll() {
+                scroll.innerHTML = '';
+                for (var n=1; n<=pdfDoc.numPages; n++) { renderPage(n); }
+            }
+            function renderPage(num) {
+                pdfDoc.getPage(num).then(function(page){
+                    var unrot = page.getViewport({ scale: 1, rotation: 0 });
+                    var portrait = unrot.height > unrot.width;
+                    if (state2.autoDone===undefined && num===1) { state2.rotation = portrait ? 90 : 0; }
+                    var rotation = ((state2.rotation%360)+360)%360;
+                    // реален fit мащаб (цялата страница да се побере по ширина И височина)
+                    var availW = scroll.clientWidth - 24;
+                    var availH = scroll.clientHeight - 24;
+                    var dispW = (rotation===90||rotation===270) ? unrot.height : unrot.width;
+                    var dispH = (rotation===90||rotation===270) ? unrot.width : unrot.height;
+                    if (num===1) {
+                        state2.fitScale = Math.min(availW/dispW, availH/dispH);
+                        if (state2.fitW) { state2.zoom = state2.fitScale; }   // „Побери" = реалния fit
+                        updateZoomPct(state2.zoom);
+                    }
+                    var scale = state2.zoom * (window.devicePixelRatio||1);   // zoom е АБСОЛЮТЕН мащаб
+                    var viewport = page.getViewport({ scale: scale, rotation: rotation });
+                    var canvas = document.createElement('canvas');
+                    var ctx = canvas.getContext('2d');
+                    canvas.width = viewport.width; canvas.height = viewport.height;
+                    canvas.style.width = (viewport.width/(window.devicePixelRatio||1))+'px';
+                    canvas.style.height = (viewport.height/(window.devicePixelRatio||1))+'px';
+                    page.render({ canvasContext: ctx, viewport: viewport });
+                    scroll.appendChild(canvas);
+                    if (num===pdfDoc.numPages) state2.autoDone=true;
+                });
+            }
+            window.docViewer = {
+                rotate: function(){ state2.rotation += 90; state2.autoDone=true; state2.fitW=true; renderAll(); },
+                zoomIn: function(){ state2.zoom *= 1.08; state2.fitW=false; renderAll(); updateZoomPct(state2.zoom); },
+                zoomOut: function(){ state2.zoom /= 1.08; state2.fitW=false; renderAll(); updateZoomPct(state2.zoom); },
+                fit: function(){ state2.fitW=true; renderAll(); },
+                setZoom: function(z){ state2.zoom=z; state2.fitW=false; renderAll(); updateZoomPct(z); }
+            };
         }
 
         /* 16.10.2026: показване на няколко прикачени документа от шапката на лабораторна колона, един под друг. */
@@ -2755,7 +3257,10 @@
 
         function closeFullscreen() {
             document.getElementById('fullscreenModal').style.display = 'none';
-            document.getElementById('fsContainer').innerHTML = '';
+            var c = document.getElementById('fsContainer');
+            c.innerHTML = '';
+            c.style.display=''; c.style.flexDirection=''; c.style.overflow=''; c.style.padding='';
+            window.docViewer = null;
         }
         
         window.onload = zdraveGate;
