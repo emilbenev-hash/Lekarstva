@@ -500,6 +500,7 @@
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                 <h2 id="visitsTitle" style="color:#8E44AD; font-size:16px; margin:0; flex:1;">📋 Прегледи</h2>
                 <input type="text" id="visitSearch" placeholder="Търси по лекар, диагноза, заведение..." oninput="renderVisits()" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; flex:1; min-width:180px; font-size:13px;">
+                <select id="visitSpecFilter" onchange="renderVisits()" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; min-width:160px; font-size:13px; flex:1;"><option value="">Всички специалности</option></select>
             </div>
         </div>
         <div id="visitsContainer" class="grid"></div>
@@ -732,7 +733,7 @@
             else if(scr.fn==='showMeds'){ document.getElementById('medsModule').style.display='block'; if(pb) pb.style.display='none'; }
             else if(scr.fn==='showLabs'){ document.getElementById('labModule').style.display='block'; document.body.classList.add('in-labs'); window.scrollTo(0,0); if(typeof setLabBarCollapsed==='function') setLabBarCollapsed(false); renderLabs(); }
             else if(scr.fn==='showShopping'){ document.getElementById('shoppingModule').style.display='block'; if(pb) pb.style.display='none'; renderShoppingList(); }
-            else if(scr.fn==='openVisitType'){ state.visitCategory=scr.arg; document.getElementById('visitsModule').style.display='block'; var t={'АЛ':'📄 Амбулаторни листове','Епикризи':'🏥 Епикризи','Спешни':'🚑 Спешни'}; var el=document.getElementById('visitsTitle'); if(el) el.textContent=t[scr.arg]||'📋 Прегледи'; var vs=document.getElementById('visitSearch'); if(vs) vs.value=''; renderVisits(); }
+            else if(scr.fn==='openVisitType'){ state.visitCategory=scr.arg; document.getElementById('visitsModule').style.display='block'; var t={'АЛ':'📄 Амбулаторни листове','Епикризи':'🏥 Епикризи','Спешни':'🚑 Спешни'}; var el=document.getElementById('visitsTitle'); if(el) el.textContent=t[scr.arg]||'📋 Прегледи'; var vs=document.getElementById('visitSearch'); if(vs) vs.value=''; var vsf=document.getElementById('visitSpecFilter'); if(vsf) vsf.value=''; renderVisits(); }
             else if(scr.fn==='openImaging'){ state.imagingCategory=scr.arg; document.getElementById('imagingModule').style.display='block'; var el2=document.getElementById('imagingTitle'); if(el2) el2.textContent='🔬 '+scr.arg; var is=document.getElementById('imagingSearch'); if(is) is.value=''; renderImaging(); }
             else if(scr.fn==='showHealth'){ document.getElementById('healthModule').style.display='block'; renderHealth(); }
             state.currentScreen=scr; updateNavButtons();
@@ -834,9 +835,23 @@
             q = q.trim().toLowerCase();
             var docName = function(id){ var d=(state.doctors||[]).find(function(x){return String(x.id)===String(id);}); return d?d.name:''; };
             var mcName = function(id){ var m=(state.medicalCenters||[]).find(function(x){return String(x.id)===String(id);}); return m?m.name:''; };
+            var specSel = document.getElementById('visitSpecFilter');
+            var specName2 = function(id){ var s=(state.specialties||[]).find(function(x){return String(x.id)===String(id);}); return s?(s.name_bg||s.name):''; };
+            if (specSel) {
+                var catVisits = (state.visits||[]).filter(function(v){ return (!pid || String(v.person_id)===pid) && visitCategoryOf(v.visit_type)===state.visitCategory; });
+                var specIds = {};
+                catVisits.forEach(function(v){ if(v.specialty_id) specIds[v.specialty_id]=1; });
+                var specList = Object.keys(specIds).map(function(id){ return {id:id, name:specName2(id)}; }).filter(function(x){return x.name;});
+                specList.sort(function(a,b){ return a.name.localeCompare(b.name,'bg'); });
+                var cur = specSel.value;
+                specSel.innerHTML = '<option value="">Всички специалности</option>' + specList.map(function(s){ return '<option value="'+s.id+'">'+s.name+'</option>'; }).join('');
+                if (cur && specIds[cur]) specSel.value = cur; else specSel.value = '';
+            }
+            var specFilter = specSel ? specSel.value : '';
             var rows = (state.visits||[]).filter(function(v){
                 if (pid && String(v.person_id)!==pid) return false;
                 if (visitCategoryOf(v.visit_type)!==state.visitCategory) return false;
+                if (specFilter && String(v.specialty_id)!==String(specFilter)) return false;
                 if (q) {
                     var diag = (state.visitDiagnoses||[]).filter(function(d){return String(d.visit_id)===String(v.id);}).map(function(d){return (d.icd_text||'')+' '+(d.icd_code||'');}).join(' ');
                     var hay = ((v.visit_type||'')+' '+docName(v.doctor_id)+' '+mcName(v.facility_id)+' '+(v.anamnesis||'')+' '+diag).toLowerCase();
@@ -858,7 +873,7 @@
                 if (nImg) badges += '<span title="Образни изследвания: '+nImg+'" style="margin-left:6px;">🔬'+(nImg>1?('×'+nImg):'')+'</span>';
                 return '<div class="card" onclick="openVisit(\''+v.id+'\')">'
                     + '<h3>'+dt+' — '+ (mcName(v.facility_id)||'') + badges + '</h3>'
-                    + '<p><b>'+(docName(v.doctor_id)?('Д-р '+docName(v.doctor_id)):'')+'</b>'+(v.visit_type?(' · '+v.visit_type):'')+'</p>'
+                    + '<p><b>'+(docName(v.doctor_id)?('д-р '+docName(v.doctor_id)):'')+'</b>'+(v.visit_type?(' · '+v.visit_type):'')+'</p>'
                     + (mainD ? ('<p style="color:#8E44AD;">'+(mainD.icd_code?('['+mainD.icd_code+'] '):'')+(mainD.icd_text||'')+'</p>') : '')
                     + '</div>';
             }).join('');
@@ -875,7 +890,7 @@
             html += '<div style="background:#f6f3fa; border-radius:8px; padding:10px; margin-bottom:12px;">';
             html += '<p style="margin:0 0 4px;"><b>Дата:</b> '+dt+'</p>';
             if (v.facility_id) html += '<p style="margin:0 0 4px;"><b>Заведение:</b> '+esc(mcName(v.facility_id))+'</p>';
-            if (v.doctor_id) html += '<p style="margin:0 0 4px;"><b>Лекар:</b> Д-р '+esc(docName(v.doctor_id))+'</p>';
+            if (v.doctor_id) html += '<p style="margin:0 0 4px;"><b>Лекар:</b> д-р '+esc(docName(v.doctor_id))+'</p>';
             if (v.visit_type) html += '<p style="margin:0;"><b>Тип:</b> '+esc(v.visit_type)+'</p>';
             html += '</div>';
             // Диагнози
@@ -999,7 +1014,7 @@
             html += '<p style="margin:0 0 4px;"><b>Вид:</b> '+esc(tn)+'</p>';
             html += '<p style="margin:0 0 4px;"><b>Дата:</b> '+dt+'</p>';
             if (im.facility_id) html += '<p style="margin:0 0 4px;"><b>Заведение:</b> '+esc(mcName(im.facility_id))+'</p>';
-            if (im.doctor_id) html += '<p style="margin:0;"><b>Лекар:</b> Д-р '+esc(docName(im.doctor_id))+'</p>';
+            if (im.doctor_id) html += '<p style="margin:0;"><b>Лекар:</b> д-р '+esc(docName(im.doctor_id))+'</p>';
             html += '</div>';
             if (im.conclusion) html += '<h3 style="color:#2980B9; font-size:14px; margin:12px 0 6px;">Заключение</h3><p style="margin:0; white-space:pre-wrap;">'+esc(im.conclusion)+'</p>';
             if (im.findings) html += '<h3 style="color:#2980B9; font-size:14px; margin:12px 0 6px;">Находка</h3><p style="margin:0; white-space:pre-wrap;">'+esc(im.findings)+'</p>';
