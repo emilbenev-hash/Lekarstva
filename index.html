@@ -927,16 +927,30 @@
                 html += imgs.map(function(im){
                     var mm = (state.imagingMeasurements||[]).filter(function(x){return String(x.study_id)===String(im.id);});
                     var mmTxt = mm.length ? ('<div style="font-size:11px; color:#555; margin-top:3px;">'+mm.map(function(x){return esc(x.measure)+': <b>'+esc(x.value)+' '+esc(x.unit||'')+'</b>';}).join(' · ')+'</div>') : '';
-                    var docBtn = im.document_id ? (' <button onclick="openVisitDoc(\''+im.document_id+'\')" style="background:#2980B9; color:#fff; border:none; border-radius:5px; padding:2px 8px; font-size:11px; cursor:pointer; margin-left:6px;">📄 Отвори</button>') : '';
+                    var _imd = im.document_id ? (state.documents||[]).find(function(dd){return String(dd.id)===String(im.document_id);}) : null;
+                    var _imn = _imd ? (_imd.file_name||'Отвори документа') : 'Отвори документа';
+                    var docBtn = im.document_id ? (' <button onclick="openVisitDoc(\''+im.document_id+'\')" style="background:#2980B9; color:#fff; border:none; border-radius:5px; padding:2px 8px; font-size:11px; cursor:pointer; margin-left:6px;">📄 '+esc(_imn)+'</button>') : '';
                     return '<div style="background:#f3f8fc; border-radius:6px; padding:8px; margin-bottom:6px;"><div>🔬 <b>'+esc(im.conclusion||'Изследване')+'</b>'+docBtn+'</div>'+mmTxt+'</div>';
                 }).join('');
             }
             // Препоръки
             if (v.recommendations) html += '<h3 style="color:#8E44AD; font-size:14px; margin:12px 0 6px;">Препоръки</h3><p style="margin:0; white-space:pre-wrap;">'+esc(v.recommendations)+'</p>';
             if (v.notes) html += '<h3 style="color:#8E44AD; font-size:14px; margin:12px 0 6px;">Бележки</h3><p style="margin:0; white-space:pre-wrap; color:#555;">'+esc(v.notes)+'</p>';
-            // Прикачен основен документ (АЛ/епикриза)
-            if (v.source_document_id) {
-                html += '<div style="margin-top:14px;"><button onclick="openVisitDoc(\''+v.source_document_id+'\')" style="background:#8E44AD; color:#fff; border:none; border-radius:6px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:bold;">📄 Отвори документа на прегледа</button></div>';
+            // Прикачени документи на прегледа (всички: АЛ/епикриза + образни + ЕКГ и т.н.)
+            var visitDocs = (state.documents||[]).filter(function(dd){ return String(dd.visit_id)===String(v.id); });
+            if (v.source_document_id && !visitDocs.some(function(dd){return String(dd.id)===String(v.source_document_id);})) {
+                var sd=(state.documents||[]).find(function(dd){return String(dd.id)===String(v.source_document_id);});
+                if (sd) visitDocs.unshift(sd);
+            }
+            if (visitDocs.length) {
+                visitDocs.sort(function(a,b){ var am=String(a.id)===String(v.source_document_id)?0:1; var bm=String(b.id)===String(v.source_document_id)?0:1; return am-bm; });
+                html += '<h3 style="color:#8E44AD; font-size:14px; margin:12px 0 6px;">Документи на прегледа</h3>';
+                html += '<div style="display:flex; flex-wrap:wrap; gap:8px;">';
+                html += visitDocs.map(function(dd){
+                    var ic = (dd.doc_type==='med_scan') ? '📷' : '📄';
+                    return '<button onclick="openVisitDoc(\''+dd.id+'\')" style="background:#8E44AD; color:#fff; border:none; border-radius:6px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:bold;">'+ic+' '+esc(dd.file_name||'Документ')+'</button>';
+                }).join('');
+                html += '</div>';
             }
             document.getElementById('visitPanelTitle').textContent = dt + ' — ' + (mcName(v.facility_id)||'Преглед');
             document.getElementById('visitPanelBody').innerHTML = html;
@@ -3107,14 +3121,31 @@
                 var viewUrl = await signMedUrl(url);
                 var u = (url || '').toLowerCase().split('?')[0];
                 var isImg = /\.(jpg|jpeg|png|gif|webp|bmp|heic|heif)$/.test(u);
-                renderDocViewer(cont, viewUrl, isImg);
+                var savedRot = null;
+                try {
+                    var rr = await fetch(CONFIG.URL + '/rest/v1/documents?select=view_rotation&file_url=eq.' + encodeURIComponent(url), { headers: { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY } });
+                    if (rr.ok) { var jj = await rr.json(); if (jj && jj.length && jj[0].view_rotation !== null && jj[0].view_rotation !== undefined) savedRot = jj[0].view_rotation; }
+                } catch(e) {}
+                renderDocViewer(cont, viewUrl, isImg, savedRot, url);
             })();
         }
         function updateZoomPct(z){ var el=document.getElementById('zoomPct'); if(!el) return; var t=Math.round(z*100)+'%'; if('value' in el) el.value=t; else el.textContent=t; }
         function setZoomPct(v){ var n=parseFloat(String(v).replace('%','').replace(',','.')); if(isNaN(n)||n<=0) return; n=Math.max(10,Math.min(500,n)); if(window.docViewer&&window.docViewer.setZoom) window.docViewer.setZoom(n/100); }
         // Универсален преглед: PDF през pdf.js, изображения директно. Fit + авто-завъртане на високите + zoom + завърти.
-        function renderDocViewer(cont, viewUrl, isImg) {
+        function renderDocViewer(cont, viewUrl, isImg, savedRot, fileUrl) {
             var state2 = { rotation: 0, zoom: 1, fitW: true, fitScale: 1 };
+            // запомняне на ръчното завъртане в documents.view_rotation (по file_url)
+            function saveRotation(deg) {
+                if (!fileUrl) return;
+                var norm = ((deg%360)+360)%360;
+                try {
+                    fetch(CONFIG.URL + '/rest/v1/documents?file_url=eq.' + encodeURIComponent(fileUrl), {
+                        method: 'PATCH',
+                        headers: { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                        body: JSON.stringify({ view_rotation: norm })
+                    });
+                } catch(e) {}
+            }
             cont.innerHTML = '';
             cont.style.display = 'flex';
             cont.style.flexDirection = 'column';
@@ -3146,7 +3177,7 @@
                 function applyImg() {
                     scroll.innerHTML = '';
                     var portrait = img.naturalHeight > img.naturalWidth;
-                    if (state2.autoDone===undefined) { state2.rotation = portrait ? 90 : 0; state2.autoDone=true; }
+                    if (state2.autoDone===undefined) { state2.rotation = (savedRot!==null && savedRot!==undefined) ? savedRot : (portrait ? 90 : 0); state2.autoDone=true; }
                     state2.fitScale = computeFit();
                     if (state2.fitW) state2.zoom = state2.fitScale;   // „Побери" = реалния fit мащаб
                     var el = document.createElement('img');
@@ -3158,7 +3189,7 @@
                     updateZoomPct(state2.zoom);
                 }
                 window.docViewer = {
-                    rotate: function(){ state2.rotation += 90; state2.fitW=true; applyImg(); },
+                    rotate: function(){ state2.rotation += 90; state2.fitW=true; applyImg(); saveRotation(state2.rotation); },
                     zoomIn: function(){ state2.zoom *= 1.08; state2.fitW=false; applyImg(); },
                     zoomOut: function(){ state2.zoom /= 1.08; state2.fitW=false; applyImg(); },
                     fit: function(){ state2.fitW=true; applyImg(); },
@@ -3188,7 +3219,7 @@
                 pdfDoc.getPage(num).then(function(page){
                     var unrot = page.getViewport({ scale: 1, rotation: 0 });
                     var portrait = unrot.height > unrot.width;
-                    if (state2.autoDone===undefined && num===1) { state2.rotation = portrait ? 90 : 0; }
+                    if (state2.autoDone===undefined && num===1) { state2.rotation = (savedRot!==null && savedRot!==undefined) ? savedRot : (portrait ? 90 : 0); }
                     var rotation = ((state2.rotation%360)+360)%360;
                     // реален fit мащаб (цялата страница да се побере по ширина И височина)
                     var availW = scroll.clientWidth - 24;
@@ -3213,7 +3244,7 @@
                 });
             }
             window.docViewer = {
-                rotate: function(){ state2.rotation += 90; state2.autoDone=true; state2.fitW=true; renderAll(); },
+                rotate: function(){ state2.rotation += 90; state2.autoDone=true; state2.fitW=true; renderAll(); saveRotation(state2.rotation); },
                 zoomIn: function(){ state2.zoom *= 1.08; state2.fitW=false; renderAll(); updateZoomPct(state2.zoom); },
                 zoomOut: function(){ state2.zoom /= 1.08; state2.fitW=false; renderAll(); updateZoomPct(state2.zoom); },
                 fit: function(){ state2.fitW=true; renderAll(); },
