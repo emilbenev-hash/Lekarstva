@@ -625,6 +625,7 @@
         <div class="panel-header">
             <h2 id="panelTitle">Редактиране</h2>
             <div style="display:flex; gap:8px; align-items:center;">
+                <button id="cloneMedBtn" class="close-btn" style="background:#6B46C1; display:none;" onclick="cloneMedDose()" title="Копирай като нова доза">📋</button>
                 <button id="deleteMedBtn" class="close-btn" style="background:#922B21; display:none;" onclick="deleteMed()" title="Изтрий лекарството">🗑️ Изтрий</button>
                 <button class="save-btn" onclick="saveMed()">💾 Запази</button>
                 <button class="close-btn" onclick="document.getElementById('editPanel').style.display='none'">Затвори</button>
@@ -2334,6 +2335,8 @@
 
             const deleteBtnEl = document.getElementById('deleteMedBtn');
             if (deleteBtnEl) deleteBtnEl.style.display = isNew ? 'none' : 'inline-block';
+            const cloneBtnEl = document.getElementById('cloneMedBtn');
+            if (cloneBtnEl) cloneBtnEl.style.display = isNew ? 'none' : 'inline-block';
 
             const originalTitle = isNew ? "Ново лекарство" : "Редактиране: " + (m.name_bg || '');
             const panelTitleEl = document.getElementById('panelTitle');
@@ -4093,6 +4096,25 @@ async function deleteListItem(kind, id) {
     };
   } catch(e){ console.warn('expiry init', e); }
 })();
+</script>
+
+<script>
+/* 📋 Копирай като нова доза — SQL функция clone_medication (2026.10.26) */
+window.cloneMedDose = async function(){
+  try{
+    if(!state.currentId){ alert('Първо запази лекарството.'); return; }
+    var m=(state.meds||[]).find(function(x){return String(x.id)===String(state.currentId);});
+    var q=prompt('Нова доза за „'+((m&&m.name_bg)||'')+'“ (текуща: '+((m&&m.volume_quantity)||'-')+' '+((m&&m.volume_unit)||'')+'):','');
+    if(q===null) return; q=String(q).trim().replace(',','.');
+    if(!q){ alert('Не е въведена доза.'); return; }
+    var r=await fetch(CONFIG.URL+'/rest/v1/rpc/clone_medication',{method:'POST',headers:{'apikey':CONFIG.KEY,'Authorization':'Bearer '+CONFIG.KEY,'Content-Type':'application/json'},body:JSON.stringify({src_id:state.currentId,new_quantity:q})});
+    if(!r.ok){ alert('Грешка: '+(await r.text())); return; }
+    var newId=await r.json();
+    alert('✅ Създадено: '+((m&&m.name_bg)||'')+' '+q+' '+((m&&m.volume_unit)||''));
+    if(typeof refreshData==='function') await refreshData();
+    if(typeof openPanel==='function') openPanel(newId);
+  }catch(e){ alert('Грешка: '+(e&&e.message?e.message:e)); }
+};
 </script>
 </body>
 </html>
