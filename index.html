@@ -2230,6 +2230,7 @@
                         ${emergencyBadge}
                         <h3>${displayName}${photoBadge}${m.atc_code ? ` <span style="color:#777; font-size:12px; font-weight:normal; font-family:monospace;">· ${m.atc_code}</span>` : ''}</h3>
                         <p style="color: #148F77; font-weight: bold; margin-bottom: 4px;">💰 ${priceHtml}</p>
+                        ${typeof expiryBadgeHtml==='function' ? expiryBadgeHtml(medPurchases) : ''}
                         <p>${dosageText}</p>
                         ${assignedPersons ? `<p style="color:#2C3E50; font-weight:bold;">За: ${assignedPersons}</p>` : ''}
                         ${medDatesLineHtml(m)}
@@ -2259,6 +2260,7 @@
             if (p.purchase_date) {
                 document.getElementById('purchase_date').value = formatDateToBG(p.purchase_date);
             }
+            if (document.getElementById('expiry_date')) document.getElementById('expiry_date').value = p.expiry_date ? formatDateToBG(p.expiry_date) : '';
             const ph = state.pharmacies.find(x => String(x.id) === String(p.pharmacy_id));
             if (ph) {
                 document.getElementById('pharmacy_name').value = ph.name;
@@ -2357,6 +2359,7 @@
                                 <tr style="background:#f1f5f9; text-align:left; border-bottom:1px solid #ddd;">
                                     <th style="padding:6px;">Дата</th>
                                     <th style="padding:6px;">Аптека</th>
+                                    <th style="padding:6px;">Годен до</th>
                                     <th style="padding:6px;">Станд. (€)</th>
                                     ${m.health_insurance ? '<th style="padding:6px;">ЗОК (€)</th>' : ''}
                                     <th style="padding:6px; text-align:center;">Опции</th>
@@ -2373,6 +2376,7 @@
                                         <tr style="border-bottom:1px solid #eee;">
                                             <td style="padding:6px;">${dStr}</td>
                                             <td style="padding:6px;"><b>${pName}</b></td>
+                                            <td style="padding:6px;${p.expiry_date && new Date(p.expiry_date) < new Date(new Date().toDateString()) ? ' color:#C0392B; font-weight:bold;' : ''}">${p.expiry_date ? formatDateToBG(p.expiry_date) : '-'}</td>
                                             <td style="padding:6px;">${eur} €</td>
                                             ${m.health_insurance ? `<td style="padding:6px; color:#E74C3C; font-weight:bold;">${zk} €</td>` : ''}
                                             <td style="padding:6px; text-align:center; white-space:nowrap;">
@@ -2437,7 +2441,7 @@
             const todayStr = new Date().toISOString().split('T')[0];
 
             document.getElementById('panelBody').innerHTML = `
-                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div><div class="form-group"><label>ATC код</label><input type="text" id="atc_code" value="${m.atc_code||''}" placeholder="напр. C02LC01" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" maxlength="10" style="text-transform:uppercase;"></div><div class="form-group"><label>Продуктов код (GTIN/EAN)</label><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="barcode" value="${m.barcode||''}" placeholder="GTIN/EAN код" inputmode="numeric" style="flex:1; padding:10px; font-size:15px;"><button type="button" onclick="if(typeof scanBarcode==='function'){scanBarcode()}else{alert('Скенерът не е наличен.')}" style="background:#2B6CB0; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:18px; line-height:1; flex:0 0 auto;">📷</button></div>
+                <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div><div class="form-group"><label>ATC код</label><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="atc_code" value="${m.atc_code||''}" placeholder="напр. C02LC01" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" maxlength="10" style="text-transform:uppercase; flex:1;"><button type="button" onclick="if(typeof scanMedBox==='function'){scanMedBox()}else{alert('Снимането не е налично.')}" title="Снимай кутията веднъж — за ATC/вещество" style="background:#2F855A; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:16px;">📷</button></div></div><div class="form-group"><label>Продуктов код (GTIN/EAN)</label><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="barcode" value="${m.barcode||''}" placeholder="GTIN/EAN код" inputmode="numeric" style="flex:1; padding:10px; font-size:15px;"><button type="button" onclick="if(typeof scanBarcode==='function'){scanBarcode()}else{alert('Скенерът не е наличен.')}" style="background:#2B6CB0; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:18px; line-height:1; flex:0 0 auto;">📷</button></div>
                 </div></div>
                 <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
                 <div class="form-group"><label>Описание (действие)</label><textarea id="desc" placeholder="Кратко действие на лекарството...">${m.description||''}</textarea></div>
@@ -2544,6 +2548,10 @@
                     <div class="form-group">
                         <label>Дата на покупка</label>
                         <input type="text" id="purchase_date" value="${formatDateToBG(todayStr)}" placeholder="дд.мм.гггг">
+                    </div>
+                    <div class="form-group">
+                        <label>Срок на годност</label>
+                        <div style="display:flex; gap:6px; align-items:center;"><input type="text" id="expiry_date" value="" placeholder="дд.мм.гггг" style="flex:1;"><button type="button" onclick="if(typeof scanExpiry==='function'){scanExpiry()}else{alert('Скенерът не е наличен.')}" title="Сканирай 2D кода (DataMatrix) от кутията" style="background:#6B46C1; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:16px;">🔲</button></div>
                     </div>
                 </div>
 
@@ -3037,10 +3045,14 @@
                 }
             }
 
-            if (priceEurVal !== '' || priceZkVal !== '' || pharmNameInput !== '') {
+            if (priceEurVal !== '' || priceZkVal !== '' || pharmNameInput !== '' || ((document.getElementById('expiry_date')||{}).value||'').trim() !== '') {
                 const purchDateEl = document.getElementById('purchase_date');
                 const pDateVal = purchDateEl && purchDateEl.value ? purchDateEl.value : '';
                 const pDate = pDateVal ? parseDateToISO(pDateVal) : new Date().toISOString().split('T')[0];
+                const expEl = document.getElementById('expiry_date');
+                const pExp = expEl && expEl.value.trim() ? parseDateToISO(expEl.value.trim()) : null;
+                const editP = state.editingPurchaseId ? state.purchases.find(x => String(x.id) === String(state.editingPurchaseId)) : null;
+                const expPart = (pExp || (editP && editP.expiry_date)) ? { expiry_date: pExp } : {};
                 
                 if (state.editingPurchaseId) {
                     await fetch(`${CONFIG.URL}/rest/v1/purchases?id=eq.${state.editingPurchaseId}`, {
@@ -3050,7 +3062,7 @@
                             price_eur: pEur, 
                             price_zk_eur: pZk, 
                             pharmacy_id: pharmId, 
-                            purchase_date: pDate 
+                            purchase_date: pDate, ...expPart 
                         })
                     });
                     state.editingPurchaseId = null;
@@ -3063,7 +3075,7 @@
                             price_eur: pEur, 
                             price_zk_eur: pZk, 
                             pharmacy_id: pharmId, 
-                            purchase_date: pDate 
+                            purchase_date: pDate, ...expPart 
                         })
                     });
                 }
@@ -3923,6 +3935,163 @@ async function deleteListItem(kind, id) {
       document.body.appendChild(ov);
     } catch(e){ console.warn('showMedPhotos', e); alert('Грешка при показване на снимките.'); }
   };
+})();
+</script>
+<script>
+/* 📸 Снимай кутията (мобилна) — качва снимка/файл в medical-docs, създава документ (опашка) и връзка към лекарството. */
+(function(){
+  try {
+    window.scanMedBox = async function(){
+      try {
+        if (typeof state==='undefined') { alert('Приложението още се зарежда.'); return; }
+        var input = document.createElement('input');
+        input.type='file'; input.accept='image/*'; input.capture='environment';
+        input.onchange = async function(){
+          try {
+            var file = input.files && input.files[0];
+            if(!file){ return; }
+            var h={ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' };
+            var ext=(file.name.split('.').pop()||'jpg');
+            var cleanFileName='medscan_'+Date.now()+'_'+Math.random().toString(36).substring(2,7)+'.'+ext;
+            var up=await fetch(CONFIG.URL+'/storage/v1/object/medical-docs/'+cleanFileName, { method:'POST', headers:{ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':file.type||'image/jpeg' }, body:file });
+            if(!up.ok){ var et=await up.text(); alert('Грешка при качване: '+et); return; }
+            var publicUrl=CONFIG.URL+'/storage/v1/object/public/medical-docs/'+cleanFileName;
+            var medId = state.currentId;
+            var createdNew = false;
+            if(!medId){
+              var dt=new Date().toLocaleString('bg-BG');
+              var medRes=await fetch(CONFIG.URL+'/rest/v1/medications', { method:'POST', headers:h, body:JSON.stringify({ name_bg:'Ново лекарство (от снимка) '+dt, is_active:true }) });
+              if(!medRes.ok){ var me=await medRes.text(); alert('Грешка при създаване на лекарството: '+me); return; }
+              var medData=await medRes.json();
+              if(medData && medData.length){ medId=medData[0].id; createdNew=true; if(state.meds && state.meds.push) state.meds.push(medData[0]); }
+              else { alert('Лекарството не бе създадено.'); return; }
+            }
+            var ocrText='';
+            try { if(typeof ocrImageFile==='function'){ ocrText=await ocrImageFile(file); } } catch(e){ ocrText=''; }
+            var parsed = (typeof parseMedText==='function') ? parseMedText(ocrText||'') : { barcode:'', atc:'', name_guess:'' };
+            try {
+              var curMed=(state.meds||[]).find(function(x){ return String(x.id)===String(medId); });
+              if(curMed){
+                var patch={};
+                if(parsed.barcode && !curMed.barcode) patch.barcode=parsed.barcode;
+                if(parsed.atc && !curMed.atc_code) patch.atc_code=parsed.atc;
+                if(Object.keys(patch).length){
+                  await fetch(CONFIG.URL+'/rest/v1/medications?id=eq.'+medId, { method:'PATCH', headers:h, body:JSON.stringify(patch) });
+                  Object.keys(patch).forEach(function(k){ curMed[k]=patch[k]; });
+                }
+              }
+            } catch(e){}
+            var docRes=await fetch(CONFIG.URL+'/rest/v1/documents', { method:'POST', headers:h, body:JSON.stringify({ file_url:publicUrl, file_name:file.name, doc_type:'med_scan', scan_status:'pending', uploaded_from:'mobile', scan_notes:(ocrText||'').slice(0,4000) }) });
+            var docData=await docRes.json();
+            if(docData && docData.length){
+              var doc=docData[0];
+              if(typeof state.documents!=='undefined' && state.documents.push) state.documents.push(doc);
+              await fetch(CONFIG.URL+'/rest/v1/medication_documents', { method:'POST', headers:h, body:JSON.stringify({ medication_id:medId, document_id:doc.id }) });
+              if(typeof state.medication_documents!=='undefined' && state.medication_documents.push) state.medication_documents.push({ medication_id:medId, document_id:doc.id });
+              if(createdNew){
+                alert('✅ Създадено ново лекарство и снимката е прикачена.\nЩе бъде разчетена и полетата попълнени при следваща обработка.');
+                try{ if(typeof refreshData==='function'){ await refreshData(); } if(typeof openPanel==='function'){ openPanel(medId); } }catch(e){}
+              } else {
+                alert('✅ Снимката е качена и прикачена към лекарството.\nЩе бъде разчетена и полетата попълнени при следваща обработка.');
+                if(typeof refreshData==='function'){ try{ refreshData(); }catch(e){} }
+              }
+            } else {
+              alert('Снимката е качена, но документът не бе записан.');
+            }
+          } catch(e){ alert('Грешка: '+(e && e.message ? e.message : e)); }
+        };
+        input.click();
+      } catch(e){ alert('Грешка при стартиране: '+(e && e.message ? e.message : e)); }
+    };
+  } catch(e){ console.warn('scanMedBox init', e); }
+})();
+</script>
+<script>
+/* 🔲 Срок на годност от 2D код (GS1 DataMatrix) — 2026.10.26 */
+(function(){
+  try {
+    function gs1Parse(raw){
+      var GS=String.fromCharCode(29);
+      var s=String(raw||'').replace(/^\]d2|^\]C1|^\]Q3/,'');
+      if(s.indexOf('(')===0){ s=s.replace(/\((\d{2,4})\)/g,function(_,a){return GS+a;}); }
+      var out={}; var fixed={'00':18,'01':14,'02':14,'11':6,'13':6,'15':6,'17':6};
+      var k=0, guard=0;
+      while(k<s.length && guard++<20){
+        if(s[k]===GS){k++;continue;}
+        var ai=s.substr(k,2);
+        if(fixed[ai]){ out[ai]=s.substr(k+2,fixed[ai]); k+=2+fixed[ai]; continue; }
+        if(ai==='10'||ai==='21'){ var e=s.indexOf(GS,k+2); if(e<0)e=s.length; out[ai]=s.substring(k+2,e); k=e; continue; }
+        break;
+      }
+      return out;
+    }
+    function expToBG(yymmdd){
+      if(!/^\d{6}$/.test(yymmdd)) return '';
+      var y=2000+parseInt(yymmdd.substr(0,2),10), mo=parseInt(yymmdd.substr(2,2),10), dd=parseInt(yymmdd.substr(4,2),10);
+      if(mo<1||mo>12) return '';
+      if(dd===0) dd=new Date(y,mo,0).getDate();
+      return String(dd).padStart(2,'0')+'.'+String(mo).padStart(2,'0')+'.'+y;
+    }
+    window.gs1Parse=gs1Parse;
+    async function applyCode(raw){
+      var g=gs1Parse(raw);
+      var expEl=document.getElementById('expiry_date');
+      if(!g['17']){ alert('В този код няма срок на годност.\nВъведи срока ръчно.'); return; }
+      var bg=expToBG(g['17']);
+      if(expEl && bg){ expEl.value=bg; expEl.dispatchEvent(new Event('input',{bubbles:true})); }
+      var msg='✅ Срок на годност: '+bg;
+      if(g['01'] && typeof state!=='undefined' && state.currentId){
+        var ean=g['01'].replace(/^0/,'');
+        var bc=document.getElementById('barcode');
+        if(bc){ if(!bc.value){ bc.value=ean; msg+='\nGTIN попълнен: '+ean; } }
+        else {
+          var med=(state.meds||[]).find(function(x){return String(x.id)===String(state.currentId);});
+          if(med && !med.barcode){
+            try{ await fetch(CONFIG.URL+'/rest/v1/medications?id=eq.'+med.id,{method:'PATCH',headers:{'apikey':CONFIG.KEY,'Authorization':'Bearer '+CONFIG.KEY,'Content-Type':'application/json'},body:JSON.stringify({barcode:ean})}); med.barcode=ean; msg+='\nGTIN записан: '+ean; }catch(e){}
+          }
+        }
+      }
+      alert(msg+'\n\nНатисни „Запази“, за да се запише покупката.');
+    }
+    window.scanExpiry = async function(){
+      try{
+        if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ alert('Камерата не е достъпна. Въведи срока ръчно.'); return; }
+        var ov=document.getElementById('expOverlay'); if(ov) ov.remove();
+        ov=document.createElement('div'); ov.id='expOverlay';
+        ov.style.cssText='position:fixed; inset:0; background:#000; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center;';
+        ov.innerHTML='<video id="expVideo" playsinline style="width:100%; max-height:70vh; object-fit:cover;"></video><div style="color:#fff; margin:12px; font-size:15px; text-align:center;">Насочи камерата към квадратния 2D код<br>(до EXP / LOT / SN)…</div><button id="expCancel" style="background:#C53030; color:#fff; border:none; border-radius:8px; padding:12px 20px; font-weight:bold; font-size:16px;">Отказ</button>';
+        document.body.appendChild(ov);
+        var video=document.getElementById('expVideo'), stream=null, stopped=false, raf=null;
+        function cleanup(){ stopped=true; if(raf) cancelAnimationFrame(raf); if(stream){ try{stream.getTracks().forEach(function(t){t.stop();});}catch(e){} } if(ov) ov.remove(); }
+        document.getElementById('expCancel').addEventListener('click',cleanup);
+        try{ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}); video.srcObject=stream; await video.play(); }
+        catch(e){ alert('Няма достъп до камерата: '+e.message); cleanup(); return; }
+        function found(code){ if(!code||stopped) return; cleanup(); applyCode(code); }
+        if('BarcodeDetector' in window){
+          try{
+            var det=new window.BarcodeDetector({formats:['data_matrix','qr_code']});
+            var tick=async function(){ if(stopped) return; try{ var c=await det.detect(video); if(c&&c.length){ found(c[0].rawValue); return; } }catch(e){} raf=requestAnimationFrame(tick); };
+            raf=requestAnimationFrame(tick); return;
+          }catch(e){}
+        }
+        try{
+          if(!window.ZXing){ await new Promise(function(res,rej){ var s=document.createElement('script'); s.src='https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+          var reader=new window.ZXing.BrowserMultiFormatReader();
+          reader.decodeFromVideoElement(video,function(r){ if(stopped){ try{reader.reset();}catch(e){} return; } if(r){ try{reader.reset();}catch(e){} found(r.getText()); } });
+        }catch(e){ alert('Скенерът не стартира. Въведи срока ръчно.'); cleanup(); }
+      }catch(e){ alert('Грешка: '+(e&&e.message?e.message:e)); }
+    };
+    window.expiryBadgeHtml = function(medPurchases){
+      try{
+        var withExp=(medPurchases||[]).filter(function(p){return p.expiry_date;});
+        if(!withExp.length) return '';
+        withExp.sort(function(a,b){ return (new Date(b.purchase_date||0)-new Date(a.purchase_date||0)) || (new Date(b.created_at||0)-new Date(a.created_at||0)); });
+        var e=withExp[0].expiry_date, t=new Date(); t.setHours(0,0,0,0);
+        var past=new Date(e)<t;
+        return '<p style="margin-bottom:4px; font-weight:bold; color:'+(past?'#C0392B':'#2C3E50')+';">'+(past?'⛔ Изтекъл: ':'📅 Годен до: ')+formatDateToBG(e)+'</p>';
+      }catch(e){ return ''; }
+    };
+  } catch(e){ console.warn('expiry init', e); }
 })();
 </script>
 </body>
