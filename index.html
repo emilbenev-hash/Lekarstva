@@ -2426,9 +2426,15 @@
             const linkedDocIds = state.medication_documents.filter(md => String(md.medication_id) === String(m.id)).map(md => String(md.document_id));
             const currentMedDocs = state.documents.filter(doc => linkedDocIds.includes(String(doc.id)));
 
+            const medPhotoDocs = currentMedDocs.filter(doc => doc.doc_type === 'med_scan');
+            const medPhotosHtml = medPhotoDocs.length === 0 ? '<span style="color:#888; font-size:12px;">Няма снимки</span>' : medPhotoDocs.map(doc => {
+                const docName = doc.file_name || 'Снимка';
+                return `<div class="doc-item"><button type="button" onclick="openFullscreen('${escJs(doc.file_url)}', '${escJs(docName)}')" style="background:none; border:none; padding:0; color:#2980B9; font-weight:bold; text-decoration:underline; cursor:pointer; font-size:13px; text-align:left;">📷 ${docName}</button><button type="button" onclick="unlinkDocument('${doc.id}')" style="background:#E74C3C; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Премахни</button></div>`;
+            }).join('');
+            const rxDocs = currentMedDocs.filter(doc => doc.doc_type !== 'med_scan');
             let docsListHtml = 'Няма свързани документи';
-            if (currentMedDocs.length > 0) {
-                docsListHtml = currentMedDocs.map(doc => {
+            if (rxDocs.length > 0) {
+                docsListHtml = rxDocs.map(doc => {
                     const docName = doc.file_name || doc.title || 'Документ';
                     return `
                     <div class="doc-item">
@@ -2438,7 +2444,7 @@
                 }).join('');
             }
 
-            const availableDocs = state.documents.filter(doc => !linkedDocIds.includes(String(doc.id)));
+            const availableDocs = state.documents.filter(doc => !linkedDocIds.includes(String(doc.id)) && doc.doc_type !== 'med_scan');
             let existingDocOpts = '<option value="">-- Избери от вече качените --</option>' + availableDocs.map(doc => `<option value="${doc.id}">${doc.file_name || doc.title || 'Документ'}</option>`).join('');
 
             const todayStr = new Date().toISOString().split('T')[0];
@@ -2446,6 +2452,7 @@
             document.getElementById('panelBody').innerHTML = `
                 <div class="form-row"><div class="form-group"><label>Име (БГ)</label><input type="text" id="name_bg" value="${m.name_bg||''}"></div><div class="form-group"><label>Име (Лат)</label><input type="text" id="name_latin" value="${m.name_latin||''}"></div><div class="form-group"><label>ATC код</label><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="atc_code" value="${m.atc_code||''}" placeholder="напр. C02LC01" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" maxlength="10" style="text-transform:uppercase; flex:1;"><button type="button" onclick="if(typeof scanMedBox==='function'){scanMedBox()}else{alert('Снимането не е налично.')}" title="Снимай кутията веднъж — за ATC/вещество" style="background:#2F855A; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:16px;">📷</button></div></div><div class="form-group"><label>Продуктов код (GTIN/EAN)</label><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="barcode" value="${m.barcode||''}" placeholder="GTIN/EAN код" inputmode="numeric" style="flex:1; padding:10px; font-size:15px;"><button type="button" onclick="if(typeof scanBarcode==='function'){scanBarcode()}else{alert('Скенерът не е наличен.')}" style="background:#2B6CB0; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; font-size:18px; line-height:1; flex:0 0 auto;">📷</button></div>
                 </div></div>
+                <div class="form-group" style="background:#F0FFF4; padding:10px; border:1px dashed #2F855A; border-radius:6px;"><label style="color:#2F855A; font-weight:bold;">📷 Снимки на кутията:</label>${medPhotosHtml}</div>
                 <div class="form-group"><label>Активно вещество</label><input type="text" id="active" value="${m.active_substance||''}"></div>
                 <div class="form-group"><label>Описание (действие)</label><textarea id="desc" placeholder="Кратко действие на лекарството...">${m.description||''}</textarea></div>
                 
