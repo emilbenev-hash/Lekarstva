@@ -3202,12 +3202,20 @@
                     if (state2.autoDone===undefined) { state2.rotation = (savedRot!==null && savedRot!==undefined) ? savedRot : (portrait ? 90 : 0); state2.autoDone=true; }
                     state2.fitScale = computeFit();
                     if (state2.fitW) state2.zoom = state2.fitScale;   // „Побери" = реалния fit мащаб
+                    // 2026.10.26: реален размер (не CSS scale), центриране в екрана и при завъртане
+                    var rotN = ((state2.rotation%360)+360)%360;
+                    var side = (rotN===90||rotN===270);
+                    var w = img.naturalWidth*state2.zoom, h = img.naturalHeight*state2.zoom;
+                    var bw = side ? h : w, bh = side ? w : h;
+                    var box = document.createElement('div');
+                    var mt = Math.max(12, (scroll.clientHeight - bh)/2);
+                    var ml = Math.max(12, (scroll.clientWidth - bw)/2);
+                    box.style.cssText = 'position:relative; width:'+bw+'px; height:'+bh+'px; margin:'+mt+'px 0 12px '+ml+'px;';
                     var el = document.createElement('img');
                     el.src = viewUrl;
-                    el.style.transform = 'rotate('+state2.rotation+'deg) scale('+state2.zoom+')';
-                    el.style.transformOrigin = 'center center';
-                    el.style.marginTop = '20px';
-                    scroll.appendChild(el);
+                    el.style.cssText = 'position:absolute; left:50%; top:50%; width:'+w+'px; height:'+h+'px; max-width:none; max-height:none; margin:0; box-shadow:0 2px 10px rgba(0,0,0,0.4); background:#fff; transform:translate(-50%,-50%) rotate('+rotN+'deg);';
+                    box.appendChild(el);
+                    scroll.appendChild(box);
                     updateZoomPct(state2.zoom);
                 }
                 window.docViewer = {
@@ -3281,14 +3289,18 @@
                 const idx = url.indexOf(marker);
                 if (idx === -1) return url;
                 const path = url.substring(idx + marker.length);
-                const signRes = await fetch(`${CONFIG.URL}/storage/v1/object/sign/medical-docs/${path}`, {
-                    method: 'POST',
-                    headers: { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ expiresIn: 3600 })
-                });
-                if (signRes.ok) {
-                    const sj = await signRes.json();
-                    if (sj && sj.signedURL) return CONFIG.URL + '/storage/v1' + sj.signedURL;
+                // 2026.10.26: Supabase понякога връща 404 при първото подписване на нов файл → до 4 опита
+                for (let attempt = 0; attempt < 4; attempt++) {
+                    const signRes = await fetch(`${CONFIG.URL}/storage/v1/object/sign/medical-docs/${path}`, {
+                        method: 'POST',
+                        headers: { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ expiresIn: 3600 })
+                    });
+                    if (signRes.ok) {
+                        const sj = await signRes.json();
+                        if (sj && sj.signedURL) return CONFIG.URL + '/storage/v1' + sj.signedURL;
+                    }
+                    await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
                 }
             } catch (e) {}
             return url;
