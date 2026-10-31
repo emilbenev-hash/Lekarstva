@@ -461,6 +461,7 @@
         <button class="m-person-btn" id="pbEmil" onclick="setPerson('Емил')">Емил</button>
         <button class="m-person-btn health" id="pbHealth" onclick="showHealth()">🩺 Картина</button>
         <button class="m-person-btn" id="pbAnalysis" onclick="showAnalysis()" style="background:rgba(255,255,255,0.92); color:#6C3483;">🧠 AwsQ Анализ</button>
+        <button class="m-person-btn" id="pbRec" onclick="showRecTests()" style="background:rgba(255,255,255,0.92); color:#117A65;">🧪 Преп. Изсл.</button>
     </div>
 
     <!-- НАЧАЛНО МЕНЮ -->
@@ -488,8 +489,9 @@
             <div class="m-subtile" onclick="openImaging('Скенер (КТ)')"><div class="ico">🖥️</div><div class="lbl">Скенер (КТ)</div></div>
             <div class="m-subtile" onclick="openImaging('ЯМР (МРТ)')"><div class="ico">🧲</div><div class="lbl">ЯМР (МРТ)</div></div>
             <div class="m-subtile" onclick="openImaging('Ехографски')"><div class="ico">〰️</div><div class="lbl">Ехографски</div></div>
-            <div class="m-subtile" onclick="openImaging('Функционални')"><div class="ico">📈</div><div class="lbl">Функционални</div></div>
-            <div class="m-subtile" onclick="openImaging('Други')" style="grid-column:1 / -1;"><div class="ico">🔖</div><div class="lbl">Други</div></div>
+            <div class="m-subtile" onclick="openImaging('Функционални')"><div class="ico">📈</div><div class="lbl">Функционални (ЕКГ)</div></div>
+            <div class="m-subtile" onclick="openImaging('Стоматологични')"><div class="ico">🦷</div><div class="lbl">Стоматологични</div></div>
+            <div class="m-subtile" onclick="openImaging('Други')"><div class="ico">🔖</div><div class="lbl">Други</div></div>
         </div>
     </div>
 
@@ -545,6 +547,19 @@
             <div id="healthMeta" style="font-size:12px; color:#777; margin-top:3px;"></div>
         </div>
         <div id="healthContent" style="background:#fff; border-radius:10px; padding:14px; line-height:1.6; font-size:15px;"></div>
+    </div>
+
+    <!-- МОДУЛ ПРЕПОРЪЧАНИ ИЗСЛЕДВАНИЯ (31.10.2026) -->
+    <div id="recModule" style="display:none;">
+        <div class="filters" style="background:#fff;">
+            <h2 id="recTitle" style="color:#117A65; font-size:16px; margin:0 0 6px;">🧪 Препоръчани изследвания</h2>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button id="recViewSpec" onclick="state.recView='spec'; renderRecTests()" class="filter-btn">По специалности</button>
+                <button id="recViewSum" onclick="state.recView='sum'; renderRecTests()" class="filter-btn">Обобщено</button>
+                <button onclick="addRecTest()" style="padding:6px 10px; background:#117A65; color:white; border:none; border-radius:6px; font-weight:bold; font-size:12px;">+ Добави</button>
+            </div>
+        </div>
+        <div id="recContent" style="background:#fff; border-radius:8px; padding:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); font-size:13px; overflow-x:auto;"></div>
     </div>
 
     <!-- МОДУЛ СПИСЪК ЗА ЗАКУПУВАНЕ -->
@@ -712,7 +727,7 @@
         };
 
         function hideAllScreens() {
-            ['homeMenu','preglediMenu','izsledvaniaMenu','medsModule','labModule','shoppingModule','visitsModule','imagingModule','healthModule'].forEach(function(id){
+            ['homeMenu','preglediMenu','izsledvaniaMenu','medsModule','labModule','shoppingModule','visitsModule','imagingModule','healthModule','recModule'].forEach(function(id){
                 var el=document.getElementById(id); if(el) el.style.display='none';
             });
             var hmX=document.getElementById('homeMenu'); if(hmX) hmX.classList.remove('m-tiles');
@@ -737,6 +752,7 @@
             else if(scr.fn==='openVisitType'){ state.visitCategory=scr.arg; document.getElementById('visitsModule').style.display='block'; var t={'АЛ':'📄 Амбулаторни листове','Епикризи':'🏥 Епикризи','Спешни':'🚑 Спешни'}; var el=document.getElementById('visitsTitle'); if(el) el.textContent=t[scr.arg]||'📋 Прегледи'; var vs=document.getElementById('visitSearch'); if(vs) vs.value=''; var vsf=document.getElementById('visitSpecFilter'); if(vsf) vsf.value=''; renderVisits(); }
             else if(scr.fn==='openImaging'){ state.imagingCategory=scr.arg; document.getElementById('imagingModule').style.display='block'; var el2=document.getElementById('imagingTitle'); if(el2) el2.textContent='🔬 '+scr.arg; var is=document.getElementById('imagingSearch'); if(is) is.value=''; renderImaging(); }
             else if(scr.fn==='showHealth'){ document.getElementById('healthModule').style.display='block'; renderHealth(); }
+            else if(scr.fn==='showRecTests'){ document.getElementById('recModule').style.display='block'; renderRecTests(); }
             state.currentScreen=scr; updateNavButtons();
         }
         function navGo(fn,arg){ if(state.currentScreen) state.navStack.push(state.currentScreen); _render({fn:fn,arg:arg}); }
@@ -778,6 +794,7 @@
         state.healthView = 'status';
         function showHealth(){ state.healthView='status'; navGo('showHealth'); }
         function showAnalysis(){ state.healthView='analysis'; navGo('showHealth'); }
+        function showRecTests(){ navGo('showRecTests'); }
         function renderHealth(){
             var pid=personIdByName(state.person);
             var rows=(state.healthOverview||[]).filter(function(r){ return String(r.person_id)===String(pid) && r.is_current; });
@@ -814,6 +831,156 @@
             cont.innerHTML=html;
             var dmax=rows.map(function(r){return r.based_on_until||'';}).sort().slice(-1)[0];
             meta.textContent=dmax?('Обхваща документи до: '+fmtDate(dmax)):'';
+        }
+        // === ПРЕПОРЪЧАНИ ИЗСЛЕДВАНИЯ (31.10.2026) ===
+        // Видове: permanent (остава винаги), periodic (остава, нов срок), one_time (изтрива се при изпълнение)
+        function recKindLbl(k){ return k==='permanent'?'Постоянно':(k==='periodic'?'Периодично':'Еднократно (от АЛ)'); }
+        function recAddMonths(iso, m){ if(!iso||!m) return null; var d=new Date(iso); d.setMonth(d.getMonth()+Number(m)); return d.toISOString().slice(0,10); }
+        // търси последно лабораторно изследване, което съдържа показател от името на препоръката (TSH, PSA, HbA1c...)
+        function recLastLab(r){
+            var pid=String(r.person_id); var name=(r.test_name||'').toUpperCase();
+            var params=(state.labParameters||[]).filter(function(p){
+                var codes=[]; var m=(p.name||'').match(/\(([^)]+)\)/g)||[]; m.forEach(function(x){codes.push(x.replace(/[()]/g,'').toUpperCase());});
+                return codes.some(function(c){ return c.length>=2 && new RegExp('(^|[^A-ZА-Я0-9])'+c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^A-ZА-Я0-9]|$)').test(name); });
+            }).map(function(p){return String(p.id);});
+            if(!params.length) return null;
+            var tests={}; (state.labTests||[]).forEach(function(t){ if(String(t.person_id)===pid) tests[String(t.id)]=t.test_date; });
+            var last=null;
+            (state.labResults||[]).forEach(function(x){ var d=tests[String(x.lab_test_id)]; if(d && params.indexOf(String(x.parameter_id))>=0 && (!last||d>last)) last=d; });
+            return last;
+        }
+        // 31.10.2026: обобщен (сбит) изглед – Кръвни / Урина / Образни и функционални; профилактиката на един ред
+        var REC_PROF_SPECS=['Гинекология и акушерство','Стоматология','Офталмология','УНГ','Мамология'];
+        function recRowState(r){
+            var today=new Date().toISOString().slice(0,10);
+            var lab=recLastLab(r); var last=r.last_done||null; if(lab && (!last||lab>last)) last=lab;
+            var done1=r.kind==='one_time' && last && last>=r.recommended_on;
+            var due=(r.kind!=='one_time' && r.period_months)? recAddMonths(last||r.recommended_on, r.period_months) : null;
+            var soon=new Date(); soon.setDate(soon.getDate()+30); soon=soon.toISOString().slice(0,10);
+            var now = (r.kind==='one_time' && !done1) || (due && due<=soon);
+            return {last:last, done1:done1, due:due, over:due&&due<today, now:now};
+        }
+        function recTokGroup(t){
+            var x=t.toLowerCase();
+            if(/урин|микроалбум|седимент|охи|протеинур/.test(x)) return 'urine';
+            if(/ехограф|кт\b|кт |dexa|мамограф|еег|datscan|ортопантом|аудиометр|преглед|ехокардио|рентген|ямр|мрт/.test(x)) return 'img';
+            return 'blood';
+        }
+        // разделя по , ; + само извън скоби
+        function recSplitTop(str){ var out=[],cur='',d=0; for(var i=0;i<str.length;i++){ var c=str[i]; if(c==='(')d++; if(c===')')d=Math.max(0,d-1); if(d===0 && (c===','||c===';'||c==='+')){ if(cur.trim()) out.push(cur.trim()); cur=''; } else cur+=c; } if(cur.trim()) out.push(cur.trim()); return out; }
+        function renderRecSummary(rows){
+            var groups={blood:{},urine:{},img:{}}, prof=[], now=[];
+            rows.forEach(function(r){
+                var st=recRowState(r);
+                if(st.done1) return;
+                if(REC_PROF_SPECS.indexOf(r.specialty)>=0){ prof.push(r.specialty+(st.over?' ⛔':'')); return; }
+                recSplitTop(r.test_name||'').forEach(function(t){
+                    var g=recTokGroup(t); var k=t.toLowerCase().replace(/\s+/g,' ');
+                    var e=groups[g][k]||(groups[g][k]={name:t, specs:[], due:null, over:false, now:false});
+                    if(e.specs.indexOf(r.specialty)<0) e.specs.push(r.specialty);
+                    var d=st.due || (r.kind==='one_time'?r.recommended_on:null);
+                    if(d && (!e.due||d<e.due)) e.due=d;
+                    e.over=e.over||st.over||(r.kind==='one_time'); e.now=e.now||st.now;
+                });
+            });
+            var titles={blood:'🩸 Кръвни',urine:'💧 Уринни',img:'🩻 Образни и функционални'};
+            var html='<div style="display:flex; flex-wrap:wrap; gap:10px;">';
+            ['blood','urine','img'].forEach(function(g){
+                var arr=Object.values(groups[g]);
+                if(g==='blood'){
+                    // 31.10.2026: ПКК покрива всички свои показатели – те не се изписват отделно
+                    var pkkCat=(state.labCategories||[]).find(function(c){return /ПКК/.test(c.name||'');});
+                    var pkkCodes=['пкк','дкк','hb','hgb','хемоглобин','rbc','еритроцити','wbc','левкоцити','plt','тромбоцити','hct','хематокрит','mcv','mch','mchc','rdw','mpv','pdw','pct','neu','lym','mon','eos','baso','gran','mid'];
+                    (state.labParameters||[]).forEach(function(pp){ if(pkkCat && String(pp.category_id)===String(pkkCat.id)){ ((pp.name||'').match(/\(([^)]+)\)/g)||[]).forEach(function(x){ pkkCodes.push(x.replace(/[()%#]/g,'').trim().toLowerCase()); }); } });
+                    arr=arr.filter(function(e){ var n=e.name.trim().toLowerCase().replace(/[%#]/g,'').trim(); return !pkkCodes.some(function(c){ return c && (n===c || n.indexOf(c+' ')===0 || n.indexOf('пкк')===0); }); });
+                    arr.unshift({name:'ПКК'});
+                }
+                if(!arr.length) return;
+                html+='<div style="flex:1 1 260px; border:2px solid #A3E4D7; border-radius:8px; padding:10px 12px; background:#F4FBF9;">'
+                    +'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="color:#0E6251;">'+titles[g]+'</b>'
+                    +'<button onclick="navigator.clipboard.writeText(document.getElementById(\'recBox_'+g+'\').innerText)" style="font-size:11px; padding:2px 8px; border:1px solid #aaa; background:#fff; border-radius:4px; cursor:pointer;">📋 Копирай</button></div>'
+                    +'<div id="recBox_'+g+'" style="line-height:1.6;">'+arr.map(function(e){return e.name;}).join(', ')+'</div></div>';
+            });
+            html+='</div>';
+            return html;
+        }
+        function renderRecTests(){
+            if(!state.recView) state.recView='sum';
+            var bs=document.getElementById('recViewSpec'), bm=document.getElementById('recViewSum');
+            if(bs) bs.classList.toggle('active', state.recView==='spec'); if(bm) bm.classList.toggle('active', state.recView==='sum');
+            if(state.recView==='sum'){
+                var pid0=personIdByName(state.person);
+                document.getElementById('recTitle').textContent='🧪 Препоръчани изследвания — '+state.person;
+                var rows0=(state.recTests||[]).filter(function(r){return String(r.person_id)===String(pid0);});
+                document.getElementById('recContent').innerHTML = rows0.length? renderRecSummary(rows0) : '<p style="color:#666; padding:10px;">Няма препоръчани изследвания.</p>';
+                rows0.forEach(function(r){ var lab=recLastLab(r); if(r.kind==='one_time' && lab && lab>=r.recommended_on){ deleteRecTest(r.id, true); } });
+                return;
+            }
+            renderRecBySpec();
+        }
+        function renderRecBySpec(){
+            var pid=personIdByName(state.person);
+            document.getElementById('recTitle').textContent='🧪 Препоръчани изследвания — '+state.person;
+            var b=document.getElementById('pbRec'); if(b) b.style.outline='3px solid #fff';
+            var rows=(state.recTests||[]).filter(function(r){return String(r.person_id)===String(pid);});
+            var today=new Date().toISOString().slice(0,10);
+            var cont=document.getElementById('recContent');
+            if(!rows.length){ cont.innerHTML='<p style="color:#666; padding:10px;">Няма препоръчани изследвания.</p>'; return; }
+            var groups={}; rows.forEach(function(r){ (groups[r.specialty]=groups[r.specialty]||[]).push(r); });
+            var html='';
+            Object.keys(groups).sort().forEach(function(sp){
+                html+='<div style="background:#D1F2EB; color:#0E6251; font-weight:bold; padding:6px 8px; margin-top:10px; border-radius:4px;">'+sp+'</div>';
+                html+='<table style="width:100%; border-collapse:collapse;">';
+                groups[sp].forEach(function(r){
+                    var lab=recLastLab(r); var last=r.last_done||null; if(lab && (!last||lab>last)) last=lab;
+                    var done1 = r.kind==='one_time' && last && last>=r.recommended_on;
+                    var due = (r.kind!=='one_time' && r.period_months) ? recAddMonths(last||r.recommended_on, r.period_months) : null;
+                    var over = due && due<today;
+                    var st='';
+                    if(done1) st='<span style="color:#1E8449; font-weight:bold;">✅ изпълнено '+fmtDate(last)+'</span> <button onclick="deleteRecTest(\''+r.id+'\')" style="font-size:11px; padding:2px 6px; background:#E74C3C; color:#fff; border:none; border-radius:4px; cursor:pointer;">Махни</button>';
+                    else if(due) st='<span style="color:'+(over?'#C0392B':'#555')+'; font-weight:'+(over?'bold':'normal')+';">'+(over?'⛔ просрочено, ':'следващо: ')+fmtDate(due)+'</span>';
+                    html+='<tr style="border-bottom:1px solid #e5e8e8;"><td style="padding:6px 4px; width:45%;"><b>'+r.test_name+'</b>'+(r.reason?'<br><span style="color:#777; font-size:11px;">'+r.reason+'</span>':'')+'</td>'
+                        +'<td style="padding:6px 4px; font-size:11px; color:#555;">'+recKindLbl(r.kind)+(r.period_months?' · '+r.period_months+' м':'')+'<br>препоръчано '+fmtDate(r.recommended_on)+'</td>'
+                        +'<td style="padding:6px 4px; font-size:11px;">'+(last?'последно: '+fmtDate(last)+'<br>':'')+st+'</td>'
+                        +'<td style="padding:6px 4px; text-align:right; white-space:nowrap;"><button onclick="editRecTest(\''+r.id+'\')" style="font-size:11px; padding:2px 6px; border:1px solid #aaa; background:#fff; border-radius:4px; cursor:pointer;">✏️</button> <button onclick="deleteRecTest(\''+r.id+'\')" style="font-size:11px; padding:2px 6px; border:1px solid #aaa; background:#fff; border-radius:4px; cursor:pointer;">🗑️</button></td></tr>';
+                });
+                html+='</table>';
+            });
+            cont.innerHTML=html;
+            // автоматично изтриване на изпълнени еднократни
+            rows.forEach(function(r){ var lab=recLastLab(r); if(r.kind==='one_time' && lab && lab>=r.recommended_on){ deleteRecTest(r.id, true); } });
+        }
+        async function recApi(method, q, body){
+            var h={'apikey':CONFIG.KEY,'Authorization':'Bearer '+CONFIG.KEY,'Content-Type':'application/json','Prefer':'return=representation'};
+            var r=await fetch(CONFIG.URL+'/rest/v1/recommended_tests'+q,{method:method,headers:h,body:body?JSON.stringify(body):undefined});
+            if(!r.ok) throw new Error(await r.text()); return r.status===204?[]:r.json();
+        }
+        async function deleteRecTest(id, silent){
+            try{
+                if(!silent && !confirm('Да се изтрие ли препоръката?')) return;
+                await recApi('DELETE','?id=eq.'+id);
+                state.recTests=(state.recTests||[]).filter(function(r){return String(r.id)!==String(id);});
+                if(!silent) renderRecTests();
+            }catch(e){ showMobileError('deleteRecTest: '+e.message); }
+        }
+        function recPrompt(r){
+            var sp=prompt('Специалност:', r.specialty||''); if(sp===null) return null;
+            var t=prompt('Изследване:', r.test_name||''); if(t===null) return null;
+            var k=prompt('Вид: p = постоянно, r = периодично, e = еднократно', r.kind==='permanent'?'p':(r.kind==='periodic'?'r':'e')); if(k===null) return null;
+            k=({p:'permanent',r:'periodic',e:'one_time'})[(k||'e').trim().toLowerCase()]||'one_time';
+            var m=null; if(k!=='one_time'){ m=prompt('На колко месеца?', r.period_months||12); if(m===null) return null; m=parseInt(m)||null; }
+            var re=prompt('Причина:', r.reason||''); if(re===null) return null;
+            return {specialty:sp.trim(), test_name:t.trim(), kind:k, period_months:m, reason:re.trim()||null};
+        }
+        async function addRecTest(){
+            var v=recPrompt({}); if(!v) return;
+            v.person_id=personIdByName(state.person);
+            try{ var res=await recApi('POST','',v); state.recTests=(state.recTests||[]).concat(res); renderRecTests(); }catch(e){ showMobileError('addRecTest: '+e.message); }
+        }
+        async function editRecTest(id){
+            var r=(state.recTests||[]).find(function(x){return String(x.id)===String(id);}); if(!r) return;
+            var v=recPrompt(r); if(!v) return;
+            try{ var res=await recApi('PATCH','?id=eq.'+id,v); Object.assign(r,res[0]||v); renderRecTests(); }catch(e){ showMobileError('editRecTest: '+e.message); }
         }
         function fmtDate(iso){ if(!iso) return ''; var s=String(iso).slice(0,10); return /^\d{4}-\d{2}-\d{2}$/.test(s)? s.replace(/-/g,'.'):s; }
         // === ПРЕГЛЕДИ (Етап 2) ===
@@ -988,13 +1155,16 @@
             if (!cont) return;
             var pid = personIdByName(state.person);
             var allowed = IMAGING_GROUPS[state.imagingCategory] || [];
+            var dentSpec = (state.specialties||[]).find(function(x){return x.name_bg==='Стоматология';});
+            var isDent = (state.imagingCategory==='Стоматологични');
             var q = ((document.getElementById('imagingSearch')||{}).value || '').trim().toLowerCase();
             var docName = function(id){ var d=(state.doctors||[]).find(function(x){return String(x.id)===String(id);}); return d?d.name:''; };
             var mcName = function(id){ var m=(state.medicalCenters||[]).find(function(x){return String(x.id)===String(id);}); return m?m.name:''; };
             var rows = (state.imagingStudies||[]).filter(function(im){
                 if (pid && String(im.person_id)!==pid) return false;
                 var tn = imagingTypeName(im.imaging_type_id);
-                if (allowed.indexOf(tn)===-1) return false;
+                if (isDent) { if (!dentSpec || String(im.specialty_id)!==String(dentSpec.id)) return false; }
+                else if (allowed.indexOf(tn)===-1) return false;
                 if (q) {
                     var hay = ((im.conclusion||'')+' '+(im.findings||'')+' '+docName(im.doctor_id)+' '+mcName(im.facility_id)+' '+tn).toLowerCase();
                     if (hay.indexOf(q)===-1) return false;
@@ -1061,6 +1231,7 @@
             if(document.getElementById('labModule').style.display!=='none' && typeof renderLabs==='function') renderLabs();
             if(document.getElementById('medsModule').style.display!=='none' && typeof renderUI==='function') renderUI();
             if(document.getElementById('healthModule')&&document.getElementById('healthModule').style.display!=='none' && typeof renderHealth==='function') renderHealth();
+            if(document.getElementById('recModule')&&document.getElementById('recModule').style.display!=='none') renderRecTests();
         }
 
         async function addShoppingItem() {
@@ -2012,7 +2183,7 @@
         async function refreshData() {
             const h = { 'apikey': CONFIG.KEY, 'Authorization': 'Bearer ' + CONFIG.KEY };
             try {
-                const [medsRes, purchRes, pharmRes, docRes, mcRes, catRes, manRes, persRes, medPersRes, docsRes, medDocsRes, labCatRes, labParRes, labTestRes, labResRes, labRangeRes, shopRes, specRes, interRes, healthRes, visitsRes, vdiagRes, vmeasRes, vtherRes, imgRes, imgmeasRes, imgTypesRes] = await Promise.all([
+                const [medsRes, purchRes, pharmRes, docRes, mcRes, catRes, manRes, persRes, medPersRes, docsRes, medDocsRes, labCatRes, labParRes, labTestRes, labResRes, labRangeRes, shopRes, specRes, interRes, healthRes, visitsRes, vdiagRes, vmeasRes, vtherRes, imgRes, imgmeasRes, imgTypesRes, recRes] = await Promise.all([
                     fetch(CONFIG.URL + '/rest/v1/medications?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/purchases?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/pharmacies?select=*', { headers: h }),
@@ -2039,7 +2210,8 @@
                     fetch(CONFIG.URL + '/rest/v1/visit_therapy?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/imaging_studies?select=*', { headers: h }),
                     fetch(CONFIG.URL + '/rest/v1/imaging_measurements?select=*', { headers: h }),
-                    fetch(CONFIG.URL + '/rest/v1/imaging_types?select=*', { headers: h })
+                    fetch(CONFIG.URL + '/rest/v1/imaging_types?select=*', { headers: h }),
+                    fetch(CONFIG.URL + '/rest/v1/recommended_tests?select=*', { headers: h })
                 ]);
 
                 state.meds = medsRes.ok ? await medsRes.json() : [];
@@ -2063,6 +2235,7 @@
                 state.specialties = specRes && specRes.ok ? await specRes.json() : [];
                 state.medicationInteractions = interRes && interRes.ok ? await interRes.json() : [];
                 state.healthOverview = healthRes && healthRes.ok ? await healthRes.json() : [];
+                state.recTests = (recRes && recRes.ok) ? await recRes.json() : [];
                 state.visits = visitsRes && visitsRes.ok ? await visitsRes.json() : [];
                 state.visitDiagnoses = vdiagRes && vdiagRes.ok ? await vdiagRes.json() : [];
                 state.visitMeasurements = vmeasRes && vmeasRes.ok ? await vmeasRes.json() : [];
