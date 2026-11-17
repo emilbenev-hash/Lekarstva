@@ -3237,7 +3237,25 @@
                 const editP = state.editingPurchaseId ? state.purchases.find(x => String(x.id) === String(state.editingPurchaseId)) : null;
                 const expPart = (pExp || (editP && editP.expiry_date)) ? { expiry_date: pExp } : {};
                 
-                if (state.editingPurchaseId) {
+                const _hasPrice = (pEur > 0) || (pZk !== null && pZk > 0);
+                if (!state.editingPurchaseId && !_hasPrice) {
+                    /* 2026-11-18: без цена НЕ се създава нов ред. Срокът отива в последната покупка с цена на лекарството. */
+                    if (pExp) {
+                        const _last = (state.purchases || [])
+                            .filter(x => String(x.medication_id) === String(state.currentId) && (Number(x.price_eur) > 0 || Number(x.price_zk_eur) > 0))
+                            .sort((a, b) => (new Date(b.purchase_date || 0) - new Date(a.purchase_date || 0)) || (new Date(b.created_at || 0) - new Date(a.created_at || 0)))[0];
+                        if (_last) {
+                            await fetch(`${CONFIG.URL}/rest/v1/purchases?id=eq.${_last.id}`, {
+                                method: 'PATCH',
+                                headers: h,
+                                body: JSON.stringify({ expiry_date: pExp })
+                            });
+                            alert('📅 Срокът ' + formatDateToBG(pExp) + ' е записан към последната покупка с цена (' + (formatDateToBG(_last.purchase_date) || '-') + ', ' + Number(_last.price_eur || 0).toFixed(2) + ').');
+                        } else {
+                            alert('Няма покупка с цена за това лекарство.\nВъведи цена и аптека, за да се запише срокът ' + formatDateToBG(pExp) + '.');
+                        }
+                    }
+                } else if (state.editingPurchaseId) {
                     await fetch(`${CONFIG.URL}/rest/v1/purchases?id=eq.${state.editingPurchaseId}`, {
                         method: 'PATCH',
                         headers: h,
