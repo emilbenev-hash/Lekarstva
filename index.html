@@ -3244,7 +3244,9 @@
                         const _last = (state.purchases || [])
                             .filter(x => String(x.medication_id) === String(state.currentId) && (Number(x.price_eur) > 0 || Number(x.price_zk_eur) > 0))
                             .sort((a, b) => (new Date(b.purchase_date || 0) - new Date(a.purchase_date || 0)) || (new Date(b.created_at || 0) - new Date(a.created_at || 0)))[0];
-                        if (_last) {
+                        if (_last && !confirm('Към покупката от ' + (formatDateToBG(_last.purchase_date) || '-') + ' (' + Number(_last.price_eur || 0).toFixed(2) + (((state.pharmacies||[]).find(p => String(p.id) === String(_last.pharmacy_id))||{}).name ? ', ' + (state.pharmacies.find(p => String(p.id) === String(_last.pharmacy_id))).name : '') + ') ли е срокът ' + formatDateToBG(pExp) + '?\n\nОК = запиши го там.\nОтказ = не записвай; въведи цената и аптеката на новата покупка.')) {
+                            alert('Срокът НЕ е записан. Въведи цената и аптеката на новата покупка заедно със срока и натисни „Запази“.');
+                        } else if (_last) {
                             await fetch(`${CONFIG.URL}/rest/v1/purchases?id=eq.${_last.id}`, {
                                 method: 'PATCH',
                                 headers: h,
