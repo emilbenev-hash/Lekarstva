@@ -4132,6 +4132,151 @@ async function deleteListItem(kind, id) {
   };
 })();
 </script>
+
+<script>
+/* ✂ Кроп на снимка на кутия (2026-11-17): авто (OpenCV.js – правоъгълник на кутията, изправяне) + ръчен (Cropper.js), завъртане.
+   medCropDialog(file) → Promise<File|undefined|null>: File = изрязана, undefined = без промяна, null = отказ. Библиотеките се зареждат само при нужда. */
+(function(){
+  try {
+    function loadCss(href){ if(document.querySelector('link[href="'+href+'"]')) return; var l=document.createElement('link'); l.rel='stylesheet'; l.href=href; document.head.appendChild(l); }
+    function loadJs(src){ return new Promise(function(res,rej){ if(document.querySelector('script[data-src="'+src+'"]')){ res(); return; } var s=document.createElement('script'); s.src=src; s.async=true; s.setAttribute('data-src',src); s.onload=function(){res();}; s.onerror=function(){rej(new Error('load '+src));}; document.head.appendChild(s); }); }
+    var CROPPER_JS='https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js';
+    var CROPPER_CSS='https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css';
+    var OPENCV_JS='https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js';
+    async function ensureCropper(){ loadCss(CROPPER_CSS); if(!window.Cropper){ await loadJs(CROPPER_JS); } return !!window.Cropper; }
+    async function ensureCv(){
+      if(window.cv && window.cv.Mat) return true;
+      await loadJs(OPENCV_JS);
+      var t0=Date.now();
+      while(!(window.cv && window.cv.Mat)){
+        if(window.cv && typeof window.cv.then==='function'){ try{ window.cv = await window.cv; }catch(e){} }
+        if(Date.now()-t0>30000) return false;
+        await new Promise(function(r){setTimeout(r,200);});
+      }
+      return true;
+    }
+    function canvasToFile(cv, name, type){ return new Promise(function(res){ cv.toBlob(function(b){ res(new File([b], name, {type:type||'image/jpeg'})); }, type||'image/jpeg', 0.92); }); }
+    function baseName(n){ return (n||'snimka').replace(/\.[^.]+$/,''); }
+    // Авто: намира най-големия 4-ъгълен контур и изправя перспективата
+    async function autoCropCanvas(img){
+      var ok = await ensureCv(); if(!ok) return null;
+      var cv=window.cv;
+      var maxSide=1200, sc=Math.min(1, maxSide/Math.max(img.naturalWidth,img.naturalHeight));
+      var c=document.createElement('canvas'); c.width=Math.round(img.naturalWidth*sc); c.height=Math.round(img.naturalHeight*sc);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      var src=cv.imread(c), gray=new cv.Mat(), blur=new cv.Mat(), edges=new cv.Mat(), contours=new cv.MatVector(), hier=new cv.Mat();
+      var best=null, bestArea=0;
+      try {
+        cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+        cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
+        cv.Canny(blur,edges,40,120);
+        var k=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(5,5)); cv.dilate(edges,edges,k); k.delete();
+        cv.findContours(edges,contours,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+        var imgArea=c.width*c.height;
+        for(var i=0;i<contours.size();i++){
+          var cnt=contours.get(i), peri=cv.arcLength(cnt,true), ap=new cv.Mat();
+          cv.approxPolyDP(cnt,ap,0.02*peri,true);
+          var a=cv.contourArea(ap);
+          if(ap.rows===4 && a>imgArea*0.12 && a<imgArea*0.98 && a>bestArea && cv.isContourConvex(ap)){
+            bestArea=a; if(best) best.delete(); best=ap;
+          } else { ap.delete(); }
+          cnt.delete();
+        }
+        if(!best){
+          // резерв: правоъгълник около най-големия контур
+          var bi=-1, ba=0; for(var j=0;j<contours.size();j++){ var cc=contours.get(j); var aa=cv.contourArea(cc); if(aa>ba){ba=aa;bi=j;} cc.delete(); }
+          if(bi<0 || ba<imgArea*0.12) return null;
+          var cc2=contours.get(bi); var r=cv.boundingRect(cc2); cc2.delete();
+          var out=document.createElement('canvas'); out.width=Math.round(r.width/sc); out.height=Math.round(r.height/sc);
+          out.getContext('2d').drawImage(img, r.x/sc, r.y/sc, r.width/sc, r.height/sc, 0,0,out.width,out.height);
+          return out;
+        }
+        var pts=[]; for(var p=0;p<4;p++){ pts.push({x:best.data32S[p*2]/sc, y:best.data32S[p*2+1]/sc}); }
+        var s=pts.slice().sort(function(a,b){return (a.x+a.y)-(b.x+b.y);}); var tl=s[0], br=s[3];
+        var d=pts.slice().sort(function(a,b){return (a.y-a.x)-(b.y-b.x);}); var tr=d[0], bl=d[3];
+        var wA=Math.hypot(br.x-bl.x,br.y-bl.y), wB=Math.hypot(tr.x-tl.x,tr.y-tl.y), hA=Math.hypot(tr.x-br.x,tr.y-br.y), hB=Math.hypot(tl.x-bl.x,tl.y-bl.y);
+        var W=Math.round(Math.max(wA,wB)), H=Math.round(Math.max(hA,hB));
+        var full=cv.imread((function(){ var f=document.createElement('canvas'); f.width=img.naturalWidth; f.height=img.naturalHeight; f.getContext('2d').drawImage(img,0,0); return f; })());
+        var srcTri=cv.matFromArray(4,1,cv.CV_32FC2,[tl.x,tl.y,tr.x,tr.y,br.x,br.y,bl.x,bl.y]);
+        var dstTri=cv.matFromArray(4,1,cv.CV_32FC2,[0,0,W-1,0,W-1,H-1,0,H-1]);
+        var M=cv.getPerspectiveTransform(srcTri,dstTri), dst=new cv.Mat();
+        cv.warpPerspective(full,dst,M,new cv.Size(W,H),cv.INTER_LINEAR,cv.BORDER_CONSTANT,new cv.Scalar());
+        var o=document.createElement('canvas'); cv.imshow(o,dst);
+        full.delete(); srcTri.delete(); dstTri.delete(); M.delete(); dst.delete();
+        return o;
+      } finally {
+        src.delete(); gray.delete(); blur.delete(); edges.delete(); contours.delete(); hier.delete(); if(best) best.delete();
+      }
+    }
+    window.medCropDialog = function(file){
+      return new Promise(function(resolve){
+        try {
+          var url=URL.createObjectURL(file);
+          var ov=document.createElement('div');
+          ov.style.cssText='position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:5000; display:flex; flex-direction:column;';
+          var stage=document.createElement('div'); stage.style.cssText='flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:8px;';
+          var im=document.createElement('img'); im.src=url; im.style.cssText='max-width:100%; max-height:100%; display:block;';
+          stage.appendChild(im);
+          var msg=document.createElement('div'); msg.style.cssText='color:#fff; text-align:center; font-size:14px; min-height:20px; padding:4px;';
+          var bar=document.createElement('div'); bar.style.cssText='display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:#111;';
+          function mk(t,bg){ var b=document.createElement('button'); b.type='button'; b.textContent=t; b.style.cssText='flex:1 1 30%; min-width:90px; background:'+bg+'; color:#fff; border:none; border-radius:8px; padding:14px 6px; font-size:15px; font-weight:bold; cursor:pointer;'; bar.appendChild(b); return b; }
+          var bAuto=mk('✂ Авто кроп','#2F855A'), bMan=mk('✋ Ръчен кроп','#2980B9'), bRot=mk('↻ Завърти','#7F8C8D'), bOrig=mk('Без кроп','#555'), bOk=mk('✓ Запази','#27AE60'), bCancel=mk('✕ Отказ','#E74C3C');
+          ov.appendChild(stage); ov.appendChild(msg); ov.appendChild(bar); document.body.appendChild(ov);
+          var cropper=null, curFile=file, curUrl=url, changed=false, busy=false;
+          function setImg(f){ if(cropper){ cropper.destroy(); cropper=null; } try{ if(curUrl!==url) URL.revokeObjectURL(curUrl); }catch(e){} curFile=f; curUrl=URL.createObjectURL(f); im.src=curUrl; }
+          function done(v){ try{ if(cropper) cropper.destroy(); }catch(e){} try{ URL.revokeObjectURL(url); if(curUrl!==url) URL.revokeObjectURL(curUrl); }catch(e){} ov.remove(); resolve(v); }
+          async function startManual(note){
+            msg.textContent=note||'Зарежда се ръчният кроп…';
+            var ok=false; try{ ok=await ensureCropper(); }catch(e){}
+            if(!ok){ msg.textContent='Ръчният кроп не можа да се зареди (няма интернет?).'; return; }
+            if(cropper) return;
+            cropper=new window.Cropper(im,{ viewMode:1, autoCropArea:0.9, background:false, movable:true, zoomable:true, rotatable:true, responsive:true, dragMode:'move' });
+            msg.textContent=(note?note+' ':'')+'Нагласи рамката с пръст и натисни „✓ Запази“.';
+          }
+          bAuto.onclick=async function(){
+            if(busy) return; busy=true;
+            msg.textContent='Търся кутията… (първия път се сваля ~10 MB)';
+            try {
+              if(cropper){ cropper.destroy(); cropper=null; }
+              if(!im.complete){ await new Promise(function(r){ im.onload=r; }); }
+              var c=await autoCropCanvas(im);
+              if(c){ var f=await canvasToFile(c, baseName(file.name)+'_crop.jpg','image/jpeg'); setImg(f); changed=true; msg.textContent='Изрязано. Ако не е добре – „✋ Ръчен кроп“ или „Без кроп“.'; }
+              else { await startManual('Кутията не беше открита автоматично.'); }
+            } catch(e){ console.warn('autocrop',e); await startManual('Автоматичният кроп не успя.'); }
+            busy=false;
+          };
+          bMan.onclick=function(){ if(!busy) startManual(); };
+          bRot.onclick=async function(){
+            if(busy) return;
+            if(cropper){ cropper.rotate(90); return; }
+            busy=true;
+            try {
+              if(!im.complete){ await new Promise(function(r){ im.onload=r; }); }
+              var c=document.createElement('canvas'); c.width=im.naturalHeight; c.height=im.naturalWidth;
+              var x=c.getContext('2d'); x.translate(c.width/2,c.height/2); x.rotate(Math.PI/2); x.drawImage(im,-im.naturalWidth/2,-im.naturalHeight/2);
+              var f=await canvasToFile(c, baseName(file.name)+'_rot.jpg','image/jpeg'); setImg(f); changed=true;
+            } catch(e){}
+            busy=false;
+          };
+          bOrig.onclick=function(){ if(!busy) done(undefined); };
+          bCancel.onclick=function(){ if(!busy) done(null); };
+          bOk.onclick=async function(){
+            if(busy) return; busy=true;
+            try {
+              if(cropper){
+                var c=cropper.getCroppedCanvas({ maxWidth:2400, maxHeight:2400, imageSmoothingQuality:'high' });
+                if(c){ var f=await canvasToFile(c, baseName(file.name)+'_crop.jpg','image/jpeg'); busy=false; done(f); return; }
+              }
+              busy=false; done(changed ? curFile : undefined);
+            } catch(e){ busy=false; done(changed ? curFile : undefined); }
+          };
+          msg.textContent='Избери: авто кроп, ръчен кроп, завъртане – или „Без кроп“.';
+        } catch(e){ console.warn('medCropDialog',e); resolve(undefined); }
+      });
+    };
+  } catch(e){ console.warn('crop init', e); }
+})();
+</script>
 <script>
 /* 📸 Снимай кутията (мобилна) — качва снимка/файл в medical-docs, създава документ (опашка) и връзка към лекарството. */
 (function(){
@@ -4145,7 +4290,17 @@ async function deleteListItem(kind, id) {
           try {
             var file = input.files && input.files[0];
             if(!file){ return; }
+            var origFile = file, origUrl = '';
+            try { if(typeof medCropDialog==='function'){ var cf = await medCropDialog(file); if(cf===null){ return; } if(cf){ file = cf; } } } catch(e){ console.warn('crop', e); }
             var h={ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' };
+            if(file!==origFile){
+              try {
+                var oext=(origFile.name.split('.').pop()||'jpg');
+                var oName='medscan_orig_'+Date.now()+'_'+Math.random().toString(36).substring(2,7)+'.'+oext;
+                var oup=await fetch(CONFIG.URL+'/storage/v1/object/medical-docs/'+oName, { method:'POST', headers:{ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':origFile.type||'image/jpeg' }, body:origFile });
+                if(oup.ok){ origUrl=CONFIG.URL+'/storage/v1/object/public/medical-docs/'+oName; }
+              } catch(e){}
+            }
             var ext=(file.name.split('.').pop()||'jpg');
             var cleanFileName='medscan_'+Date.now()+'_'+Math.random().toString(36).substring(2,7)+'.'+ext;
             var up=await fetch(CONFIG.URL+'/storage/v1/object/medical-docs/'+cleanFileName, { method:'POST', headers:{ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':file.type||'image/jpeg' }, body:file });
@@ -4176,7 +4331,7 @@ async function deleteListItem(kind, id) {
                 }
               }
             } catch(e){}
-            var docRes=await fetch(CONFIG.URL+'/rest/v1/documents', { method:'POST', headers:h, body:JSON.stringify({ file_url:publicUrl, file_name:file.name, doc_type:'med_scan', scan_status:'pending', uploaded_from:'mobile', scan_notes:(ocrText||'').slice(0,4000) }) });
+            var docRes=await fetch(CONFIG.URL+'/rest/v1/documents', { method:'POST', headers:h, body:JSON.stringify({ file_url:publicUrl, file_name:file.name, doc_type:'med_scan', scan_status:'pending', uploaded_from:'mobile', scan_notes:((origUrl?('[оригинал] '+origUrl+'\n'):'')+(ocrText||'')).slice(0,4000) }) });
             var docData=await docRes.json();
             if(docData && docData.length){
               var doc=docData[0];
