@@ -2552,7 +2552,7 @@
                                         <tr style="border-bottom:1px solid #eee;">
                                             <td style="padding:6px;">${dStr}</td>
                                             <td style="padding:6px;"><b>${pName}</b></td>
-                                            <td style="padding:6px;${p.expiry_date && new Date(p.expiry_date) < new Date(new Date().toDateString()) ? ' color:#C0392B; font-weight:bold;' : ''}">${p.expiry_date ? formatDateToBG(p.expiry_date) : '-'}</td>
+                                            <td style="padding:6px;${p.expiry_date && new Date(p.expiry_date) < new Date(new Date().toDateString()) ? ' color:#C0392B; font-weight:bold;' : ''}">${p.expiry_date ? formatDateToBG(p.expiry_date) : '-'}${(typeof expiryPhotoCell==='function') ? expiryPhotoCell(p.id) : ''}</td>
                                             <td style="padding:6px;">${eur} €</td>
                                             ${m.health_insurance ? `<td style="padding:6px; color:#E74C3C; font-weight:bold;">${zk} €</td>` : ''}
                                             <td style="padding:6px; text-align:center; white-space:nowrap;">
@@ -4165,13 +4165,13 @@ async function deleteListItem(kind, id) {
     var OPENCV_JS='https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js';
     async function ensureCropper(){ loadCss(CROPPER_CSS); if(!window.Cropper){ await loadJs(CROPPER_JS); } return !!window.Cropper; }
     async function ensureCv(){
+      /* 2026-11-18: без await на window.cv (Emscripten модулът има .then и зацикляше). Само проверка за cv.Mat, общо до 20 сек. */
       if(window.cv && window.cv.Mat) return true;
-      await loadJs(OPENCV_JS);
       var t0=Date.now();
+      try { await Promise.race([ loadJs(OPENCV_JS), new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout')); }, 20000); }) ]); } catch(e){ return false; }
       while(!(window.cv && window.cv.Mat)){
-        if(window.cv && typeof window.cv.then==='function'){ try{ window.cv = await window.cv; }catch(e){} }
-        if(Date.now()-t0>30000) return false;
-        await new Promise(function(r){setTimeout(r,200);});
+        if(Date.now()-t0>20000) return false;
+        await new Promise(function(r){ setTimeout(r,200); });
       }
       return true;
     }
@@ -4259,7 +4259,7 @@ async function deleteListItem(kind, id) {
             try {
               if(cropper){ cropper.destroy(); cropper=null; }
               if(!im.complete){ await new Promise(function(r){ im.onload=r; }); }
-              var c=await autoCropCanvas(im);
+              var c=await Promise.race([ autoCropCanvas(im), new Promise(function(r){ setTimeout(function(){ r(null); }, 20000); }) ]);
               if(c){ var f=await canvasToFile(c, baseName(file.name)+'_crop.jpg','image/jpeg'); setImg(f); changed=true; msg.textContent='Изрязано. Ако не е добре – „✋ Ръчен кроп“ или „Без кроп“.'; }
               else { await startManual('Кутията не беше открита автоматично.'); }
             } catch(e){ console.warn('autocrop',e); await startManual('Автоматичният кроп не успя.'); }
@@ -4482,6 +4482,53 @@ window.cloneMedDose = async function(){
     if(typeof openPanel==='function') openPanel(newId);
   }catch(e){ alert('Грешка: '+(e&&e.message?e.message:e)); }
 };
+</script>
+
+<script>
+/* 📷 Снимка на срока към конкретна покупка (2026-11-18). documents.doc_type='expiry_scan', documents.purchase_id → purchases.id.
+   Снимките на кутията остават към лекарството (med_scan). */
+(function(){
+  try {
+    function expDocs(pid){ return ((typeof state!=='undefined' && state.documents)||[]).filter(function(d){ return d && d.doc_type==='expiry_scan' && String(d.purchase_id)===String(pid); }); }
+    window.expiryPhotoCell = function(pid){
+      try {
+        var n=expDocs(pid).length;
+        var view = n ? ' <span onclick="event.stopPropagation(); showExpiryPhotos(\''+pid+'\')" title="Снимка на срока ('+n+')" style="cursor:pointer; font-size:16px; vertical-align:middle;">📷'+(n>1?'<sup>'+n+'</sup>':'')+'</span>' : '';
+        var add = ' <button type="button" onclick="event.stopPropagation(); addExpiryPhoto(\''+pid+'\')" title="Добави снимка на срока към тази покупка" style="background:#6B46C1; color:#fff; border:none; border-radius:6px; padding:2px 6px; cursor:pointer; font-size:12px; vertical-align:middle;">＋📷</button>';
+        return view+add;
+      } catch(e){ return ''; }
+    };
+    window.showExpiryPhotos = function(pid){
+      var ph=expDocs(pid);
+      if(!ph.length){ alert('Няма снимка на срока за тази покупка.'); return; }
+      if(ph.length===1 || typeof openFullscreen!=='function'){ if(typeof openFullscreen==='function') openFullscreen(ph[0].file_url, ph[0].file_name||'Срок'); return; }
+      var i=prompt('Снимки на срока: '+ph.length+'\nВъведи номер (1–'+ph.length+'):','1'); var k=parseInt(i,10);
+      if(k>=1 && k<=ph.length) openFullscreen(ph[k-1].file_url, ph[k-1].file_name||'Срок');
+    };
+    window.addExpiryPhoto = function(pid){
+      try {
+        var input=document.createElement('input'); input.type='file'; input.accept='image/*';
+        input.onchange=async function(){
+          try {
+            var file=input.files && input.files[0]; if(!file) return;
+            try { if(typeof medCropDialog==='function'){ var cf=await medCropDialog(file); if(cf===null) return; if(cf) file=cf; } } catch(e){}
+            var ext=(file.name.split('.').pop()||'jpg');
+            var fn='expiry_'+Date.now()+'_'+Math.random().toString(36).substring(2,7)+'.'+ext;
+            var up=await fetch(CONFIG.URL+'/storage/v1/object/medical-docs/'+fn, { method:'POST', headers:{ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':file.type||'image/jpeg' }, body:file });
+            if(!up.ok){ alert('Грешка при качване: '+(await up.text())); return; }
+            var url=CONFIG.URL+'/storage/v1/object/public/medical-docs/'+fn;
+            var res=await fetch(CONFIG.URL+'/rest/v1/documents', { method:'POST', headers:{ 'apikey':CONFIG.KEY, 'Authorization':'Bearer '+CONFIG.KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' }, body:JSON.stringify({ file_url:url, file_name:file.name, doc_type:'expiry_scan', purchase_id:pid, uploaded_from:'app' }) });
+            if(!res.ok){ alert('Снимката е качена, но не е записана към покупката: '+(await res.text())); return; }
+            var d=await res.json(); if(d && d.length && state.documents && state.documents.push) state.documents.push(d[0]);
+            alert('✅ Снимката на срока е прикачена към тази покупка.');
+            try { if(state.currentId && typeof openPanel==='function') openPanel(state.currentId); } catch(e){}
+          } catch(e){ alert('Грешка: '+(e&&e.message?e.message:e)); }
+        };
+        input.click();
+      } catch(e){ alert('Грешка: '+(e&&e.message?e.message:e)); }
+    };
+  } catch(e){ console.warn('expiryPhoto init', e); }
+})();
 </script>
 </body>
 </html>
